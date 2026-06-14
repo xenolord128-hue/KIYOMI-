@@ -1,0 +1,6 @@
+{
+  "name": "KIYOMI",
+  "description": "Premium garment e-commerce boutique featuring a fast, intuitive shopping catalog, dynamic cart management, and seamless order tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,79 @@
+{
+  "entities": {
+    "product": {
+      "title": "Product",
+      "description": "Premium apparel product listing details.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "number", "description": "Numeric unique identifier" },
+        "title": { "type": "string", "description": "Formal product title" },
+        "category": { "type": "string", "description": "Apparel category name" },
+        "price": { "type": "number", "description": "Price of the product" },
+        "rating": { "type": "number", "description": "Average user rating" },
+        "assets": { "type": "array", "description": "List of high-resolution Unsplash image URLs" },
+        "variants": { "type": "array", "description": "Sizing or styling variants list" },
+        "outOfStock": { "type": "array", "description": "List of current out-of-stock variants" },
+        "description": { "type": "string", "description": "Textual product summary details" },
+        "reviews": { "type": "array", "description": "List of user-submitted reviews" },
+        "stock": { "type": "number", "description": "Total stock left" }
+      },
+      "required": ["id", "title", "category", "price", "rating", "assets", "variants", "outOfStock", "description", "reviews"]
+    },
+    "order": {
+      "title": "Order",
+      "description": "E-commerce order detail captured during premium checkout.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique order or invoice tracking identifier" },
+        "fullName": { "type": "string", "description": "Full name of the recipient" },
+        "phone": { "type": "string", "description": "Mobile number of the recipient" },
+        "address": { "type": "string", "description": "Shipping courier delivery address" },
+        "paymentMethod": { "type": "string", "description": "Selected payment terms" },
+        "items": { "type": "array", "description": "List of purchased items and metadata" },
+        "totalPrice": { "type": "number", "description": "Total price including tax and discounts" },
+        "status": { "type": "string", "enum": ["Received", "Processing", "Shipped", "Out for Delivery", "Completed"] },
+        "createdAt": { "type": "string", "description": "ISO timestamp when client placed the invoice" }
+      },
+      "required": ["id", "fullName", "phone", "address", "paymentMethod", "items", "totalPrice", "status", "createdAt"]
+    },
+    "announcement": {
+      "title": "Announcement",
+      "description": "Top notice bar message block configure by brand administrators.",
+      "type": "object",
+      "properties": {
+        "message": { "type": "string" },
+        "active": { "type": "boolean" }
+      },
+      "required": ["message", "active"]
+    },
+    "adConfig": {
+      "title": "AdConfig",
+      "description": "Dynamic script configuration block for monetization.",
+      "type": "object",
+      "properties": {
+        "scriptBlock": { "type": "string" },
+        "enabled": { "type": "boolean" },
+        "intervalSeconds": { "type": "number" }
+      },
+      "required": ["scriptBlock", "enabled"]
+    }
+  },
+  "firestore": {
+    "/products/{productId}": {
+      "schema": "product",
+      "description": "Individual product detail document"
+    },
+    "/orders/{orderId}": {
+      "schema": "order",
+      "description": "Individual premium order shipment detail"
+    },
+    "/announcements/{announcementId}": {
+      "schema": "announcement",
+      "description": "Broadcasting header banner notification message"
+    },
+    "/adConfigs/{configId}": {
+      "schema": "adConfig",
+      "description": "Dynamic script placements and settings database node"
+    }
+  }
+}

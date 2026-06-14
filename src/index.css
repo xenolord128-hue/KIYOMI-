@@ -1,0 +1,264 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Space+Grotesk:wght@400;505;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-serif: "Playfair Display", "Space Grotesk", Georgia, serif;
+  --font-mono: "JetBrains Mono", SFMono-Regular, monospace;
+  
+  --color-brand-base: #FFFFFF;
+  --color-brand-deep: #0C1E1F;
+  --color-brand-accent: #526600;
+
+  /* Premium luxury eco-luxe boutique palette */
+  --color-seashell: #FFFFFF;
+  --color-cascade: #6F7973;
+  --color-big-stone: #0C1E1F;
+  --color-deep-emerald: #003E2C;
+  --color-lime-neon: #CBF23D;
+  --color-soft-mint: #E9FDFD;
+}
+
+/* Custom global rules for premium boutique presentation */
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--color-soft-mint);
+  color: var(--color-big-stone);
+  font-family: var(--font-sans);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Minimalist elegant custom scrollbars for desktops */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FDFBF7;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #0F2C2E;
+  border-radius: 99px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #2d728f;
+}
+
+/* Standard animation keyframes for WiFiLoader Waveforms */
+@keyframes wifi-wave {
+  0%, 100% {
+    transform: scaleY(0.4);
+  }
+  50% {
+    transform: scaleY(1.0);
+  }
+}
+
+.wifi-wave-bar {
+  animation: wifi-wave 1.2s ease-in-out infinite;
+}
+
+.wifi-wave-bar:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.wifi-wave-bar:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.wifi-wave-bar:nth-child(4) {
+  animation-delay: 0.45s;
+}
+
+.wifi-wave-bar:nth-child(5) {
+  animation-delay: 0.6s;
+}
+
+/* Scrollbar Hide class for horizontal mobile galleries with snap alignment */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE & Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+/* Custom Uiverse.io Toggle Button Styles for Language Selection */
+.toggle-cont {
+  --primary: #54a8fc;
+  --light: #d9d9d9;
+  --dark: #121212;
+  --gray: #414344;
+  --second: #0c0d0d;
+
+  position: relative;
+  z-index: 10;
+  width: fit-content;
+  height: 28px;
+  border-radius: 9999px;
+}
+
+.toggle-cont .toggle-input {
+  display: none;
+}
+
+.toggle-cont .toggle-label {
+  --gap: 3px;
+  --width: 28px;
+
+  cursor: pointer;
+  position: relative;
+  display: inline-block;
+
+  padding: 0.25rem;
+  width: calc((var(--width) + var(--gap)) * 2);
+  height: 100%;
+  background-color: var(--dark);
+
+  border: 1px solid #777777;
+  border-bottom: 0;
+
+  border-radius: 9999px;
+  box-sizing: content-box;
+  transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.toggle-label::before {
+  content: "";
+  position: absolute;
+  z-index: -10;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  width: calc(100% + 0.75rem);
+  height: calc(100% + 0.75rem);
+  background-color: var(--gray);
+
+  border: 1px solid #777777;
+  border-bottom: 0;
+  border-radius: 9999px;
+
+  transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.toggle-label::after {
+  content: "";
+  position: absolute;
+  z-index: -10;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  width: 100%;
+  height: 100%;
+  background-image: radial-gradient(
+    circle at 50% -100%,
+    rgb(58, 155, 252) 0%,
+    rgba(12, 12, 12, 1) 80%
+  );
+  border-radius: 9999px;
+}
+
+.toggle-cont .toggle-label .cont-icon {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: var(--width);
+  height: 28px;
+  background-image: radial-gradient(
+    circle at 50% 0%,
+    #666666 0%,
+    var(--gray) 100%
+  );
+
+  border: 1px solid #aaaaaa;
+  border-bottom: 0;
+  border-radius: 9999px;
+  box-shadow: inset 0 -0.1rem 0.1rem var(--primary),
+    inset 0 0 0.3rem 0.45rem var(--second);
+
+  transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.cont-icon {
+  overflow: clip;
+  position: relative;
+}
+
+.cont-icon .sparkle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: block;
+  width: calc(var(--width) * 1px);
+  aspect-ratio: 1;
+  background-color: var(--light);
+  border-radius: 50%;
+  transform-origin: 50% 50%;
+  rotate: calc(1deg * var(--deg));
+  transform: translate(-50%, -50%);
+  animation: sparkle-unchecked calc(100s / var(--duration)) linear
+    calc(0s / var(--duration)) infinite;
+}
+
+@keyframes sparkle-unchecked {
+  to {
+    width: calc(var(--width) * 0.5px);
+    transform: translate(2000%, -50%);
+  }
+}
+
+@keyframes sparkle-checked {
+  to {
+    width: calc(var(--width) * 1px);
+    transform: translate(5000%, -50%);
+  }
+}
+
+.cont-icon .icon {
+  width: 0.75rem;
+  fill: var(--light);
+}
+
+/* Checked state animations and repositioning */
+.toggle-input:checked + .toggle-label {
+  background-color: #41434400;
+  border: 1px solid #3d6970;
+  border-bottom: 0;
+}
+
+.toggle-input:checked + .toggle-label::before {
+  box-shadow: 0 0.5rem 1.5rem -1rem #0080ff;
+}
+
+.toggle-input:checked + .toggle-label .cont-icon {
+  overflow: visible;
+  background-image: radial-gradient(
+    circle at 50% 0%,
+    #045ab1 0%,
+    var(--primary) 100%
+  );
+  border: 1px solid var(--primary);
+  border-bottom: 0;
+  transform: translateX(calc((var(--gap) * 2) + 100%)) rotate(-225deg);
+}
+
+.toggle-input:checked + .toggle-label .cont-icon .sparkle {
+  z-index: -10;
+  width: calc(var(--width) * 1.5px);
+  background-color: #acacac;
+  animation: sparkle-checked calc(100s / var(--duration)) linear
+    calc(10s / var(--duration)) infinite;
+}
