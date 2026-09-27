@@ -14,7 +14,7 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Load favorites from local storage on mount
   useEffect(() => {
-    const stored = localStorage.getItem('KIYOMI_wishlist') || localStorage.getItem('dorax_wishlist');
+    const stored = localStorage.getItem('patowary_wishlist');
     if (stored) {
       try {
         setWishlist(JSON.parse(stored));
@@ -33,7 +33,7 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
        updated = [...wishlist, product];
     }
     setWishlist(updated);
-    localStorage.setItem('KIYOMI_wishlist', JSON.stringify(updated));
+    localStorage.setItem('patowary_wishlist', JSON.stringify(updated));
   };
 
   const isInWishlist = (productId: number) => {

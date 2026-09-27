@@ -2,134 +2,124 @@ import React from 'react';
 import { useWishlist } from '../contexts/WishlistContext';
 import { useCart } from '../contexts/CartContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { Heart, ShoppingCart, Trash2, ArrowLeft, ShoppingBag } from 'lucide-react';
+import { Heart, Trash2, ArrowLeft, ShoppingBag, ArrowRight } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
+import { playCinematicIntroSound } from '../utils/voiceUtils';
 
 export const Wishlist: React.FC = () => {
   const { wishlist, toggleWishlist } = useWishlist();
-  const { addToCart } = useCart();
+  const { addToCart, toggleCart } = useCart();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   const handleQuickAdd = (product: any) => {
-    // Select first available variant in stock
-    const availableVariant = product.variants.find((v: string) => !product.outOfStock.includes(v)) || product.variants[0];
+    const availableVariant = product.variants.find((v: string) => !product.outOfStock.includes(v)) || product.variants[0] || 'Standard';
     addToCart(product, availableVariant, 1);
+    playCinematicIntroSound(`${product.title} added to bag`);
+    toggleCart();
   };
 
   return (
-    <div id="wishlist-page-stage" className="min-h-screen bg-[#FDFBF7] py-12 md:py-16 selection:bg-[#0F2C2E] selection:text-white">
-      <div className="max-w-5xl mx-auto px-4 sm:px-12">
+    <div id="wishlist-page-stage" className="min-h-screen bg-[#F8F3EA] text-[#111827] py-10 md:py-16 text-left">
+      <div className="max-w-6xl mx-auto px-4 sm:px-8">
         
         {/* Navigation Breadcrumb */}
-        <div className="mb-8">
+        <div className="mb-6">
           <Link 
             to="/products"
-            className="inline-flex items-center gap-2 text-xs font-mono tracking-widest text-[#2d728f] uppercase font-bold hover:text-stone-900 transition-colors"
+            className="inline-flex items-center gap-2 text-xs font-mono tracking-wider text-[#0A1E54] uppercase font-bold hover:text-[#1A3070] transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" /> Explore Collection Catalog
+            <ArrowLeft className="w-4 h-4" /> {t("Continue Shopping", "কেনাকাটা চালিয়ে যান")}
           </Link>
         </div>
 
         {/* Header section */}
-        <div className="border-b border-stone-200 pb-6 mb-10">
-          <h1 className="text-2xl sm:text-3xl font-serif tracking-[0.25em] text-[#0f2c2e] uppercase font-light">
-            YOUR CURATED WISHLIST
-          </h1>
-          <p className="text-[10px] sm:text-xs font-mono tracking-widest text-stone-500 uppercase mt-2">
-            Items Flagged For Potential Acquisition &bull; KIYOMI GUILD MEMBER EXCLUSIVE
-          </p>
+        <div className="border-b border-[#0A1E54]/10 pb-5 mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+          <div>
+            <span className="text-xs font-mono font-bold tracking-[0.25em] text-[#C9A66B] uppercase block">
+              PATOWARY FASHION
+            </span>
+            <h1 className="text-2xl sm:text-4xl font-serif font-bold text-[#0A1E54] uppercase mt-1">
+              {t("Saved Fits & Wishlist", "পছন্দের তালিকা")}
+            </h1>
+          </div>
+          <span className="text-xs font-mono text-stone-500">
+            {wishlist.length} {t("ITEMS SAVED", "পণ্য সংরক্ষিত")}
+          </span>
         </div>
 
         {wishlist.length === 0 ? (
-          <div className="py-20 text-center space-y-6 bg-white/40 border border-stone-200/50 p-8 rounded">
-            <div className="w-16 h-16 rounded-full bg-stone-100 flex items-center justify-center text-rose-300 mx-auto">
-              <Heart className="w-8 h-8 fill-rose-100" />
+          <div className="py-20 text-center space-y-4 glass-panel border border-white p-8 rounded-3xl max-w-lg mx-auto">
+            <div className="w-16 h-16 rounded-full bg-rose-50 flex items-center justify-center text-rose-400 mx-auto">
+              <Heart className="w-8 h-8 fill-rose-200" />
             </div>
-            <h3 className="text-xs font-mono tracking-widest uppercase font-bold text-[#0f2c2e]">YOUR WISHLIST IS COMPLETELY EMPTY</h3>
-            <p className="text-stone-500 text-xs font-sans max-w-sm mx-auto leading-relaxed">
-              Tag items during exploration to organize shipping and collection candidates. Start adding premium gadgets now.
+            <h3 className="text-base font-bold text-[#0A1E54]">
+              {t("Your Wishlist is Empty", "আপনার পছন্দের তালিকাটি খালি")}
+            </h3>
+            <p className="text-stone-600 text-xs font-sans max-w-sm mx-auto leading-relaxed">
+              {t("Browse our trending baggy pants, oversized tees, hoodies, and accessories to save your favorite fits.", "আমাদের ট্রেন্ডিং স্ট্রিটওয়্যার ব্রাউজ করে পছন্দের পণ্য সেভ করুন।")}
             </p>
             <button
               onClick={() => navigate('/products')}
-              className="border border-[#0f2c2e] hover:bg-[#0f2c2e] hover:text-[#fbf9f5] text-[#0f2c2e] text-[10px] font-mono tracking-widest uppercase font-bold py-3 px-8 rounded transition-all transform hover:scale-[1.02]"
+              className="bg-[#0A1E54] hover:bg-[#1A3070] text-[#F8F3EA] text-xs font-mono tracking-wider uppercase font-bold py-3 px-8 rounded-xl transition-all shadow-sm cursor-pointer"
             >
-              BROWSE DROPS CATALOG
+              {t("Explore Catalog", "ক্যাটালগ দেখুন")}
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
-            {wishlist.map((product) => {
-              const outOfStockAny = product.variants.every((v: string) => product.outOfStock.includes(v));
-
-              return (
-                <div 
-                  key={product.id} 
-                  className="group bg-white border border-stone-200/60 rounded overflow-hidden flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:border-stone-300 h-full"
-                >
-                  {/* Photo area */}
-                  <div className="relative aspect-[3/4] bg-stone-100 overflow-hidden shrink-0">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            {wishlist.map((product) => (
+              <div 
+                key={product.id}
+                className="glass-card rounded-2xl overflow-hidden flex flex-col justify-between group border border-white hover:border-[#C9A66B]/50 shadow-xs transition-all"
+              >
+                <div className="relative aspect-[4/5] bg-stone-100 overflow-hidden">
+                  <Link to={`/product/${product.id}`} className="block w-full h-full">
                     <img 
                       src={product.assets[0]} 
                       alt={product.title} 
-                      className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
-                    
-                    {/* Remove Overlay heart */}
-                    <button
-                      onClick={() => toggleWishlist(product)}
-                      className="absolute top-3 right-3 p-2 bg-white/85 hover:bg-rose-50 rounded-full transition-all text-rose-600 shadow-md transform hover:scale-110"
-                      title="Remove from favorites"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                  </Link>
+                  <button
+                    onClick={() => toggleWishlist(product)}
+                    className="absolute top-2.5 right-2.5 p-2 rounded-full bg-white/90 hover:bg-white text-red-500 shadow-xs transition-all cursor-pointer"
+                    aria-label="Remove from wishlist"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
 
-                    {outOfStockAny && (
-                      <div className="absolute inset-0 bg-[#FDFBF7]/85 backdrop-blur-3xs flex items-center justify-center">
-                        <span className="text-[9px] font-mono tracking-[0.25em] bg-[#0f2c2e] text-white py-1 px-3 text-center uppercase font-extrabold rounded-none">
-                          SOLD OUT TEMPORARILY
-                        </span>
-                      </div>
-                    )}
+                <div className="p-4 flex flex-col justify-between flex-1">
+                  <div>
+                    <span className="text-[10px] font-mono uppercase text-stone-500 font-bold block mb-1">
+                      {product.category}
+                    </span>
+                    <h3 className="text-xs sm:text-sm font-semibold text-[#111827] line-clamp-1">
+                      <Link to={`/product/${product.id}`} className="hover:text-[#0A1E54]">
+                        {product.title}
+                      </Link>
+                    </h3>
+                    <p className="text-sm font-bold font-mono text-[#0A1E54] mt-2">
+                      ৳ {product.price.toLocaleString()}
+                    </p>
                   </div>
 
-                  {/* Body content */}
-                  <div className="p-4 sm:p-5 flex-grow flex flex-col justify-between">
-                    <div>
-                      <div className="text-[9px] font-mono tracking-widest text-[#2d728f] uppercase font-bold mb-1">
-                        {product.category}
-                      </div>
-
-                      <h3 className="text-xs sm:text-sm font-serif font-semibold text-[#0f2c2e] tracking-tight leading-snug line-clamp-2">
-                        <Link to={`/product/${product.id}`} className="hover:text-[#2d728f] transition-colors">
-                          {product.title}
-                        </Link>
-                      </h3>
-                    </div>
-
-                    <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between gap-1.5">
-                      {/* Price matrix */}
-                      <div>
-                        <span className="text-[8px] font-mono text-stone-400 block uppercase">PRICE</span>
-                        <span className="text-xs font-mono font-extrabold text-[#0f2c2e]">
-                          BDT {product.price}
-                        </span>
-                      </div>
-
-                      {/* Moving direct to Cart */}
-                      <button
-                        onClick={() => handleQuickAdd(product)}
-                        disabled={outOfStockAny}
-                        className="bg-[#0f2c2e] text-white hover:bg-[#1C4E52] disabled:bg-stone-300 disabled:text-stone-500 text-[10px] items-center gap-1.5 font-mono tracking-widest px-3 py-2 rounded font-bold transition-all flex select-none uppercase cursor-pointer"
-                        title="Add first size variant to bag"
-                      >
-                        <ShoppingCart className="w-3.5 h-3.5" /> ADD TO BAG
-                      </button>
-                    </div>
+                  <div className="mt-3 pt-3 border-t border-stone-100 flex gap-2">
+                    <button
+                      onClick={() => handleQuickAdd(product)}
+                      className="w-full py-2.5 bg-[#0A1E54] hover:bg-[#1A3070] text-white text-xs font-bold uppercase rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs"
+                    >
+                      <ShoppingBag className="w-3.5 h-3.5 text-[#C9A66B]" />
+                      <span>{t("Add to Bag", "ব্যাগে যোগ করুন")}</span>
+                    </button>
                   </div>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         )}
+
       </div>
     </div>
   );

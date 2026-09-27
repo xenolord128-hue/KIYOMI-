@@ -10,130 +10,186 @@ import {
   Phone, 
   ShieldCheck, 
   ArrowRight,
-  TrendingDown,
-  Globe2
+  Sparkles,
+  Lock,
+  AlertCircle
 } from 'lucide-react';
+import { OFFICIAL_LOGO_URL } from './BrandLogo';
+import { sendFormViaEmailJS } from '../lib/emailjs';
 
 export const Footer: React.FC = () => {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [subscribeError, setSubscribeError] = useState<string | null>(null);
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
+    if (isSubmitting) return;
+    if (!email.trim()) return;
+
+    setIsSubmitting(true);
+    setSubscribeError(null);
+
+    const emailResult = await sendFormViaEmailJS({
+      formType: 'VIP Newsletter Subscription Form',
+      email: email.trim(),
+      message: 'Customer joined the Patowary Fashion VIP Club for drop alerts and promo codes.',
+      subject: `New VIP Club Subscription: ${email.trim()}`,
+      customFields: {
+        'Subscription Tier': 'Patowary VIP Club',
+        'Voucher Code Provided': 'PATOWARY10',
+      },
+    });
+
+    if (!emailResult.success) {
+      console.error('[EmailJS] Newsletter subscription transmission failed:', emailResult.error);
+      setSubscribeError(emailResult.error || 'Unable to submit your information right now. Please try again.');
+      setIsSubmitting(false);
+      return;
+    }
+
     setSubmitted(true);
-    playCinematicIntroSound("Subscribed! Thank you.");
+    playCinematicIntroSound("Thank you for joining Patowary Fashion VIP list!");
     setEmail('');
+    setIsSubmitting(false);
   };
 
   return (
-    <footer className="bg-big-stone text-seashell border-t border-cascade/25 selection:bg-deep-emerald selection:text-lime-neon">
-      {/* Top Newsletter & Story Row */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 grid grid-cols-1 md:grid-cols-12 gap-12 border-b border-cascade/15">
+    <footer className="bg-[#0A1E54] text-[#F8F3EA] border-t border-[#1A3070]">
+      {/* Top Newsletter & Fashion Story Row */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 grid grid-cols-1 md:grid-cols-12 gap-12 border-b border-white/10">
         
         {/* Brand Blurb */}
-        <div className="md:col-span-5 space-y-6">
+        <div className="md:col-span-5 space-y-6 text-left">
           <div className="flex items-center gap-3">
-            <img
-              src="https://i.ibb.co.com/Xxv0xKL8/Black-White-Simple-Modern-Neon-Griddy-Bold-Technology-Pixel-Electronics-Store-Logo.png"
-              alt="KIYOMI Premium Brand Logo"
-              className="h-10 w-auto bg-big-stone p-0.5 rounded object-contain border border-cascade/25"
-              referrerPolicy="no-referrer"
-            />
-            <h2 className="text-xl font-serif tracking-[0.3em] font-bold text-seashell">KIYOMI</h2>
+            <div className="p-0.5 rounded-full bg-white shadow-sm border border-[#C9A66B]/50">
+              <img
+                src={OFFICIAL_LOGO_URL}
+                alt="Patowary Fashion Logo"
+                className="h-11 w-11 rounded-full object-contain"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+            <div className="flex flex-col">
+              <h2 className="text-xl sm:text-2xl font-serif font-bold tracking-tight text-white">
+                Patowary Fashion
+              </h2>
+              <span className="text-[10px] font-mono tracking-[0.25em] uppercase text-[#C9A66B]">
+                TRENDING STREETWEAR STORE
+              </span>
+            </div>
           </div>
-          <p className="text-seashell/80 text-xs leading-relaxed font-sans max-w-sm">
-            Exclusive smartwatches and premium gadgets curated for tech-forward individuals. Rooted in minimalist architectural designs and cutting-edge engineering, we source the highest grade hardware, tactile keypads, high-fidelity acoustics, and ultra-fast GaN charging components. Base operations in Dhaka, Bangladesh.
+          <p className="text-white/80 text-xs sm:text-sm leading-relaxed font-sans max-w-sm">
+            Patowary Fashion is your premier destination for contemporary trending streetwear in Bangladesh. Explore heavy-twill baggy cargo pants, relaxed-fit trousers, 260 GSM boxy oversized tees, and curated urban lifestyle accessories.
           </p>
-          <div className="flex items-center space-x-4 text-cascade">
-            <a 
-              href="https://www.instagram.com/kiyomi_express?igsh=MW9maTVjczhkbzM5bQ==" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="hover:text-lime-neon transition-colors" 
-              aria-label="Instagram handle"
-            >
-              <Instagram className="w-4 h-4" />
-            </a>
+          <div className="flex items-center space-x-4 text-white/70">
             <a 
               href="https://www.facebook.com/share/19JHtW2Eft/" 
               target="_blank" 
               rel="noopener noreferrer" 
-              className="hover:text-lime-neon transition-colors" 
+              className="hover:text-[#C9A66B] transition-colors p-2 rounded-full bg-white/5 hover:bg-white/10" 
               aria-label="Facebook page"
             >
               <Facebook className="w-4 h-4" />
             </a>
-            <a href="https://twitter.com" className="hover:text-lime-neon transition-colors" aria-label="Twitter account">
-              <Twitter className="w-4 h-4" />
+            <a 
+              href="https://www.instagram.com/patowaryfashion" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="hover:text-[#C9A66B] transition-colors p-2 rounded-full bg-white/5 hover:bg-white/10" 
+              aria-label="Instagram handle"
+            >
+              <Instagram className="w-4 h-4" />
             </a>
-            <span className="text-[10px] font-mono tracking-widest text-[#D1F843] font-bold">#KIYOMIPREMIUM</span>
+            <span className="text-xs font-mono tracking-widest text-[#C9A66B] font-bold">
+              #PATOWARYFASHION
+            </span>
           </div>
         </div>
 
         {/* Dynamic Newsletter Capture */}
-        <div className="md:col-span-4 space-y-4">
-          <h3 className="text-xs font-mono tracking-widest uppercase text-seashell">KIYOMI PREMIUM MAILING</h3>
-          <p className="text-seashell/80 text-xs leading-relaxed font-sans">
-            Subscribe to secure drop notifications, restock priority, and private client coupon allocations.
+        <div className="md:col-span-4 space-y-4 text-left">
+          <div className="flex items-center gap-1.5">
+            <Sparkles className="w-4 h-4 text-[#C9A66B]" />
+            <h3 className="text-xs font-mono tracking-widest uppercase text-white font-bold">
+              PATOWARY VIP CLUB
+            </h3>
+          </div>
+          <p className="text-white/80 text-xs leading-relaxed font-sans">
+            Subscribe for exclusive drop alerts, restock announcements, and special promo codes directly to your inbox.
           </p>
           
           {submitted ? (
-            <div className="bg-deep-emerald/20 border border-deep-emerald/40 p-4 rounded text-xs text-lime-neon font-mono tracking-wider">
-              SUCCESS: SUBSCRIPTION CONFIRMED. CHECK INBOX SHORTLY.
+            <div className="bg-[#1A3070]/60 border border-[#C9A66B]/50 p-4 rounded-xl text-xs text-[#C9A66B] font-mono tracking-wider">
+              ✦ WELCOME TO PATOWARY FASHION VIP. YOUR 10% COUPON IS PATOWARY10.
             </div>
           ) : (
-            <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-2 mt-2">
-              <input
-                type="email"
-                value={email}
-                required
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="YOUR EMAIL"
-                className="bg-seashell/10 text-seashell placeholder-cascade text-xs font-mono tracking-widest px-4 py-2.5 rounded focus:outline-none border border-cascade/20 focus:border-lime-neon w-full uppercase"
-              />
-              <button
-                type="submit"
-                className="bg-deep-emerald hover:bg-cascade text-lime-neon text-[10px] font-mono tracking-widest uppercase font-bold py-2.5 px-6 rounded transition-all flex items-center justify-center gap-1 cursor-pointer shrink-0 border border-deep-emerald hover:border-cascade"
-              >
-                JOIN <ArrowRight className="w-3.5 h-3.5 animate-pulse" />
-              </button>
-            </form>
+            <div className="space-y-2">
+              {subscribeError && (
+                <div className="p-3 bg-rose-50 text-rose-800 border border-rose-200 rounded-xl text-xs flex items-center gap-2 font-mono">
+                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>{subscribeError}</span>
+                </div>
+              )}
+              <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-2 mt-2">
+                <input
+                  type="email"
+                  value={email}
+                  required
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="ENTER YOUR EMAIL"
+                  className="bg-white/10 text-white placeholder-white/50 text-xs font-mono tracking-wider px-4 py-2.5 rounded-xl focus:outline-none border border-white/20 focus:border-[#C9A66B] w-full"
+                />
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className={`bg-[#C9A66B] hover:bg-[#d6b47c] text-[#0A1E54] text-xs font-bold font-mono tracking-widest uppercase py-2.5 px-6 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0 shadow-sm ${
+                    isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+                  }`}
+                >
+                  {isSubmitting ? 'JOINING...' : 'JOIN'} <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </form>
+            </div>
           )}
         </div>
 
-        {/* Contacts & Support Grid */}
-        <div className="md:col-span-3 space-y-4">
-          <h3 className="text-xs font-mono tracking-widest uppercase text-seashell">BASE FLIGHT</h3>
-          <ul className="space-y-2.5 text-seashell/85 font-mono text-[11px] uppercase tracking-wider">
-            <li className="flex items-center gap-2">
-              <MapPin className="w-3.5 h-3.5 text-cascade shrink-0" />
-              <span>GULSHAN AVENUE, DHAKA, BANGLADESH</span>
+        {/* Contacts & Support */}
+        <div className="md:col-span-3 space-y-4 text-left">
+          <h3 className="text-xs font-mono tracking-widest uppercase text-[#C9A66B] font-bold">
+            STORE LOCATION & CARE
+          </h3>
+          <ul className="space-y-3 text-white/80 font-mono text-xs uppercase tracking-wider">
+            <li className="flex items-start gap-2.5">
+              <MapPin className="w-4 h-4 text-[#C9A66B] shrink-0 mt-0.5" />
+              <span>বাংলাদেশ, চাঁদপুর ৩৬৫০, ফরিদগঞ্জ</span>
             </li>
-            <li className="flex items-center gap-2">
-              <Mail className="w-3.5 h-3.5 text-cascade shrink-0" />
-              <span className="className uppercase">xenolord128@gmail.com</span>
+            <li className="flex items-center gap-2.5">
+              <Mail className="w-4 h-4 text-[#C9A66B] shrink-0" />
+              <span className="lowercase">support@patowaryfashion.com</span>
             </li>
-            <li className="flex items-center gap-2">
-              <Phone className="w-3.5 h-3.5 text-cascade shrink-0" />
-              <span>+8801633704001</span>
+            <li className="flex items-center gap-2.5">
+              <Phone className="w-4 h-4 text-[#C9A66B] shrink-0" />
+              <span>+880 1633-704001</span>
             </li>
           </ul>
         </div>
       </div>
 
-      {/* Ground Footings section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-12 py-8 flex flex-col md:flex-row items-center justify-between text-[10px] font-mono tracking-widest text-seashell/60 space-y-4 md:space-y-0">
-        <div className="flex items-center gap-2 select-none">
-          <ShieldCheck className="w-3.5 h-3.5 text-lime-neon" />
-          <span>© 2026 KIYOMI BANGLADESH. ALL RIGHTS RESERVED.</span>
+      {/* Footer Bottom Bar */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 py-6 flex flex-col md:flex-row items-center justify-between text-xs font-mono tracking-wider text-white/60 space-y-4 md:space-y-0">
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="w-4 h-4 text-[#C9A66B]" />
+          <span>© {new Date().getFullYear()} Patowary Fashion. All rights reserved.</span>
         </div>
         
-        <div className="flex items-center gap-6 uppercase text-[9px]">
-          <Link to="/products" className="hover:text-lime-neon transition-colors">TAXES & DUTIES</Link>
-          <Link to="/track-order" className="hover:text-lime-neon transition-colors">TRACK COURIER</Link>
-          <Link to="/admin" className="hover:text-lime-neon transition-colors flex items-center gap-1 font-bold text-lime-neon">
-            <Globe2 className="w-3 h-3 text-lime-neon" /> SECURED ADMIN CONTEXT
+        <div className="flex items-center gap-6 uppercase text-[11px]">
+          <Link to="/products" className="hover:text-[#C9A66B] transition-colors">Shop All</Link>
+          <Link to="/menu" className="hover:text-[#C9A66B] transition-colors">Catalog Menu</Link>
+          <Link to="/track-order" className="hover:text-[#C9A66B] transition-colors">Track Order</Link>
+          <Link to="/admin" className="hover:text-[#C9A66B] transition-colors flex items-center gap-1 font-semibold text-[#C9A66B]">
+            <Lock className="w-3 h-3" /> Admin Portal
           </Link>
         </div>
       </div>

@@ -1,463 +1,655 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'motion/react';
-import { PRODUCTS } from '../data/products';
-import { useWishlist } from '../contexts/WishlistContext';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { RAW_PRODUCTS } from '../data/products';
 import { useCart } from '../contexts/CartContext';
-import { playProIntroSynth, playCinematicIntroSound } from '../utils/voiceUtils';
+import { useWishlist } from '../contexts/WishlistContext';
+import { playCinematicIntroSound } from '../utils/voiceUtils';
+import { useLanguage } from '../contexts/LanguageContext';
+import { db } from '../lib/firebase';
+import { collection, onSnapshot } from 'firebase/firestore';
+import { Product } from '../types';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   ArrowRight, 
-  Sparkles, 
-  Heart, 
   ShoppingBag, 
-  Compass, 
-  Fingerprint, 
-  RotateCcw,
-  Star,
-  Quote,
-  Flame,
-  Truck,
-  ShieldCheck,
-  Layers,
-  Zap,
-  Grid,
-  Play,
-  Pause,
-  Volume2,
-  VolumeX,
-  Terminal,
-  Sliders,
-  Eye,
-  MousePointer2,
+  Heart, 
+  Star, 
+  Sparkles, 
+  Truck, 
+  ShieldCheck, 
+  RotateCcw, 
+  Search,
+  Check,
   RefreshCw,
-  Clock,
-  ArrowUpRight,
-  UserCheck
+  MapPin,
+  MessageSquare
 } from 'lucide-react';
-import { db } from '../lib/firebase';
-import { collection, onSnapshot, query, limit } from 'firebase/firestore';
-import { useLanguage } from '../contexts/LanguageContext';
 import { NoticeBoard } from '../components/NoticeBoard';
-import { SocialInfoBar } from '../components/SocialInfoBar';
 import { IntroAnimation } from '../components/IntroAnimation';
-
-const HERO_SLIDES = [
-  {
-    image: "https://images.unsplash.com/photo-1542496658-e33a6d0d50f6?w=1600",
-    title: "KIYOMI EXCLUSIVE GADGETS",
-    subtitle: "2026 DROPS",
-    tagline: "STUNNING AMOLED SCREENS. METICULOUS HARDWARE CORES."
-  },
-  {
-    image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=1600",
-    title: "PREMIUM AUDIO & GaN CHARGERS",
-    subtitle: "DHAKA DISTRICT GUILD",
-    tagline: "DESIGNED FOR LONGStandby LIFESPAN & FAST CHARGE MOBILITY."
-  },
-  {
-    image: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=1600",
-    title: "TACTILE KEYBOARDS & SOUNDBARS",
-    subtitle: "LIMITED COMMISSIONS ONLY",
-    tagline: "MECHANICAL SWITCH RESONANCE & HI-RES ACOUSTICS."
-  }
-];
+import { SocialInfoBar } from '../components/SocialInfoBar';
 
 export const Home: React.FC = () => {
-  const navigate = useNavigate();
-  const { toggleWishlist, isInWishlist } = useWishlist();
   const { addToCart } = useCart();
+  const { toggleWishlist, isInWishlist } = useWishlist();
   const { t } = useLanguage();
+  const navigate = useNavigate();
 
-  const [slideIndex, setSlideIndex] = useState(0);
-  const [dbProducts, setDbProducts] = useState(PRODUCTS);
-  const [selectedSizes, setSelectedSizes] = useState<Record<number, string>>({});
+  const [dbProducts, setDbProducts] = useState<Product[]>(() => {
+    const cached = localStorage.getItem('patowary_local_products');
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch (e) {}
+    }
+    return RAW_PRODUCTS;
+  });
 
+  const [activeCategoryFilter, setActiveCategoryFilter] = useState('All');
+  const [selectedVariants, setSelectedVariants] = useState<Record<number, string>>({});
 
+  // Hero interactive state
+  const [heroIndex, setHeroIndex] = useState(0);
 
-  // Sync products from firestore if admins have edited them
+  // Firestore Sync for products
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'products'), (snapshot) => {
       if (!snapshot.empty) {
-        const prodArr: any[] = [];
+        const prodArr: Product[] = [];
         snapshot.forEach((doc) => {
-          prodArr.push(doc.data());
+          prodArr.push(doc.data() as Product);
         });
-        // Sort by ID to keep order consistent
-        prodArr.sort((a,b) => a.id - b.id);
+        prodArr.sort((a, b) => a.id - b.id);
         setDbProducts(prodArr);
+        localStorage.setItem('patowary_local_products', JSON.stringify(prodArr));
+      } else {
+        const cached = localStorage.getItem('patowary_local_products');
+        if (cached) {
+          try {
+            setDbProducts(JSON.parse(cached));
+          } catch (e) {}
+        }
       }
-    }, (err) => {
-      // Offline fallback is already product data
+    }, () => {
+      const cached = localStorage.getItem('patowary_local_products');
+      if (cached) {
+        try {
+          setDbProducts(JSON.parse(cached));
+        } catch (e) {}
+      }
     });
     return () => unsub();
   }, []);
 
-  // Automate slides
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSlideIndex(prev => (prev + 1) % HERO_SLIDES.length);
-    }, 6000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Soft speech synth welcoming
-  const handleHeroInteraction = () => {
-    playProIntroSynth();
-    playCinematicIntroSound("Welcome to KIYOMI. Discover next-gen premium gadgets and chronographs.");
-  };
-
-  const categories = ["Smartwatches", "Earbuds & Audio", "Power & Chargers", "Mice & Keyboards", "Smart Gadgets"];
-
-  const testimonials = [
+  const heroShowcaseItems = [
     {
-      name: "MAHAFUZUR RAHAMAN",
-      guildCode: "MEMBER #205",
-      comment: "Absolutely top-tier build quality. The Chrono X1 smartwatch titanium frame stands stiff exactly how premium gadget aficionados appreciate. A masterclass in Dhaka electronics.",
-      rating: 5
+      id: 1,
+      title: "Patowary Heavy Baggy Cargo",
+      subtitle: "ARCHITECTURAL UTILITY CARGO",
+      category: "CARGO PANTS",
+      price: 2450,
+      image: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=800",
+      details: {
+        spec: "HEAVY TWILL COTTON",
+        lining: "100% COMBED COTTON",
+        fit: "RELAXED BAGGY DRAPE",
+        pockets: "6 REINFORCED UTILITY POCKETS",
+        origin: "PATOWARY STUDIO 2026"
+      },
+      num: "01"
     },
     {
-      name: "MAHAFUZUR RAHAMAN",
-      guildCode: "MEMBER #491",
-      comment: "KIYOMI mechanical keypads feel luxurious. The gasket acoustics are beautifully deep without any rattle. Easily competes with foreign high-end brands.",
-      rating: 5
+      id: 2,
+      title: "French Terry Heavyweight Hoodie",
+      subtitle: "DOUBLE LAYERED BOX HOOD",
+      category: "HOODIE",
+      price: 3200,
+      image: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=800",
+      details: {
+        spec: "420 GSM FRENCH TERRY",
+        lining: "DOUBLE HOOD LINING",
+        fit: "OVERSIZED BOXY FIT",
+        pockets: "KANGAROO COMFORT POUCH",
+        origin: "PATOWARY STUDIO 2026"
+      },
+      num: "02"
+    },
+    {
+      id: 3,
+      title: "Minimalist Oversized Boxy Tee",
+      subtitle: "260 GSM DROP-SHOULDER",
+      category: "OVERSIZED TEE",
+      price: 1250,
+      image: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800",
+      details: {
+        spec: "260 GSM PURE COMBED",
+        lining: "RIBBED CREW NECKLINE",
+        fit: "DROP-SHOULDER DRAPE",
+        pockets: "SEAMLESS CONSTRUCTION",
+        origin: "PATOWARY STUDIO 2026"
+      },
+      num: "03"
     }
   ];
 
+  const currentHero = heroShowcaseItems[heroIndex];
+
+  const handleHeroQuickAdd = () => {
+    const matched = dbProducts.find(p => p.id === currentHero.id) || dbProducts[0];
+    if (matched) {
+      const defaultVar = matched.variants[0] || 'Standard';
+      addToCart(matched, defaultVar, 1);
+      playCinematicIntroSound(`${matched.title} added to bag`);
+    }
+  };
+
+  const handleAddToCart = (product: Product, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const variant = selectedVariants[product.id] || product.variants[0] || 'Standard';
+    addToCart(product, variant, 1);
+    playCinematicIntroSound(`${product.title} added to your bag`);
+  };
+
+  const categories = [
+    { name: "Baggy & Cargo Pants", label: t("Baggy & Cargo", "ব্যাগি ও কার্গো"), img: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=600", num: "01" },
+    { name: "Oversized Tees & Polos", label: t("Oversized Tees", "ওভারসাইজড টি"), img: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600", num: "02" },
+    { name: "Hoodies & Sweatshirts", label: t("Hoodies & Fleece", "হুডি ও ফ্লিস"), img: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600", num: "03" },
+    { name: "Women's Collection", label: t("Women's Fits", "উইমেন্স ফিটস"), img: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600", num: "04" },
+    { name: "Accessories & Lifestyle", label: t("Accessories", "এক্সেসরিজ"), img: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600", num: "05" }
+  ];
+
+  const filteredProducts = activeCategoryFilter === 'All' 
+    ? dbProducts 
+    : dbProducts.filter(p => p.category === activeCategoryFilter);
+
+  // Collect genuine customer reviews across all real products
+  const allCustomerReviews = dbProducts.flatMap(p => 
+    (p.reviews || []).map(r => ({ ...r, productTitle: p.title, productId: p.id, productAsset: p.assets[0] }))
+  );
+
   return (
-    <div id="home-page-viewport" className="bg-soft-mint text-big-stone min-h-screen selection:bg-deep-emerald selection:text-lime-neon">
-      
-      {/* Top Banner announcing updates */}
+    <div className="bg-[#F8F3EA] text-[#111827] min-h-screen font-sans selection:bg-[#0A1E54] selection:text-[#F8F3EA]">
       <NoticeBoard />
-
       <IntroAnimation />
-
-      {/* Dynamic Social manifesto with rotating mini product popups */}
       <SocialInfoBar />
-      
-      {/* 1. Cinematic Hero Section */}
-      <section className="relative h-[82vh] overflow-hidden bg-[#E5E2DD] flex items-center justify-center">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={slideIndex}
-            initial={{ opacity: 0, scale: 1.05 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.2 }}
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `linear-gradient(to bottom, rgba(25,45,60,0.35), rgba(25,45,60,0.65)), url(${HERO_SLIDES[slideIndex].image})` }}
-          />
-        </AnimatePresence>
 
-        {/* Content Layer */}
-        <div className="relative z-10 text-center px-4 max-w-4xl text-seashell flex flex-col items-center">
-          <motion.span 
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="text-lime-neon font-bold text-xs sm:text-sm tracking-[0.35em] uppercase mb-4"
-          >
-            {HERO_SLIDES[slideIndex].subtitle}
-          </motion.span>
-          
-          <motion.h2
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="text-4xl sm:text-6xl md:text-7xl font-serif tracking-[0.2em] font-light leading-tight uppercase text-seashell"
-          >
-            {HERO_SLIDES[slideIndex].title.split(' ')[0]} <br/>
-            <span className="italic font-normal text-seashell">{HERO_SLIDES[slideIndex].title.split(' ').slice(1).join(' ')}</span>
-          </motion.h2>
+      {/* Futuristic Glassmorphism Hero Section (Inspired by Reference Design) */}
+      <section className="relative px-4 sm:px-8 pt-4 pb-12 sm:pb-20 overflow-hidden">
+        
+        {/* Background Ethereal Landscape Atmosphere */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-40 blur-xs pointer-events-none -z-10"
+          style={{
+            backgroundImage: `radial-gradient(circle at 50% 30%, rgba(201, 166, 107, 0.25) 0%, rgba(10, 30, 84, 0.35) 70%), url('https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?w=1600')`
+          }}
+        />
 
-          <motion.p
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="text-seashell/85 text-xs sm:text-sm tracking-[0.2em] uppercase font-sans max-w-2xl mt-6 font-medium"
-          >
-            {HERO_SLIDES[slideIndex].tagline}
-          </motion.p>
+        <div className="max-w-6xl mx-auto space-y-6">
 
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.8 }}
-            className="mt-10 flex flex-col sm:flex-row items-center gap-4 justify-center"
-          >
-            <button
-              onClick={() => navigate('/products')}
-              className="px-8 py-3.5 bg-deep-emerald hover:bg-big-stone text-lime-neon text-[11px] uppercase tracking-[0.25em] font-bold transition-colors rounded-none cursor-pointer flex items-center gap-2 border border-deep-emerald hover:border-big-stone"
+          {/* Top Micro Floating Pill Navigation Capsule */}
+          <div className="glass-panel py-2 px-4 sm:px-6 rounded-full border border-white/70 shadow-sm flex items-center justify-between text-xs font-mono">
+            <div className="flex items-center gap-3">
+              <span className="font-serif font-black text-sm tracking-wider text-[#0A1E54]">PATOWARY</span>
+              <span className="text-stone-300">/</span>
+              <span className="text-stone-600 hidden sm:inline">TRENDING STREETWEAR</span>
+            </div>
+
+            <div className="flex items-center gap-4 sm:gap-6 uppercase tracking-wider text-[11px] font-bold text-[#0A1E54]">
+              <Link to="/products" className="hover:text-[#C9A66B] transition-colors">{t("Hot Drops", "হট ড্রপস")}</Link>
+              <Link to="/menu" className="hover:text-[#C9A66B] transition-colors">{t("Collection", "কালেকশন")}</Link>
+              <Link to="/search" className="hover:text-[#C9A66B] transition-colors flex items-center gap-1">
+                <Search className="w-3 h-3 text-[#C9A66B]" /> {t("Search", "সার্চ")}
+              </Link>
+            </div>
+
+            <Link
+              to="/auth"
+              className="px-4 py-1.5 rounded-full bg-[#0A1E54] text-white hover:bg-[#1A3070] text-[10px] tracking-wider uppercase font-bold transition-all shadow-xs"
             >
-              EXPLORE COLLECTION <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={() => {
-                const specItem = dbProducts.find(p => p.category === 'Smartwatches');
-                if (specItem) navigate(`/product/${specItem.id}`);
-              }}
-              className="px-8 py-3.5 border border-seashell text-seashell text-[11px] uppercase tracking-[0.25em] font-bold hover:bg-seashell/10 transition-colors rounded-none cursor-pointer backdrop-blur-sm"
-            >
-              THE EDIT
-            </button>
-          </motion.div>
+              Client Login
+            </Link>
+          </div>
+
+          {/* Main Giant Glassmorphic Showcase Stage */}
+          <div className="glass-panel p-6 sm:p-10 rounded-[2.5rem] border border-white/80 shadow-2xl relative overflow-hidden text-left">
+            
+            {/* Specular Inner Glass Flare */}
+            <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-white/60 via-white/10 to-transparent rounded-full blur-2xl pointer-events-none" />
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
+              
+              {/* Left Column: Numbering, Technical Specs, Hot Drop Badge (4-cols) */}
+              <div className="lg:col-span-4 space-y-6">
+                
+                <div className="flex items-baseline gap-4">
+                  <span className="text-6xl sm:text-8xl font-serif font-black text-[#0A1E54]/90 tracking-tighter">
+                    {currentHero.num}
+                  </span>
+                  <div>
+                    <span className="text-[10px] font-mono tracking-[0.3em] uppercase text-[#C9A66B] font-bold block">
+                      STREETWEAR DROP
+                    </span>
+                    <h2 className="text-xl sm:text-2xl font-serif font-bold text-[#0A1E54] leading-tight">
+                      {currentHero.title}
+                    </h2>
+                  </div>
+                </div>
+
+                {/* Technical Garment Specs */}
+                <div className="glass-card p-4 rounded-2xl border border-white/90 space-y-2 text-[11px] font-mono text-stone-700">
+                  <div className="flex justify-between border-b border-stone-200/60 pb-1.5">
+                    <span className="text-stone-400">SPECIFICATION:</span>
+                    <strong className="text-[#0A1E54]">{currentHero.details.spec}</strong>
+                  </div>
+                  <div className="flex justify-between border-b border-stone-200/60 pb-1.5">
+                    <span className="text-stone-400">GARMENT FIT:</span>
+                    <strong className="text-[#0A1E54]">{currentHero.details.fit}</strong>
+                  </div>
+                  <div className="flex justify-between border-b border-stone-200/60 pb-1.5">
+                    <span className="text-stone-400">POCKETS & CINCH:</span>
+                    <strong className="text-[#0A1E54]">{currentHero.details.pockets}</strong>
+                  </div>
+                  <div className="flex justify-between pt-0.5">
+                    <span className="text-stone-400">STUDIO ARCHIVE:</span>
+                    <strong className="text-[#C9A66B]">{currentHero.details.origin}</strong>
+                  </div>
+                </div>
+
+                {/* Sub Mini Card for Sneakers / Accessories (Inspired by Nike sneaker card in reference) */}
+                <div className="glass-card p-3 rounded-2xl border border-white/80 flex items-center gap-3">
+                  <img 
+                    src="https://images.unsplash.com/photo-1542272604-780c96856592?w=300" 
+                    alt="Sneaker pairings" 
+                    className="w-14 h-14 rounded-xl object-cover border border-white/60 bg-stone-100 shrink-0" 
+                  />
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[9px] font-mono uppercase text-[#C9A66B] font-bold block">PAIRING ADVICE</span>
+                    <h4 className="text-xs font-bold text-[#0A1E54] truncate">Style With Acid-Wash Wide Denim</h4>
+                    <span className="text-[10px] text-stone-500 font-sans">Full skate flare drape</span>
+                  </div>
+                  <Link 
+                    to="/products?category=Baggy+%26+Cargo+Pants"
+                    className="p-2 rounded-full bg-white hover:bg-stone-50 text-[#0A1E54] shadow-xs cursor-pointer shrink-0"
+                    aria-label="View pairing"
+                  >
+                    <Search className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+
+                {/* Refresh/Cycle hero showcase */}
+                <button
+                  onClick={() => setHeroIndex((prev) => (prev + 1) % heroShowcaseItems.length)}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card hover:bg-white text-xs font-mono font-bold text-[#0A1E54] cursor-pointer transition-all shadow-xs"
+                >
+                  <RefreshCw className="w-3.5 h-3.5 text-[#C9A66B]" />
+                  <span>REFRESH HERO FIT</span>
+                </button>
+
+              </div>
+
+              {/* Center & Right: Central Crystal Spherical Glass Bubble Orb (8-cols) */}
+              <div className="lg:col-span-8 flex flex-col items-center justify-center relative py-6">
+                
+                {/* The Floating Crystal Glass Orb */}
+                <div className="relative w-72 sm:w-96 md:w-[420px] aspect-square rounded-full p-4 flex items-center justify-center">
+                  
+                  {/* Outer glowing glass aura */}
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-white/70 via-white/20 to-white/80 backdrop-blur-2xl border-2 border-white/80 shadow-[0_20px_60px_-10px_rgba(10,30,84,0.18)]" />
+                  
+                  {/* Subtle specular reflection crescent */}
+                  <div className="absolute top-2 left-6 right-6 h-28 rounded-full bg-gradient-to-b from-white/80 to-transparent opacity-60 pointer-events-none" />
+
+                  {/* Streetwear apparel floating inside the glass orb */}
+                  <div className="relative z-10 w-4/5 h-4/5 rounded-3xl overflow-hidden shadow-xl border border-white/50 bg-stone-100 group">
+                    <img 
+                      src={currentHero.image} 
+                      alt={currentHero.title}
+                      className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700" 
+                    />
+                  </div>
+
+                  {/* Floating Price Pill Capsule on the Glass Orb */}
+                  <div className="absolute bottom-12 left-6 sm:left-10 z-20 glass-dark py-1.5 px-3.5 rounded-full border border-white/40 shadow-lg flex items-center gap-2 text-xs font-mono font-bold">
+                    <span className="text-[10px] uppercase text-[#C9A66B]">{currentHero.category}</span>
+                    <span className="text-white/40">|</span>
+                    <span className="text-white">BDT {currentHero.price}</span>
+                  </div>
+
+                  {/* Floating "Add to Cart +" Pill Button */}
+                  <button
+                    onClick={handleHeroQuickAdd}
+                    className="absolute bottom-8 right-6 sm:right-10 z-20 px-6 py-2.5 rounded-full bg-[#0A1E54] hover:bg-[#1A3070] text-white text-xs font-mono font-bold tracking-wider uppercase transition-all shadow-xl hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-2 border border-[#C9A66B]/50"
+                  >
+                    <span>Add to bag</span>
+                    <span className="text-[#C9A66B] font-bold text-sm">+</span>
+                  </button>
+
+                  {/* Mini decorative glass bubbles */}
+                  <div className="absolute -top-3 right-8 w-12 h-12 rounded-full bg-white/50 backdrop-blur-md border border-white/70 shadow-sm" />
+                  <div className="absolute top-1/3 -left-4 w-9 h-9 rounded-full bg-white/60 backdrop-blur-md border border-white/80 shadow-sm" />
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+          {/* Sub-Card Docked Below: NEW · PATOWARY SET 2026 (Inspired by bottom dock in reference) */}
+          <Link
+            to="/products"
+            className="glass-panel p-4 sm:p-5 rounded-3xl border border-white/80 shadow-md flex items-center justify-between gap-4 hover:border-[#C9A66B]/60 transition-all duration-300 group text-left cursor-pointer"
+          >
+            <div className="flex items-center gap-4">
+              {/* Mini bubble thumbnail */}
+              <div className="w-14 h-14 rounded-2xl overflow-hidden glass-card p-1 border border-white/90 shrink-0">
+                <img 
+                  src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=200" 
+                  alt="Patowary Drop" 
+                  className="w-full h-full object-cover rounded-xl"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm sm:text-base font-serif font-black text-[#0A1E54] tracking-tight group-hover:text-[#1A3070] transition-colors">
+                    NEW • PATOWARY STREETWEAR SET 2026
+                  </span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#C9A66B]/20 text-[#0A1E54] font-bold uppercase hidden sm:inline">
+                    HOT DROP
+                  </span>
+                </div>
+                <p className="text-xs text-stone-600 font-sans mt-0.5 line-clamp-1">
+                  High-density 260 GSM combed tees, architectural wide denim, and heavy twill cargo line.
+                </p>
+              </div>
+            </div>
+
+            {/* Circular Arrow Button ↗ */}
+            <div className="w-11 h-11 rounded-full border border-[#0A1E54]/20 bg-white/80 group-hover:bg-[#0A1E54] group-hover:text-white text-[#0A1E54] transition-all flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105">
+              <ArrowRight className="w-5 h-5 -rotate-45 group-hover:rotate-0 transition-transform" />
+            </div>
+          </Link>
+
         </div>
 
-        {/* Swipe Slide Dot Indicators */}
-        <div className="absolute bottom-8 z-10 flex space-x-3">
-          {HERO_SLIDES.map((_, i) => (
-            <button
+      </section>
+
+      {/* Trust & Guarantee Banner */}
+      <section className="bg-white/70 backdrop-blur-md border-y border-[#0A1E54]/10 py-6 px-4">
+        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+          <div className="flex flex-col items-center gap-1.5 p-2">
+            <Truck className="w-5 h-5 text-[#0A1E54]" />
+            <span className="text-xs font-bold tracking-wide uppercase text-[#111827]">{t("Express Delivery", "দ্রুত ডেলিভারি")}</span>
+            <span className="text-[11px] text-stone-500 font-sans">{t("Nationwide 24-48h Delivery", "সারাদেশে ২৪-৪৮ ঘণ্টায় ডেলিভারি")}</span>
+          </div>
+          <div className="flex flex-col items-center gap-1.5 p-2">
+            <ShieldCheck className="w-5 h-5 text-[#0A1E54]" />
+            <span className="text-xs font-bold tracking-wide uppercase text-[#111827]">{t("100% Authentic Quality", "আসল কোয়ালিটি")}</span>
+            <span className="text-[11px] text-stone-500 font-sans">{t("Heavyweight 260 GSM Fabrics", "হেভিওয়েট প্রিমিয়াম ফেব্রিক")}</span>
+          </div>
+          <div className="flex flex-col items-center gap-1.5 p-2">
+            <RotateCcw className="w-5 h-5 text-[#0A1E54]" />
+            <span className="text-xs font-bold tracking-wide uppercase text-[#111827]">{t("7-Day Fitting Exchange", "৭ দিনের এক্সচেঞ্জ")}</span>
+            <span className="text-[11px] text-stone-500 font-sans">{t("Hassle-free size replacement", "সহজ সাইজ এক্সচেঞ্জ সুবিধা")}</span>
+          </div>
+          <div className="flex flex-col items-center gap-1.5 p-2">
+            <Sparkles className="w-5 h-5 text-[#C9A66B]" />
+            <span className="text-xs font-bold tracking-wide uppercase text-[#111827]">{t("Cash on Delivery & bKash", "ক্যাশ অন ডেলিভারি")}</span>
+            <span className="text-[11px] text-stone-500 font-sans">{t("Pay upon courier inspection", "পণ্য দেখে ডেলিভারিম্যানকে পেমেন্ট")}</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Categories (Glassmorphic) */}
+      <section className="py-14 sm:py-20 px-4 sm:px-8 max-w-7xl mx-auto text-left">
+        <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-8 pb-3 border-b border-[#0A1E54]/10 gap-3">
+          <div>
+            <span className="text-xs font-mono font-bold tracking-[0.25em] uppercase text-[#C9A66B]">
+              CURATED FASHION COLLECTIONS
+            </span>
+            <h2 className="text-2xl sm:text-4xl font-serif font-bold text-[#0A1E54] mt-1">
+              {t("Explore By Silhouette", "ক্যাটাগরি অনুযায়ী দেখুন")}
+            </h2>
+          </div>
+          <Link
+            to="/menu"
+            className="text-xs font-mono tracking-wider font-bold text-[#0A1E54] hover:text-[#C9A66B] uppercase flex items-center gap-1"
+          >
+            <span>{t("All Categories Menu ↗", "সব ক্যাটাগরি মেনু ↗")}</span>
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          {categories.map((c, i) => (
+            <Link
               key={i}
-              onClick={() => setSlideIndex(i)}
-              className={`h-[2px] transition-all cursor-pointer ${slideIndex === i ? 'bg-lime-neon w-12' : 'bg-seashell/45 w-8'}`}
-              aria-label={`Go to slide ${i + 1}`}
-            />
+              to={`/products?category=${encodeURIComponent(c.name)}`}
+              className="glass-card rounded-2xl overflow-hidden border border-white group relative aspect-[3/4] flex flex-col justify-end p-4 transition-all duration-300"
+            >
+              <img
+                src={c.img}
+                alt={c.name}
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0A1E54]/90 via-[#0A1E54]/25 to-transparent" />
+              <div className="relative z-10 text-white space-y-1">
+                <span className="text-[10px] font-mono text-[#C9A66B] font-bold block">{c.num}</span>
+                <span className="text-xs sm:text-sm font-bold block leading-tight">{c.label}</span>
+              </div>
+            </Link>
           ))}
         </div>
       </section>
 
-      {/* 2. Curated Products Gallery */}
-      <section id="curated-products-shelf" className="bg-soft-mint/30 py-16 border-b border-cascade/10">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 md:px-12">
+      {/* Featured Products Grid */}
+      <section className="py-8 px-4 sm:px-8 max-w-7xl mx-auto text-left">
+        <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-8 pb-3 border-b border-[#0A1E54]/10 gap-3">
+          <div>
+            <span className="text-xs font-mono font-bold tracking-[0.25em] uppercase text-[#C9A66B]">
+              CURRENT WARDROBE DROPS
+            </span>
+            <h2 className="text-2xl sm:text-4xl font-serif font-bold text-[#0A1E54] mt-1">
+              {t("Trending Streetwear Fits", "ট্রেন্ডিং স্ট্রিটওয়্যার")}
+            </h2>
+          </div>
           
-          {/* Top Left View All Products Button / Action Row */}
-          <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <Link 
-              to="/products"
-              className="self-start inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-mono font-bold tracking-wider text-[#003E2C] hover:text-[#CBF23D] hover:bg-[#003E2C] bg-white border border-[#003E2C]/20 hover:border-[#003E2C] py-2 px-3 sm:px-4 rounded-lg shadow-xs transition-all active:scale-95"
-            >
-              <Grid className="w-3.5 h-3.5 text-emerald-800 animate-pulse" />
-              <span>VIEW ALL PRODUCTS • ভিউ অল প্রোডাক্ট</span>
-            </Link>
-            <span className="text-[10px] font-mono text-stone-500 uppercase tracking-widest hidden sm:inline-block">
-              LIMITED HOMEPAGE EXHIBITION • MAX 35 PIECES
-            </span>
+          <div className="flex flex-wrap gap-2 text-xs font-mono">
+            {['All', 'Baggy & Cargo Pants', 'Oversized Tees & Polos', 'Hoodies & Sweatshirts'].map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategoryFilter(cat)}
+                className={`px-3 py-1.5 rounded-full cursor-pointer transition-all ${
+                  activeCategoryFilter === cat
+                    ? 'bg-[#0A1E54] text-white font-bold'
+                    : 'glass-card text-stone-600 hover:bg-white'
+                }`}
+              >
+                {cat === 'All' ? t("All Fits", "সব") : cat}
+              </button>
+            ))}
           </div>
+        </div>
 
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 pb-3 border-b border-stone-200/40">
-            <div>
-              <span className="text-[10px] sm:text-[11px] font-bold tracking-[0.3em] uppercase text-deep-emerald-800">
-                {t("KIYOMI ARCHIVE • আমাদের বিশেষ কালেকশন", "KIYOMI ARCHIVE • EXCLUSIVE SELECTION")}
-              </span>
-              <h3 className="text-xl sm:text-2xl font-serif tracking-[0.1em] text-big-stone font-light mt-1.5 uppercase">
-                {t("COLLECTIONS")}
-              </h3>
-            </div>
-            <Link 
-              to="/products"
-              className="text-[10px] uppercase font-semibold tracking-[0.15em] text-[#003E2C] hover:text-black pb-1 border-b border-[#003E2C] mt-2 md:mt-0 transition-colors self-start"
-            >
-              {t("VIEW ENTIRE CATALOG (ALL ITEMS) ➔", "VIEW ALL PRODUCTS ➔")}
-            </Link>
+        {filteredProducts.length === 0 ? (
+          <div className="p-12 glass-card rounded-3xl border border-white text-center space-y-3">
+            <ShoppingBag className="w-10 h-10 text-stone-400 mx-auto" />
+            <p className="text-sm font-mono text-[#0A1E54] font-bold uppercase">NO PRODUCTS FOUND</p>
+            <p className="text-xs text-stone-500 font-sans">Check back soon for new inventory drops.</p>
           </div>
-
-          {/* Swipe indicator for mobile users */}
-          <div className="flex sm:hidden items-center justify-between text-[10px] text-stone-500 font-mono tracking-wider mb-4 px-2.5 py-2 bg-white/60 rounded-lg border border-stone-200/40">
-            <span className="flex items-center gap-1 font-sans font-medium text-stone-600">
-              <span className="w-1.5 h-1.5 rounded-full bg-deep-emerald animate-ping" />
-              {t("প্রতিটি কালেকশন আলাদাভাবে ডানে-বামে এবং নিচে স্ক্রল করুন", "Swipe horizontally or scroll down to explore items")}
-            </span>
-            <span className="text-[#003E2C] font-bold">{t("Swipe ➔")}</span>
-          </div>
-
-          {/* 9 Independent Elegant horizontal scrolling rows stacked on top of each other with no label boundaries */}
-          <div className="space-y-4 sm:space-y-6">
-            {Array.from({ length: 9 }).map((_, rowIndex) => {
-              // Row elements: select 12 products per row. Keep it full and varied by wrapping around dbProducts.
-              const itemsPerRow = 12;
-              const rowProducts = Array.from({ length: itemsPerRow }).map((_, i) => {
-                const prodIdx = (rowIndex * itemsPerRow + i) % dbProducts.length;
-                return dbProducts[prodIdx];
-              }).filter(Boolean);
-
-              if (rowProducts.length === 0) return null;
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            {filteredProducts.slice(0, 8).map((product) => {
+              const isWish = isInWishlist(product.id);
+              const realReviewsCount = (product.reviews || []).length;
+              const avgScore = realReviewsCount > 0 
+                ? (product.reviews.reduce((acc, r) => acc + r.rating, 0) / realReviewsCount).toFixed(1)
+                : null;
 
               return (
-                <div key={rowIndex} className="py-4 pb-8 border-b border-black/[0.08] last:border-b-0">
-                  {/* Horizontal Scroll Shelf with custom snap & scrollbar hiding, buttery smooth touch rendering */}
-                  <div className="flex overflow-x-auto snap-x snap-mandatory gap-2.5 scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">
-                    {rowProducts.map((product, idx) => {
-                      const uniqueKey = `${product.id}-${rowIndex}-${idx}`;
-                      
-                      return (
-                        <motion.div
-                          key={uniqueKey}
-                          initial={{ opacity: 0, y: 20 }}
-                          whileInView={{ opacity: 1, y: 0 }}
-                          viewport={{ once: true, margin: "-40px" }}
-                          whileHover={{ y: -8, scale: 1.04, rotate: 0.5, boxShadow: "0 22px 35px rgba(0, 0, 0, 0.07)" }}
-                          transition={{ 
-                            type: "spring",
-                            stiffness: 280,
-                            damping: 22
-                          }}
-                          style={{ willChange: "transform" }}
-                          className="flex-shrink-0 w-[42vw] xs:w-[150px] sm:w-[185px] md:w-[210px] snap-start group flex flex-col bg-white border border-stone-200/60 relative overflow-hidden p-3 rounded-2xl shadow-xs transition-all duration-300"
+                <div
+                  key={product.id}
+                  onClick={() => navigate(`/product/${product.id}`)}
+                  className="glass-card rounded-2xl overflow-hidden border border-white flex flex-col justify-between group cursor-pointer"
+                >
+                  <div className="relative aspect-[4/5] bg-stone-100 overflow-hidden">
+                    <img
+                      src={product.assets[0]}
+                      alt={product.title}
+                      className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleWishlist(product);
+                      }}
+                      className="absolute top-2.5 right-2.5 p-2 rounded-full bg-white/80 backdrop-blur-md hover:bg-white text-[#0A1E54] shadow-xs cursor-pointer transition-all"
+                      aria-label="Wishlist"
+                    >
+                      <Heart className={`w-4 h-4 ${isWish ? 'fill-red-500 text-red-500' : 'text-stone-400'}`} />
+                    </button>
+                  </div>
+
+                  <div className="p-4 space-y-2">
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-[#C9A66B] font-bold block truncate">
+                      {product.category}
+                    </span>
+                    <h3 className="font-serif font-bold text-sm text-[#0A1E54] group-hover:text-[#1A3070] transition-colors line-clamp-1">
+                      {product.title}
+                    </h3>
+
+                    {/* Real Review Counter with Direct Link */}
+                    <div className="flex items-center gap-1.5 text-[11px] font-mono">
+                      {avgScore ? (
+                        <Link
+                          to={`/product/${product.id}/reviews`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex items-center gap-1 text-[#C9A66B] font-bold hover:underline"
                         >
+                          <Star className="w-3.5 h-3.5 fill-current" />
+                          <span>{avgScore} ({realReviewsCount})</span>
+                        </Link>
+                      ) : (
+                        <Link
+                          to={`/product/${product.id}/reviews`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-stone-400 hover:text-[#0A1E54] transition-colors"
+                        >
+                          No reviews yet ↗
+                        </Link>
+                      )}
+                    </div>
 
-                          {/* Image Overlay Frame */}
-                          <Link to={`/product/${product.id}`} className="block relative aspect-[4/5] overflow-hidden bg-[#FAF9F5] rounded-md cursor-pointer">
-                            <img
-                              src={product.assets[0]}
-                              alt={product.title}
-                              className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-104"
-                              referrerPolicy="no-referrer"
-                            />
-                            
-                            {/* Compact stock warnings */}
-                            {product.stock && product.stock <= 5 ? (
-                              <span className="absolute top-1.5 left-1.5 bg-deep-emerald text-lime-neon font-mono text-[5.5px] sm:text-[6.5px] uppercase px-1.5 py-0.5 tracking-wider font-extrabold rounded">
-                                LTD ({product.stock})
-                              </span>
-                            ) : null}
-
-                            {/* Quick view detail layer */}
-                            <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                              <span className="bg-white/95 text-stone-900 border border-stone-200 py-1 px-2 text-[8px] font-mono tracking-widest uppercase rounded shadow-xs">
-                                {t("VIEW")}
-                              </span>
-                            </div>
-                          </Link>
-
-                          {/* Info block */}
-                          <div className="pt-2 space-y-1 flex-grow flex flex-col justify-between font-sans">
-                            <div>
-                              <div className="flex items-center justify-between text-[7px] sm:text-[9px] font-mono font-bold tracking-wider uppercase text-stone-500">
-                                <p className="truncate max-w-[62%]">{t(product.category)}</p>
-                                <span className="text-[9px] sm:text-[11px] font-mono font-bold text-[#003E2C] shrink-0">৳ {product.price}</span>
-                              </div>
-                              <Link to={`/product/${product.id}`} className="block mt-0.5">
-                                <h4 className="text-[10px] sm:text-[12px] font-serif italic text-stone-900 hover:text-emerald-800 tracking-wide transition-colors truncate">
-                                  {product.title}
-                                </h4>
-                              </Link>
-                            </div>
-
-                            <div className="pt-1.5 border-t border-stone-100 flex items-center justify-between gap-1 mt-auto">
-                              {/* Left: Quick Save */}
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  e.preventDefault();
-                                  toggleWishlist(product);
-                                }}
-                                className={`p-1 rounded-md border transition-all cursor-pointer active:scale-95 flex items-center justify-center ${
-                                  isInWishlist(product.id) 
-                                    ? 'bg-[#966b26] border-[#966b26] text-white' 
-                                    : 'bg-stone-50 hover:bg-stone-100 border-stone-200 text-stone-700'
-                                }`}
-                                title="Toggle Wishlist"
-                              >
-                                <Heart className="w-2.5 h-2.5 fill-current" />
-                              </button>
-
-                              {/* Right: Buy/Details */}
-                              <Link 
-                                to={`/product/${product.id}`}
-                                className="flex-grow text-center py-1 px-1.5 bg-[#CBF23D] hover:bg-[#003E2C] hover:text-white text-[#0C1E1F] font-bold text-[8px] sm:text-[9px] uppercase tracking-wider transition-all rounded-md flex items-center justify-center gap-0.5 hover:shadow-xs cursor-pointer"
-                              >
-                                <span>{t("BUY")}</span>
-                                <ArrowRight className="w-2 h-2" />
-                              </Link>
-                            </div>
-                          </div>
-                        </motion.div>
-                      );
-                    })}
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="font-mono font-bold text-sm text-[#0A1E54]">
+                        BDT {product.price}
+                      </span>
+                      <button
+                        onClick={(e) => handleAddToCart(product, e)}
+                        className="px-3 py-1.5 rounded-lg bg-[#0A1E54] hover:bg-[#1A3070] text-white text-[10px] font-mono uppercase font-bold tracking-wider transition-all shadow-xs cursor-pointer"
+                      >
+                        Add +
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
             })}
           </div>
+        )}
+
+        <div className="text-center mt-10">
+          <Link
+            to="/products"
+            className="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-[#0A1E54] hover:bg-[#1A3070] text-white text-xs font-mono font-bold tracking-widest uppercase shadow-md transition-all hover:scale-105"
+          >
+            <span>{t("VIEW ALL COLLECTIONS", "সব কালেকশন দেখুন")}</span>
+            <ArrowRight className="w-4 h-4 text-[#C9A66B]" />
+          </Link>
         </div>
       </section>
 
-      {/* 3. Premium Core Value Propositions & Logistics Section */}
-      <section className="bg-white border-b border-cascade/10 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12">
-          <div className="text-center mb-12">
-            <span className="text-[10px] font-mono font-bold tracking-[0.35em] uppercase text-deep-emerald flex items-center justify-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-[#526600] animate-pulse" /> PREMIUM SERVICES & CREDENTIALS
+      {/* Genuine Customer Reviews Section (Strictly Real Reviews Only - No Demo Fake Testimonials) */}
+      <section className="py-14 px-4 sm:px-8 max-w-7xl mx-auto text-left">
+        <div className="mb-8 pb-3 border-b border-[#0A1E54]/10 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-3">
+          <div>
+            <span className="text-xs font-mono font-bold tracking-[0.25em] uppercase text-[#C9A66B]">
+              GENUINE CUSTOMER EXPERIENCES
             </span>
-            <h3 className="text-2xl sm:text-3xl font-serif tracking-widest text-[#003E2C] font-light mt-2.5 uppercase">
-              OUR TRUST PROTOCOL & GUARANTY
-            </h3>
-            <div className="w-16 h-[1.5px] bg-[#526600]/30 mx-auto mt-4" />
+            <h2 className="text-2xl sm:text-3xl font-serif font-bold text-[#0A1E54] mt-1">
+              {t("Real Community Feedback", "আসল গ্রাহকদের মতামত")}
+            </h2>
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="p-6 bg-soft-mint/45 border border-cascade/10 rounded-2xl flex flex-col items-center text-center shadow-xs hover:shadow transition-shadow duration-300">
-              <div className="w-12 h-12 bg-deep-emerald text-[#CBF23D] rounded-full flex items-center justify-center mb-4">
-                <Truck className="w-6 h-6" />
-              </div>
-              <h4 className="font-serif italic font-bold text-base text-big-stone mb-1.5">দ্রুত ডেলিভারি সুবিধা (Swift Dispatch)</h4>
-              <p className="text-xs text-stone-600 leading-relaxed font-sans">
-                সারা বাংলাদেশে ১৮-৪৮ ঘণ্টায় আমরা দ্রুততম শিপমেন্ট দিয়ে থাকি। প্রতিটি অর্ডার ট্র্যাক করার লাইভ সুবিধা পাবেন।
-              </p>
-            </div>
-
-            <div className="p-6 bg-soft-mint/45 border border-cascade/10 rounded-2xl flex flex-col items-center text-center shadow-xs hover:shadow transition-shadow duration-300">
-              <div className="w-12 h-12 bg-deep-emerald text-[#CBF23D] rounded-full flex items-center justify-center mb-4">
-                <ShieldCheck className="w-6 h-6" />
-              </div>
-              <h4 className="font-serif italic font-bold text-base text-big-stone mb-1.5">শতভাগ বিশ্বস্ত ক্যাশ অন ডেলিভারি</h4>
-              <p className="text-xs text-stone-600 leading-relaxed font-sans">
-                পণ্য হাতে পেয়ে চেক করে পেমেন্ট করার সম্পূর্ণ নিরাপদ ও নির্ভরযোগ্য সুবিধা। কোনো ঝুঁকি ছাড়াই আত্মবিশ্বাসে কেনাকাটা করুন।
-              </p>
-            </div>
-
-            <div className="p-6 bg-soft-mint/45 border border-cascade/10 rounded-2xl flex flex-col items-center text-center shadow-xs hover:shadow transition-shadow duration-300">
-              <div className="w-12 h-12 bg-deep-emerald text-[#CBF23D] rounded-full flex items-center justify-center mb-4">
-                <Layers className="w-6 h-6" />
-              </div>
-              <h4 className="font-serif italic font-bold text-base text-big-stone mb-1.5">প্রিমিয়াম হেভি ফেব্রিক কোয়ালিটি</h4>
-              <p className="text-xs text-stone-600 leading-relaxed font-sans">
-                ৪৪০+ জিএসএম পর্যন্ত ভারী লুপ টেরি কটন এবং শতভাগ পরিবেশবান্ধব প্রিমিয়াম ফেব্রিক দিয়ে তৈরি দীর্ঘস্থায়ী পোশাকসমূহ।
-              </p>
-            </div>
-
-            <div className="p-6 bg-soft-mint/45 border border-cascade/10 rounded-2xl flex flex-col items-center text-center shadow-xs hover:shadow transition-shadow duration-300">
-              <div className="w-12 h-12 bg-deep-emerald text-[#CBF23D] rounded-full flex items-center justify-center mb-4">
-                <RotateCcw className="w-6 h-6" />
-              </div>
-              <h4 className="font-serif italic font-bold text-base text-big-stone mb-1.5">সহজ ৭ দিনের এক্সচেঞ্জ পলিসি</h4>
-              <p className="text-xs text-stone-600 leading-relaxed font-sans">
-                সাইজ বা ফিটিং নিয়ে কোনো চিন্তা নেই! আমাদের রয়েছে একদম সহজ ও দ্রুত ৭ দিনব্যাপী পণ্য এক্সচেঞ্জ সুবিধা।
-              </p>
-            </div>
-          </div>
+          <span className="text-[10px] font-mono text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+            ✓ 100% Verified Customer Feedback
+          </span>
         </div>
-      </section>
 
-
-
-      {/* 5. Customer Testimonials Section */}
-      <section className="bg-big-stone text-seashell py-24 border-t border-cascade/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-12">
-          <div className="text-center mb-16">
-            <span className="text-[11px] font-bold tracking-[0.3em] text-lime-neon uppercase">VALUED CLIENT TESTIMONIALS</span>
-            <h3 className="text-3xl font-serif tracking-[0.2em] text-seashell font-light mt-2 uppercase">CUSTOMER REVIEWS</h3>
-            <div className="w-12 h-[2px] bg-lime-neon/55 mx-auto mt-4" />
+        {allCustomerReviews.length === 0 ? (
+          <div className="p-8 sm:p-12 glass-card rounded-3xl border border-white text-center space-y-3">
+            <MessageSquare className="w-10 h-10 text-stone-400 mx-auto" />
+            <h3 className="font-serif font-bold text-lg text-[#0A1E54]">
+              {t("No Customer Reviews Recorded Yet", "এখনো কোনো রিভিউ রেকর্ড হয়নি")}
+            </h3>
+            <p className="text-xs text-stone-600 font-sans max-w-md mx-auto leading-relaxed">
+              {t(
+                "We do not display fabricated demo reviews. Be the first customer to purchase and share your thoughts on the drape and fabric!",
+                "আমরা কোনো ফেক বা ডেমো রিভিউ দেখাই না। যেকোনো প্রোডাক্ট কিনে প্রথম আসল রিভিউটি আপনিই দিন!"
+              )}
+            </p>
+            <div className="pt-2">
+              <Link
+                to="/products"
+                className="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-xl bg-[#0A1E54] text-white text-xs font-mono uppercase font-bold tracking-wider hover:bg-[#1A3070] transition-all shadow-xs"
+              >
+                <span>{t("Browse Catalog To Review", "রিভিউ দিতে প্রোডাক্ট দেখুন")}</span>
+                <ArrowRight className="w-3.5 h-3.5 text-[#C9A66B]" />
+              </Link>
+            </div>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-            {testimonials.map((test, i) => (
-              <div key={i} className="bg-white/5 border border-white/5 p-8 relative space-y-4">
-                <Quote className="w-8 h-8 text-lime-neon/15 absolute top-6 right-6" />
-                <div className="flex gap-1">
-                  {[...Array(test.rating)].map((_, j) => (
-                    <Star key={j} className="w-4 h-4 fill-lime-neon text-lime-neon" />
-                  ))}
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {allCustomerReviews.slice(0, 6).map((rev, idx) => (
+              <div key={idx} className="glass-card p-6 rounded-2xl border border-white space-y-3 text-left">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-[#0A1E54]">{rev.userName}</span>
+                  <div className="flex text-[#C9A66B]">
+                    {[...Array(rev.rating)].map((_, i) => (
+                      <Star key={i} className="w-3.5 h-3.5 fill-current" />
+                    ))}
+                  </div>
                 </div>
-                <p className="text-seashell/85 text-xs sm:text-sm font-serif leading-relaxed italic">
-                  "{test.comment}"
+                <p className="text-stone-700 text-xs sm:text-sm leading-relaxed font-sans italic">
+                  "{rev.comment}"
                 </p>
-                <div className="pt-2">
-                  <span className="block text-xs font-mono tracking-widest uppercase font-bold text-seashell">{test.name}</span>
-                  <span className="block text-[8px] font-mono tracking-widest text-lime-neon uppercase mt-0.5">VERIFIED CUSTOMER</span>
+                <div className="pt-2 border-t border-stone-200/60 flex items-center justify-between text-[10px] font-mono">
+                  <Link to={`/product/${rev.productId}/reviews`} className="text-[#0A1E54] hover:underline font-bold truncate max-w-[180px]">
+                    {rev.productTitle}
+                  </Link>
+                  <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                    Verified Buyer
+                  </span>
                 </div>
               </div>
             ))}
           </div>
+        )}
+      </section>
+
+      {/* Official Location Banner */}
+      <section className="py-6 px-4 max-w-7xl mx-auto">
+        <div className="glass-panel p-5 rounded-3xl border border-white shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-[#0A1E54]">
+          <div className="flex items-center gap-3">
+            <MapPin className="w-5 h-5 text-[#C9A66B] shrink-0" />
+            <span className="font-bold">
+              {t("OFFICIAL STORE LOCATION: বাংলাদেশ, চাঁদপুর ৩৬৫০, ফরিদগঞ্জ", "অফিসিয়াল স্টোর লোকেশন: বাংলাদেশ, চাঁদপুর ৩৬৫০, ফরিদগঞ্জ")}
+            </span>
+          </div>
+          <Link
+            to="/menu"
+            className="px-4 py-2 rounded-full bg-[#0A1E54] text-white hover:bg-[#1A3070] uppercase font-bold text-[10px] tracking-wider transition-all"
+          >
+            Store Information ↗
+          </Link>
         </div>
       </section>
 

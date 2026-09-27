@@ -1,6 +1,6 @@
 {
-  "name": "KIYOMI",
-  "description": "Premium garment e-commerce boutique featuring a fast, intuitive shopping catalog, dynamic cart management, and seamless order tracking.",
+  "name": "Patowary Fashion",
+  "description": "Modern trending fashion e-commerce store featuring baggy pants, cargo streetwear, oversized tees, polo shirts, women's fashion, and premium accessories with luxury glassmorphic aesthetics.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

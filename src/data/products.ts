@@ -1,208 +1,236 @@
 import { Product } from '../types';
 
-const RAW_PRODUCTS: Product[] = [
+export const RAW_PRODUCTS: Product[] = [
   {
     id: 1,
-    title: "KIYOMI Chrono X1 Smartwatch",
-    category: "Smartwatches",
-    price: 4500,
-    rating: 4.9,
+    title: "Patowary Heavyweight Baggy Cargo Pants",
+    category: "Baggy & Cargo Pants",
+    price: 2450,
+    rating: 0,
     assets: [
-      "https://images.unsplash.com/photo-1542496658-e33a6d0d50f6?w=800",
-      "https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?w=800",
-      "https://images.unsplash.com/photo-1517502884422-41eaaced0168?w=800",
-      "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800",
-      "https://images.unsplash.com/photo-1517430816045-df4b7de11d1d?w=800"
+      "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=800",
+      "https://images.unsplash.com/photo-1517445312882-bc9910d016b7?w=800",
+      "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=800",
+      "https://images.unsplash.com/photo-1552902865-b72c031ac5ea?w=800"
     ],
-    variants: ["Space Gray", "Obsidian Black", "Pure Silver"],
-    outOfStock: ["Pure Silver"],
-    description: "Super AMOLED 1.43-inch display, dual-core chipset, with up to 14 days standby power. Premium aerospace-grade titanium frame with continuous blood oxygen monitoring.",
-    reviews: [
-      { id: 1, userName: "Abrar Rahman", rating: 5, comment: "Incredible battery life and premium build!" }
-    ],
-    stock: 25
+    variants: ["M (Waist 30-32)", "L (Waist 32-34)", "XL (Waist 34-36)"],
+    outOfStock: [],
+    description: "Premium high-density cotton twill baggy cargo trousers engineered for contemporary street style. Features 6 deep utility pockets, adjustable cinch hem at ankle, reinforced stitch lines, and relaxed silhouette.",
+    reviews: [],
+    stock: 45
   },
   {
     id: 2,
-    title: "KIYOMI SonicBuds Pro ANC",
-    category: "Earbuds & Audio",
-    price: 3200,
-    rating: 5.0,
+    title: "Patowary Acid-Wash Wide-Leg Denim",
+    category: "Baggy & Cargo Pants",
+    price: 2850,
+    rating: 0,
     assets: [
-      "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800",
-      "https://images.unsplash.com/photo-1608156639585-b3a032ef9689?w=800",
-      "https://images.unsplash.com/photo-1484704849700-f032a568e944?w=800",
-      "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800",
-      "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=800"
+      "https://images.unsplash.com/photo-1542272604-780c96856592?w=800",
+      "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=800",
+      "https://images.unsplash.com/photo-1582552938357-32b906df40cb?w=800"
     ],
-    variants: ["Matte Black", "Arctic White"],
+    variants: ["30", "32", "34", "36"],
     outOfStock: [],
-    description: "Active Noise Cancellation up to 48dB, high-fidelity dynamic drivers, with zero-latency gaming transmission interface.",
-    reviews: [
-      { id: 1, userName: "Sadnan Kabir", rating: 5, comment: "Pure audio acoustics crafted for urban audiophiles." }
-    ],
-    stock: 18
+    description: "Custom vintage-treated acid wash wide-leg denim. 13.5oz non-stretch 100% pure denim cotton offering the iconic 90s skater drape with modern streetwear luxury.",
+    reviews: [],
+    stock: 35
   },
   {
     id: 3,
-    title: "KIYOMI Neo-Type Mechanical Keypad",
-    category: "Mice & Keyboards",
-    price: 5800,
-    rating: 4.8,
+    title: "Patowary Minimalist Oversized Boxy Tee",
+    category: "Oversized Tees & Polos",
+    price: 1250,
+    rating: 0,
     assets: [
-      "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800",
-      "https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=800",
-      "https://images.unsplash.com/photo-1595225476474-87563907a212?w=800",
-      "https://images.unsplash.com/photo-1626908013351-800ddd734b8a?w=800",
-      "https://images.unsplash.com/photo-1547119957-637f8679db1e?w=800"
+      "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800",
+      "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=800",
+      "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=800"
     ],
-    variants: ["Carbon Fade", "Neon Mint"],
+    variants: ["M (Chest 42)", "L (Chest 44)", "XL (Chest 46)"],
     outOfStock: [],
-    description: "Gasket mount mechanical keyboard, customized brown tactile switches, sound absorbing layers with premium dye-subbed keycaps. Includes dynamic RGB routing.",
-    reviews: [
-      { id: 1, userName: "Imtiaz Hassan", rating: 5, comment: "Perfect typing experience." }
-    ],
-    stock: 12
+    description: "260 GSM combed cotton heavyweight fabric. Drop-shoulder cut with ribbed 1.25-inch crew neckline. Breathable, pre-shrunk, and engineered for that effortless luxury streetwear drape.",
+    reviews: [],
+    stock: 60
   },
   {
     id: 4,
-    title: "KIYOMI VoltStream 100W GaN Adapter",
-    category: "Power & Chargers",
-    price: 2400,
-    rating: 4.7,
+    title: "Patowary Vintage Tokyo Graphic Oversized Tee",
+    category: "Oversized Tees & Polos",
+    price: 1450,
+    rating: 0,
     assets: [
-      "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=800",
-      "https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?w=800",
-      "https://images.unsplash.com/photo-1622445262465-2481c4574875?w=800",
-      "https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=800",
-      "https://images.unsplash.com/photo-1543269865-cbf427effbad?w=800"
+      "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=800",
+      "https://images.unsplash.com/photo-1503341455253-b2e723bb3dbb?w=800",
+      "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=800"
     ],
-    variants: ["Sleek Gray", "Off White"],
+    variants: ["M (Chest 42)", "L (Chest 44)", "XL (Chest 46)"],
     outOfStock: [],
-    description: "Ultra-compact Gallium Nitride power center with 3x USB-C fast charging slots. Intelligently routes electric flow to safe-protect notebook batteries.",
+    description: "High-density screen print with subtle distressed aesthetics. Pure combed organic cotton with relaxed drop-shoulder structure and seamless side construction.",
+    reviews: [],
+    stock: 50
+  },
+  {
+    id: 5,
+    title: "Patowary Pique Knit Luxury Polo",
+    category: "Oversized Tees & Polos",
+    price: 1750,
+    rating: 0,
+    assets: [
+      "https://images.unsplash.com/photo-1625910513413-5b8004f2f0a1?w=800",
+      "https://images.unsplash.com/photo-1586363104862-3a5e2ab60d99?w=800"
+    ],
+    variants: ["M (Chest 40)", "L (Chest 42)", "XL (Chest 44)"],
+    outOfStock: [],
+    description: "Refined textured pique cotton polo with structured knit collar, concealed placket, and custom mother-of-pearl buttons. Transitions effortlessly between casual and smart streetwear.",
+    reviews: [],
+    stock: 40
+  },
+  {
+    id: 6,
+    title: "Patowary French Terry Heavyweight Hoodie",
+    category: "Hoodies & Sweatshirts",
+    price: 3200,
+    rating: 0,
+    assets: [
+      "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=800",
+      "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?w=800",
+      "https://images.unsplash.com/photo-1578587018452-892bacefd3f2?w=800"
+    ],
+    variants: ["M (Relaxed)", "L (Oversized)", "XL (Heavy Boxy)"],
+    outOfStock: [],
+    description: "420 GSM 100% French Terry cotton. Double-layered hood without drawstring for a clean modern architectural look. Heavy ribbing on cuffs and hem with kangaroo pouch pocket.",
+    reviews: [],
+    stock: 28
+  },
+  {
+    id: 7,
+    title: "Patowary Urban Drop-Shoulder Sweatshirt",
+    category: "Hoodies & Sweatshirts",
+    price: 2600,
+    rating: 0,
+    assets: [
+      "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=800",
+      "https://images.unsplash.com/photo-1620799139834-6b8f844fbe61?w=800"
+    ],
+    variants: ["M", "L", "XL"],
+    outOfStock: [],
+    description: "Clean crewneck fleece sweatshirt with raglan drop-shoulders and minimalist tonal Patowary embroidery. High-density brushback fleece for comfort and warmth.",
     reviews: [],
     stock: 30
   },
   {
-    id: 5,
-    title: "KIYOMI Aurora Ambient Lamp Grid",
-    category: "Smart Gadgets",
-    price: 1800,
-    rating: 4.6,
-    assets: [
-      "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=800",
-      "https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?w=800",
-      "https://images.unsplash.com/photo-1565814636199-ae8133055c1c?w=800",
-      "https://images.unsplash.com/photo-1517999144091-3d9dca6d1e43?w=800",
-      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800"
-    ],
-    variants: ["Default Color"],
-    outOfStock: [],
-    description: "Smart ambient layout light with sound responsive frequency sync, controlled wirelessly via smartphone. Creates deep therapeutic atmosphere.",
-    reviews: [],
-    stock: 15
-  },
-  {
-    id: 6,
-    title: "KIYOMI Classic Brass Desk Clock",
-    category: "Smartwatches",
-    price: 2900,
-    rating: 4.9,
-    assets: [
-      "https://images.unsplash.com/photo-1563861826100-9cb868fdcd1d?w=800",
-      "https://images.unsplash.com/photo-1509048191080-d2984bad6ae5?w=800",
-      "https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=800",
-      "https://images.unsplash.com/photo-1518131394553-c3e387c162da?w=800",
-      "https://images.unsplash.com/photo-1585128792020-803d29415281?w=800"
-    ],
-    variants: ["Vintage Gold", "Matte Jet"],
-    outOfStock: [],
-    description: "Pure retro brass analog desktop clock with a quiet high-precision quartz movement. Represents classic mechanical chronography.",
-    reviews: [],
-    stock: 10
-  },
-  {
-    id: 7,
-    title: "KIYOMI Solo One Wireless Soundbar",
-    category: "Earbuds & Audio",
-    price: 8900,
-    rating: 4.9,
-    assets: [
-      "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=800",
-      "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=800",
-      "https://images.unsplash.com/photo-1589256469067-ea99122bbec4?w=800",
-      "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=800",
-      "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800"
-    ],
-    variants: ["Carbon Fiber", "Premium Oak"],
-    outOfStock: [],
-    description: "Multi-driver high-resolution wireless soundbar. Precision acoustics, integrated subwoofer, spatial sound technology.",
-    reviews: [],
-    stock: 15
-  },
-  {
     id: 8,
-    title: "KIYOMI Carbon Precision Trackpad",
-    category: "Mice & Keyboards",
-    price: 4200,
-    rating: 4.8,
+    title: "Patowary Relaxed Cuban Collar Linen Shirt",
+    category: "Men's Streetwear",
+    price: 2200,
+    rating: 0,
     assets: [
-      "https://images.unsplash.com/photo-1541140134449-29161a66a953?w=800",
-      "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=800",
-      "https://images.unsplash.com/photo-1563206767-5b18f218e8de?w=800",
-      "https://images.unsplash.com/photo-1572945281861-68b293d045a7?w=800",
-      "https://images.unsplash.com/photo-1547119957-637f8679db1e?w=800"
+      "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=800",
+      "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=800"
     ],
-    variants: ["Matte Black", "Silver Satin"],
+    variants: ["M", "L", "XL"],
     outOfStock: [],
-    description: "Extra large carbon glass wireless trackpad with haptic feedback, gestures, and ultra long battery life.",
+    description: "Breezy natural linen blend with open camp/cuban collar and straight hem with side slits. Perfect for summer layering over tank tops and pairing with wide-leg pants.",
     reviews: [],
-    stock: 22
+    stock: 32
   },
   {
     id: 9,
-    title: "KIYOMI Helios 25K Solar Charge Bank",
-    category: "Power & Chargers",
-    price: 3100,
-    rating: 4.7,
+    title: "Patowary Women's Crop Boxy Streetwear Tee",
+    category: "Women's Collection",
+    price: 1350,
+    rating: 0,
     assets: [
-      "https://images.unsplash.com/photo-1620283085439-39620a1e21c4?w=800",
-      "https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=800",
-      "https://images.unsplash.com/photo-1504274066651-8d31a536b11a?w=800",
-      "https://images.unsplash.com/photo-1562408590-e32931084e23?w=800",
-      "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800"
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800",
+      "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=800",
+      "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=800"
     ],
-    variants: ["Solar Yellow", "Tactical Gray"],
+    variants: ["S", "M", "L"],
     outOfStock: [],
-    description: "High-density 25000mAh durable battery bank with integrated fast-charging solar panels and IP67 dustproof/waterproof metrics.",
+    description: "Cropped boxy tee crafted from ultra-soft combed cotton. Drop-shoulder seam line, ribbed collar, and raw-cut straight hem designed to pair with high-waist cargo pants.",
     reviews: [],
-    stock: 19
+    stock: 40
   },
   {
     id: 10,
-    title: "KIYOMI Orbit Smart AirTags (4-Pack)",
-    category: "Smart Gadgets",
-    price: 1500,
-    rating: 4.6,
+    title: "Patowary Women's Wide-Leg High-Waist Trousers",
+    category: "Women's Collection",
+    price: 2700,
+    rating: 0,
     assets: [
-      "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800",
-      "https://images.unsplash.com/photo-1588449668338-d15168863c83?w=800",
-      "https://images.unsplash.com/photo-1600541519463-ee67aa1ec7e9?w=800",
-      "https://images.unsplash.com/photo-1616440347437-b1c73416efc2?w=800",
-      "https://images.unsplash.com/photo-1534224039826-c7a0dea0e66a?w=800"
+      "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=800",
+      "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=800"
     ],
-    variants: ["Default White"],
+    variants: ["28", "30", "32", "34"],
     outOfStock: [],
-    description: "Compact smart key markers and trackers synced to global locator mapping grids. Durable structure with water-resistant sealing.",
+    description: "Tailored high-rise trousers with front double pleats, wide-leg fluid drape, and hidden hook-and-bar closure. Modern luxury minimalism for the fashion-forward wardrobe.",
+    reviews: [],
+    stock: 25
+  },
+  {
+    id: 11,
+    title: "Patowary Crossbody Tactical Sling Bag",
+    category: "Accessories & Lifestyle",
+    price: 1650,
+    rating: 0,
+    assets: [
+      "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800",
+      "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800"
+    ],
+    variants: ["Midnight Black", "Steel Grey"],
+    outOfStock: [],
+    description: "Water-resistant Cordura nylon tactical sling with quick-release magnetic buckle, multiple zippered compartments, internal mesh divider, and adjustable padded shoulder strap.",
+    reviews: [],
+    stock: 35
+  },
+  {
+    id: 12,
+    title: "Patowary Distressed Vintage Dad Cap",
+    category: "Accessories & Lifestyle",
+    price: 950,
+    rating: 0,
+    assets: [
+      "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=800",
+      "https://images.unsplash.com/photo-1575428652377-a2d80e2277fc?w=800"
+    ],
+    variants: ["Vintage Black", "Sand Khaki"],
+    outOfStock: [],
+    description: "Unstructured 6-panel baseball cap washed for a relaxed worn-in feel. Antique brass buckle closure with minimalist tonal 3D embroidered brand insignia.",
+    reviews: [],
+    stock: 50
+  },
+  {
+    id: 13,
+    title: "Patowary Matte Minimalist Sunglasses",
+    category: "Accessories & Lifestyle",
+    price: 1400,
+    rating: 0,
+    assets: [
+      "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=800",
+      "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=800"
+    ],
+    variants: ["Matte Black", "Tortoise Shell"],
+    outOfStock: [],
+    description: "UV400 polarized square acetate frame sunglasses with scratch-resistant polycarbonate lenses and luxury hinge detailing.",
+    reviews: [],
+    stock: 30
+  },
+  {
+    id: 14,
+    title: "Patowary Heavy Leather Tactical Belt",
+    category: "Accessories & Lifestyle",
+    price: 1150,
+    rating: 0,
+    assets: [
+      "https://images.unsplash.com/photo-1624222247344-550fb60583dc?w=800"
+    ],
+    variants: ["Standard (30-38)"],
+    outOfStock: [],
+    description: "Full-grain thick bridle leather with matte black roller buckle and debossed edge groove for long-lasting durability.",
     reviews: [],
     stock: 40
   }
 ];
 
-export const PRODUCTS: Product[] = RAW_PRODUCTS.map(prod => ({
-  ...prod,
-  reviews: (prod.reviews || []).map(rev => ({
-    ...rev,
-    userName: rev.userName || "MAHAFUZUR RAHAMAN"
-  }))
-}));
+export const INITIAL_PRODUCTS = RAW_PRODUCTS;

@@ -7,6 +7,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { db } from '../lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
+import { sendFormViaEmailJS } from '../lib/emailjs';
 import { 
   CreditCard, 
   MapPin, 
@@ -31,7 +32,7 @@ export const Checkout: React.FC = () => {
   // Contact States
   const [fullName, setFullName] = useState(() => {
     try {
-      const autofillStr = localStorage.getItem('KIYOMI_profile_autofill') || localStorage.getItem('dorax_profile_autofill');
+      const autofillStr = localStorage.getItem('patowary_profile_autofill');
       if (autofillStr) {
         const data = JSON.parse(autofillStr);
         if (data.fullName) return data.fullName;
@@ -41,7 +42,7 @@ export const Checkout: React.FC = () => {
   });
   const [phoneNumber, setPhoneNumber] = useState(() => {
     try {
-      const autofillStr = localStorage.getItem('KIYOMI_profile_autofill') || localStorage.getItem('dorax_profile_autofill');
+      const autofillStr = localStorage.getItem('patowary_profile_autofill');
       if (autofillStr) {
         const data = JSON.parse(autofillStr);
         if (data.phoneNumber) return data.phoneNumber;
@@ -51,7 +52,7 @@ export const Checkout: React.FC = () => {
   });
   const [shippingAddress, setShippingAddress] = useState(() => {
     try {
-      const autofillStr = localStorage.getItem('KIYOMI_profile_autofill') || localStorage.getItem('dorax_profile_autofill');
+      const autofillStr = localStorage.getItem('patowary_profile_autofill');
       if (autofillStr) {
         const data = JSON.parse(autofillStr);
         if (data.shippingAddress) return data.shippingAddress;
@@ -74,6 +75,7 @@ export const Checkout: React.FC = () => {
   // Status indicators
   const [isOrdering, setIsOrdering] = useState(false);
   const [successOrder, setSuccessOrder] = useState<any>(null);
+  const [orderError, setOrderError] = useState<string | null>(null);
 
   // Handle generating bKash OTP
   const triggerSendBkashOtp = (isResend = false) => {
@@ -134,7 +136,51 @@ export const Checkout: React.FC = () => {
 
   const executeOrderSubmission = async (paymentDetails: string) => {
     setIsOrdering(true);
+    setOrderError(null);
     const trackingNo = `DRX-2026-${Math.floor(10000 + Math.random() * 90000)}`;
+
+    const itemsSummary = cartItems
+      .map(
+        (item, idx) =>
+          `${idx + 1}. ${item.product.title} (Size: ${item.selectedVariant || 'Standard'}) x ${item.quantity} - BDT ${item.product.price * item.quantity}`
+      )
+      .join('\n');
+
+    // Transmit complete order details to EmailJS
+    const emailResult = await sendFormViaEmailJS({
+      formType: 'Checkout Order Form (bKash)',
+      name: fullName.trim(),
+      phone: phoneNumber.trim(),
+      email: user?.email || '',
+      address: shippingAddress.trim(),
+      deliveryAddress: shippingAddress.trim(),
+      paymentMethod: paymentDetails,
+      transactionId: bkashAccount ? `bKash Account: ${bkashAccount}` : trackingNo,
+      orderId: trackingNo,
+      productOrService: cartItems.map((i) => i.product.title).join(', '),
+      productId: cartItems.map((i) => i.product.id).join(', '),
+      package: cartItems.map((i) => `${i.product.title} [Size ${i.selectedVariant || 'Standard'}]`).join(', '),
+      quantity: cartItems.reduce((acc, curr) => acc + curr.quantity, 0),
+      price: `BDT ${totalBeforeDiscount}`,
+      total: `BDT ${totalPrice}`,
+      deliveryCharge: deliveryCharge === 0 ? 'FREE' : `BDT ${deliveryCharge}`,
+      message: `bKash payment confirmed. Account: ${bkashAccount || phoneNumber}. Voucher ID: ${trackingNo}`,
+      customFields: {
+        'Ordered Items': itemsSummary,
+        'Subtotal Amount': `BDT ${totalBeforeDiscount}`,
+        'Coupon Promo Applied': promoCode ? `${promoCode} (${discountPercentage}% off)` : 'None',
+        'Courier Delivery Fee': deliveryCharge === 0 ? 'FREE' : `BDT ${deliveryCharge}`,
+        'Total Invoice Amount': `BDT ${totalPrice}`,
+        'Payment Status': 'Paid via bKash',
+      },
+    });
+
+    if (!emailResult.success) {
+      console.error('[EmailJS] Order submission notification failed:', emailResult.error);
+      setOrderError(emailResult.error || 'Unable to submit your information right now. Please try again.');
+      setIsOrdering(false);
+      return;
+    }
 
     const orderPayload = {
       id: trackingNo,
@@ -160,16 +206,16 @@ export const Checkout: React.FC = () => {
       const orderRef = doc(db, 'orders', trackingNo);
       await setDoc(orderRef, orderPayload);
       
-      const existingStr = localStorage.getItem('KIYOMI_local_orders') || localStorage.getItem('dorax_local_orders') || '[]';
+      const existingStr = localStorage.getItem('patowary_local_orders') || '[]';
       const localOrders = JSON.parse(existingStr);
       localOrders.push(orderPayload);
-      localStorage.setItem('KIYOMI_local_orders', JSON.stringify(localOrders));
+      localStorage.setItem('patowary_local_orders', JSON.stringify(localOrders));
     } catch (err) {
       console.warn("Firestore order submission skipped or offline. Writing to backup local storage.", err);
-      const existingStr = localStorage.getItem('KIYOMI_local_orders') || localStorage.getItem('dorax_local_orders') || '[]';
+      const existingStr = localStorage.getItem('patowary_local_orders') || '[]';
       const localOrders = JSON.parse(existingStr);
       localOrders.push(orderPayload);
-      localStorage.setItem('KIYOMI_local_orders', JSON.stringify(localOrders));
+      localStorage.setItem('patowary_local_orders', JSON.stringify(localOrders));
     }
 
     setSuccessOrder(orderPayload);
@@ -180,6 +226,7 @@ export const Checkout: React.FC = () => {
 
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+    setOrderError(null);
     if (cartItems.length === 0) return;
     if (!fullName || !phoneNumber || !shippingAddress) {
       alert("Please complete shipping profile fields");
@@ -200,9 +247,53 @@ export const Checkout: React.FC = () => {
 
     // Cash on Delivery
     setIsOrdering(true);
+    setOrderError(null);
     playCinematicIntroSound("Processing Cash on delivery invoice. Dispatching courier line.");
 
-    const trackingNo = `DRX-2026-${Math.floor(10000 + Math.random() * 90000)}`;
+    const trackingNo = `PTW-2026-${Math.floor(10000 + Math.random() * 90000)}`;
+
+    const itemsSummary = cartItems
+      .map(
+        (item, idx) =>
+          `${idx + 1}. ${item.product.title} (Size: ${item.selectedVariant || 'Standard'}) x ${item.quantity} - BDT ${item.product.price * item.quantity}`
+      )
+      .join('\n');
+
+    // Transmit complete order details to EmailJS
+    const emailResult = await sendFormViaEmailJS({
+      formType: 'Checkout Order Form (Cash on Delivery)',
+      name: fullName.trim(),
+      phone: phoneNumber.trim(),
+      email: user?.email || '',
+      address: shippingAddress.trim(),
+      deliveryAddress: shippingAddress.trim(),
+      paymentMethod: 'Cash on Delivery',
+      transactionId: trackingNo,
+      orderId: trackingNo,
+      productOrService: cartItems.map((i) => i.product.title).join(', '),
+      productId: cartItems.map((i) => i.product.id).join(', '),
+      package: cartItems.map((i) => `${i.product.title} [Size ${i.selectedVariant || 'Standard'}]`).join(', '),
+      quantity: cartItems.reduce((acc, curr) => acc + curr.quantity, 0),
+      price: `BDT ${totalBeforeDiscount}`,
+      total: `BDT ${totalPrice}`,
+      deliveryCharge: deliveryCharge === 0 ? 'FREE' : `BDT ${deliveryCharge}`,
+      message: `Cash on Delivery Order Confirmed. Delivery address: ${shippingAddress.trim()}`,
+      customFields: {
+        'Ordered Items': itemsSummary,
+        'Subtotal Amount': `BDT ${totalBeforeDiscount}`,
+        'Coupon Promo Applied': promoCode ? `${promoCode} (${discountPercentage}% off)` : 'None',
+        'Courier Delivery Fee': deliveryCharge === 0 ? 'FREE' : `BDT ${deliveryCharge}`,
+        'Total Invoice Amount': `BDT ${totalPrice}`,
+        'Payment Status': 'Unpaid (Cash on Delivery)',
+      },
+    });
+
+    if (!emailResult.success) {
+      console.error('[EmailJS] Order submission notification failed:', emailResult.error);
+      setOrderError(emailResult.error || 'Unable to submit your information right now. Please try again.');
+      setIsOrdering(false);
+      return;
+    }
 
     const orderPayload = {
       id: trackingNo,
@@ -228,16 +319,16 @@ export const Checkout: React.FC = () => {
       const orderRef = doc(db, 'orders', trackingNo);
       await setDoc(orderRef, orderPayload);
       
-      const existingStr = localStorage.getItem('KIYOMI_local_orders') || localStorage.getItem('dorax_local_orders') || '[]';
+      const existingStr = localStorage.getItem('patowary_local_orders') || '[]';
       const localOrders = JSON.parse(existingStr);
       localOrders.push(orderPayload);
-      localStorage.setItem('KIYOMI_local_orders', JSON.stringify(localOrders));
+      localStorage.setItem('patowary_local_orders', JSON.stringify(localOrders));
     } catch (err) {
       console.warn("Firestore order submission skipped or offline. Writing to backup local storage.", err);
-      const existingStr = localStorage.getItem('KIYOMI_local_orders') || localStorage.getItem('dorax_local_orders') || '[]';
+      const existingStr = localStorage.getItem('patowary_local_orders') || '[]';
       const localOrders = JSON.parse(existingStr);
       localOrders.push(orderPayload);
-      localStorage.setItem('KIYOMI_local_orders', JSON.stringify(localOrders));
+      localStorage.setItem('patowary_local_orders', JSON.stringify(localOrders));
     }
 
     setTimeout(() => {
@@ -390,7 +481,7 @@ export const Checkout: React.FC = () => {
                   rows={3}
                   value={shippingAddress}
                   onChange={(e) => setShippingAddress(e.target.value)}
-                  placeholder="E.G., HOUSE 12, ROAD 5, GULSHAN 2, DHAKA-1212"
+                  placeholder="E.G., FARIDGANJ, CHANDPUR-3650, BANGLADESH"
                   className="w-full bg-[#fbf9f5] border border-stone-200 focus:border-[#0f2c2e] focus:bg-white focus:ring-1 focus:ring-[#0f2c2e]/10 p-4 rounded-xl text-xs focus:outline-none font-sans transition-all duration-300 shadow-sm resize-none"
                 />
               </div>
@@ -471,6 +562,16 @@ export const Checkout: React.FC = () => {
                 )}
               </div>
 
+              {orderError && (
+                <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-800 flex items-start gap-2.5">
+                  <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold block">Submission Error</span>
+                    <span>{orderError}</span>
+                  </div>
+                </div>
+              )}
+
               {/* Order Submit */}
               <button
                 type="submit"
@@ -549,9 +650,9 @@ export const Checkout: React.FC = () => {
               </div>
 
               {/* Trust badges */}
-              <div className="p-4 border border-dashed border-stone-300 rounded-2xl text-[9px] text-[#0f2c2e]/60 font-mono tracking-widest leading-relaxed text-center uppercase space-y-1 bg-white/40">
+              <div className="p-4 border border-dashed border-stone-300 rounded-2xl text-[9px] text-[#0A1E54]/70 font-mono tracking-widest leading-relaxed text-center uppercase space-y-1 bg-white/40">
                 <div>🔒 SSL CONNECT SECURE PORTAL 256-BIT API</div>
-                <div>KIYOMI PREMIUM LUXURY ASSURANCE APPROVED</div>
+                <div>PATOWARY FASHION LUXURY ASSURANCE APPROVED</div>
               </div>
             </aside>
 

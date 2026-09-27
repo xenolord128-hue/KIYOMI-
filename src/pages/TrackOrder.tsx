@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { db } from '../lib/firebase';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { playCinematicIntroSound } from '../utils/voiceUtils';
 import { 
   Search, 
@@ -10,12 +10,13 @@ import {
   PackageCheck, 
   User, 
   MapPin, 
-  DollarSign, 
   ShoppingBag, 
-  Info,
+  CheckCircle2,
   ChevronRight,
-  ClipboardList
+  ShieldCheck,
+  Phone
 } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export const TrackOrder: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -25,12 +26,12 @@ export const TrackOrder: React.FC = () => {
   const [orderData, setOrderData] = useState<any>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const { t } = useLanguage();
 
-  // Local storage orders history to show as suggestions for easier testing!
   const [suggestedOrders, setSuggestedOrders] = useState<any[]>([]);
 
   useEffect(() => {
-    const rawLocalHistory = localStorage.getItem('KIYOMI_local_orders') || localStorage.getItem('dorax_local_orders');
+    const rawLocalHistory = localStorage.getItem('patowary_local_orders');
     if (rawLocalHistory) {
       try {
         setSuggestedOrders(JSON.parse(rawLocalHistory));
@@ -49,7 +50,6 @@ export const TrackOrder: React.FC = () => {
     setLoading(true);
     setSearchError(null);
 
-    // 1. Setup a real-time Firestore listener on this specific invoice document
     const orderDocRef = doc(db, 'orders', searchQuery.trim());
     const unsub = onSnapshot(orderDocRef, (snap) => {
       if (snap.exists()) {
@@ -57,26 +57,24 @@ export const TrackOrder: React.FC = () => {
         setSearchError(null);
         setLoading(false);
       } else {
-        // 2. Check local backup orders fallback memory trace
-        const matchLocal = suggestedOrders.find(ord => ord.id.toUpperCase() === searchQuery.trim().toUpperCase());
+        const matchLocal = suggestedOrders.find(ord => ord.id?.toUpperCase() === searchQuery.trim().toUpperCase());
         if (matchLocal) {
           setOrderData(matchLocal);
           setSearchError(null);
         } else {
           setOrderData(null);
-          setSearchError("INVOICE VOUCHER TRACKING ID NOT RECISTERED IN SYSTEMS");
+          setSearchError("No order found with this Tracking ID. Please verify and try again.");
         }
         setLoading(false);
       }
-    }, (err) => {
-      // Offline/Permissions Firestore error -> search local suggestions directly
-      const matchLocal = suggestedOrders.find(ord => ord.id.toUpperCase() === searchQuery.trim().toUpperCase());
+    }, () => {
+      const matchLocal = suggestedOrders.find(ord => ord.id?.toUpperCase() === searchQuery.trim().toUpperCase());
       if (matchLocal) {
         setOrderData(matchLocal);
         setSearchError(null);
       } else {
         setOrderData(null);
-        setSearchError("INVOICE VOUCHER TRACKING ID NOT REGISTERED IN SYSTEMS (OFFLINE)");
+        setSearchError("Tracking system offline. Please check connection.");
       }
       setLoading(false);
     });
@@ -91,7 +89,7 @@ export const TrackOrder: React.FC = () => {
 
     setSearchParams({ id: cleanId });
     setSearchQuery(cleanId);
-    playCinematicIntroSound(`Inquiring delivery phase for tracking ID ${cleanId}`);
+    playCinematicIntroSound(`Inquiring shipment status for ${cleanId}`);
   };
 
   const handleSelectSuggestion = (idStr: string) => {
@@ -100,7 +98,6 @@ export const TrackOrder: React.FC = () => {
     setSearchQuery(idStr);
   };
 
-  // Phases of shipment
   const PHASES: ('Received' | 'Processing' | 'Shipped' | 'Out for Delivery' | 'Completed')[] = [
     'Received',
     'Processing',
@@ -117,18 +114,24 @@ export const TrackOrder: React.FC = () => {
   const currentPhaseIdx = orderData ? getPhaseNumber(orderData.status) : 0;
 
   return (
-    <div id="tracking-engine-view" className="bg-[#fbf9f5] min-h-screen py-16 selection:bg-emerald-800 selection:text-white font-sans">
+    <div id="tracking-engine-view" className="bg-[#F8F3EA] min-h-screen text-[#111827] py-12 sm:py-16 font-sans text-left">
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         
         {/* Title center */}
-        <div className="text-center mb-12 space-y-3">
-          <span className="text-[10px] font-mono tracking-[0.25em] text-[#005840] uppercase font-bold">KIYOMI COMMUNION PORTAL</span>
-          <h2 className="text-xl sm:text-2xl font-serif tracking-[0.2em] font-bold text-[#0f2c2e] uppercase">SHIPPING INVOICE TRACKING</h2>
-          <div className="w-12 h-1 bg-[#2d728f]/30 mx-auto rounded" />
+        <div className="text-center mb-10 space-y-2">
+          <span className="text-xs font-mono tracking-[0.25em] text-[#C9A66B] uppercase font-bold">
+            PATOWARY FASHION LOGISTICS
+          </span>
+          <h1 className="text-2xl sm:text-4xl font-serif font-bold text-[#0A1E54] uppercase">
+            {t("Order Tracking & Courier Status", "অর্ডার ট্র্যাকিং ও কুরিয়ার স্ট্যাটাস")}
+          </h1>
+          <p className="text-xs text-stone-600 max-w-md mx-auto">
+            {t("Enter your unique tracking voucher code to view live delivery updates.", "আপনার ইউনিক ট্র্যাকিং কোড দিয়ে লাইভ ডেলিভারি স্ট্যাটাস চেক করুন।")}
+          </p>
         </div>
 
         {/* Tracking Code input box */}
-        <div className="bg-white border border-stone-200 p-6 sm:p-8 rounded-lg shadow-sm space-y-6">
+        <div className="glass-panel border border-white p-6 sm:p-8 rounded-3xl shadow-sm space-y-6">
           <form onSubmit={handleTrackSubmit} className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <input
@@ -136,31 +139,34 @@ export const TrackOrder: React.FC = () => {
                 required
                 value={trackingIdInput}
                 onChange={(e) => setTrackingIdInput(e.target.value)}
-                placeholder="ENTER INVOICE TRACKING ID, E.C., DRX-2026-57112"
-                className="w-full bg-[#fbf9f5] border border-stone-300 pl-10 pr-4 py-3 rounded text-xs font-mono tracking-widest uppercase focus:outline-none focus:border-[#0f2c2e]"
+                placeholder="ENTER TRACKING ID (e.g. PTW-2026-57112)"
+                className="w-full bg-white border border-stone-300 pl-10 pr-4 py-3.5 rounded-xl text-xs font-mono tracking-wider uppercase focus:outline-none focus:border-[#0A1E54] shadow-inner"
               />
-              <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-stone-400" />
+              <Search className="w-4.5 h-4.5 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             </div>
             <button
               type="submit"
-              className="bg-[#0f2c2e] hover:bg-[#1a4a4d] text-[#fbf9f5] hover:scale-[1.01] transition-all text-xs font-mono tracking-widest uppercase font-bold py-3 px-8 rounded shrink-0 cursor-pointer"
+              className="bg-[#0A1E54] hover:bg-[#1A3070] text-[#F8F3EA] text-xs font-mono font-bold tracking-wider uppercase py-3.5 px-8 rounded-xl transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
             >
-              INQUIRE DISPATCH
+              <span>{t("Track Order", "ট্র্যাক করুন")}</span>
+              <Truck className="w-4 h-4 text-[#C9A66B]" />
             </button>
           </form>
 
-          {/* Quick recommendations local storage links if there's orders */}
+          {/* Suggested local orders */}
           {suggestedOrders.length > 0 && (
-            <div className="space-y-2 border-t border-stone-100 pt-4">
-              <span className="block text-[10px] font-mono uppercase tracking-widest text-stone-400">YOUR RECENT BILLING HISTORY INVOICES:</span>
+            <div className="pt-2 border-t border-stone-200/60">
+              <span className="text-[10px] font-mono text-stone-500 uppercase tracking-wider block mb-2 font-bold">
+                {t("YOUR RECENT INVOICES (CLICK TO LOAD)", "আপনার সাম্প্রতিক অর্ডারসমূহ")}
+              </span>
               <div className="flex flex-wrap gap-2">
                 {suggestedOrders.map((ord) => (
                   <button
                     key={ord.id}
                     onClick={() => handleSelectSuggestion(ord.id)}
-                    className="bg-stone-100 hover:bg-[#eae5db]/40 text-[#0f2c2e] text-[9.5px] font-mono border border-stone-350 px-3 py-1.5 rounded transition-transform cursor-pointer hover:scale-[1.02]"
+                    className="text-[11px] font-mono bg-white hover:bg-stone-100 text-[#0A1E54] border border-stone-300 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
                   >
-                    🚀 {ord.id} (BDT {ord.totalPrice})
+                    {ord.id} ({ord.fullName})
                   </button>
                 ))}
               </div>
@@ -168,131 +174,128 @@ export const TrackOrder: React.FC = () => {
           )}
         </div>
 
-        {/* Load indicators */}
+        {/* Loading Indicator */}
         {loading && (
-          <div className="py-12 text-center text-xs font-mono tracking-widest text-[#0f2c2e] uppercase animate-pulse">
-            CONNECTING DISPATCH REGISTRY SECTOR...
+          <div className="p-8 text-center text-xs font-mono text-stone-500 animate-pulse">
+            Connecting to Patowary Fashion live logistics ledger...
           </div>
         )}
 
-        {/* Errors display */}
-        {searchError && !loading && (
-          <div className="bg-amber-50 border border-amber-300 rounded-lg p-6 mt-8 space-y-2 text-center">
-            <Info className="w-8 h-8 text-amber-700 mx-auto" />
-            <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-amber-900">{searchError}</h4>
-            <p className="text-stone-500 font-sans text-xs max-w-sm mx-auto">
-              Make sure typing matches characters exactly. If you placed a test order earlier, click its suggested ID button above.
-            </p>
+        {/* Error message */}
+        {searchError && (
+          <div className="mt-8 p-5 bg-rose-50 border border-rose-200 text-rose-800 text-xs font-mono rounded-2xl text-center">
+            {searchError}
           </div>
         )}
 
-        {/* Realtime Delivery Phase display cards */}
-        {orderData && !loading && (
-          <div className="mt-8 space-y-6">
+        {/* Result Tracking Details View */}
+        {orderData && (
+          <div className="mt-10 space-y-6">
             
-            {/* Visual Tracking Progress Indicator */}
-            <div className="bg-white border border-stone-200 p-6 sm:p-8 rounded-lg shadow-sm space-y-6">
-              <h3 className="text-xs font-mono tracking-widest uppercase font-extrabold text-stone-500 flex items-center gap-1.5">
-                <Clock className="w-4.5 h-4.5 text-[#2d728f]" /> COURIER DISPATCH TIMELINE STATUS
-              </h3>
+            {/* Live Progress Stepper */}
+            <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-white shadow-sm space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-stone-200 gap-2">
+                <div>
+                  <span className="text-[10px] font-mono text-stone-500 uppercase">{t("Order Tracking ID", "অর্ডার ট্র্যাকিং আইডি")}</span>
+                  <h3 className="text-base sm:text-lg font-mono font-bold text-[#0A1E54]">{orderData.id}</h3>
+                </div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0A1E54]/10 text-[#0A1E54] text-xs font-mono font-bold uppercase self-start sm:self-auto">
+                  <span className="w-2 h-2 rounded-full bg-[#C9A66B] animate-ping" />
+                  <span>{orderData.status}</span>
+                </div>
+              </div>
 
-              {/* Graphical Progress Track */}
-              <div className="relative pt-6 pb-2">
-                {/* Horizontal progress bar */}
-                <div className="absolute top-[42px] left-6 right-6 h-1 bg-stone-200 -z-0 hidden md:block" />
+              {/* Progress Steps */}
+              <div className="grid grid-cols-5 gap-2 relative">
+                <div className="absolute top-4 left-6 right-6 h-0.5 bg-stone-200 -z-0" />
                 <div 
-                  className="absolute top-[42px] left-6 h-1 bg-emerald-800 -z-0 transition-all duration-700 hidden md:block" 
-                  style={{ width: `${(currentPhaseIdx / (PHASES.length - 1)) * 94}%` }}
+                  className="absolute top-4 left-6 h-0.5 bg-[#0A1E54] -z-0 transition-all duration-500" 
+                  style={{ width: `${(currentPhaseIdx / 4) * 100}%` }}
                 />
 
-                {/* Nodes layout Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-6 md:gap-2 relative z-10">
-                  {PHASES.map((phase, idx) => {
-                    const isCompleted = idx < currentPhaseIdx;
-                    const isActive = idx === currentPhaseIdx;
-                    return (
-                      <div key={phase} className="flex md:flex-col items-center text-left md:text-center space-y-0 md:space-y-3.5 space-x-4 md:space-x-0">
-                        {/* Dot */}
-                        <div 
-                          className={`w-9 h-9 rounded-full flex items-center justify-center font-mono text-[11px] font-bold border transition-all duration-500 ${isCompleted ? 'bg-emerald-850 text-white border-transparent' : isActive ? 'bg-yellow-600 text-white border-transparent animate-bounce' : 'bg-white text-stone-400 border-stone-250'}`}
-                        >
-                          {isCompleted ? "✓" : idx + 1}
-                        </div>
+                {PHASES.map((phase, idx) => {
+                  const isDone = idx <= currentPhaseIdx;
+                  const isCurrent = idx === currentPhaseIdx;
 
-                        {/* Text */}
-                        <div>
-                          <span className={`block text-xs font-mono tracking-wider uppercase font-bold ${isActive ? 'text-yellow-600 font-extrabold' : isCompleted ? 'text-emerald-900' : 'text-stone-400'}`}>
-                            {phase}
-                          </span>
-                          <span className="block text-[9px] font-sans text-stone-400 uppercase leading-none mt-0.5">
-                            {idx === 0 ? "LEDGER CAPTURED" : 
-                             idx === 1 ? "PACKAGING LABELS" :
-                             idx === 2 ? "COURIER HANDED" :
-                             idx === 3 ? "DELIVERY AGENT" : "CONSIGNED"}
-                          </span>
-                        </div>
+                  return (
+                    <div key={phase} className="flex flex-col items-center text-center relative z-10">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                        isCurrent 
+                          ? 'bg-[#0A1E54] text-[#C9A66B] ring-4 ring-[#0A1E54]/20 scale-110 shadow-sm'
+                          : isDone 
+                            ? 'bg-[#0A1E54] text-white' 
+                            : 'bg-stone-200 text-stone-400'
+                      }`}>
+                        {isDone ? <CheckCircle2 className="w-4 h-4" /> : <span className="text-[10px] font-bold font-mono">{idx + 1}</span>}
                       </div>
-                    );
-                  })}
-                </div>
+                      <span className={`text-[9px] sm:text-[10px] font-mono uppercase mt-2 font-bold leading-tight ${
+                        isCurrent ? 'text-[#0A1E54]' : isDone ? 'text-stone-700' : 'text-stone-400'
+                      }`}>
+                        {phase}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Invoiced Shipment details cards */}
-            <div className="bg-white border border-stone-200 p-6 sm:p-8 rounded-lg shadow-sm grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+            {/* Consignee & Items Details */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               
-              {/* Delivery Consignee address info parameters */}
-              <div className="space-y-4">
-                <h3 className="text-xs font-mono tracking-widest uppercase font-extrabold text-stone-550 flex items-center gap-2">
-                  <User className="w-4 h-4 text-[#2d728f]" /> DISPATCH DETAILS
-                </h3>
-                <ul className="space-y-2.5 text-xs text-[#0f2c2e]">
-                  <li className="flex justify-between border-b pb-2">
-                    <span className="text-stone-500 font-mono uppercase text-[10px]">CLIENT CONSIGNEE:</span>
-                    <strong className="uppercase">{orderData.fullName}</strong>
-                  </li>
-                  <li className="flex justify-between border-b pb-2">
-                    <span className="text-stone-500 font-mono uppercase text-[10px]">COURIER PHONE:</span>
+              {/* Shipping info */}
+              <div className="glass-card p-6 rounded-2xl border border-white space-y-3">
+                <h4 className="text-xs font-mono font-bold tracking-wider text-[#0A1E54] uppercase border-b border-stone-100 pb-2">
+                  {t("DELIVERY INFORMATION", "ডেলিভারি তথ্য")}
+                </h4>
+                <div className="space-y-2 text-xs text-stone-700">
+                  <div className="flex items-center gap-2">
+                    <User className="w-4 h-4 text-[#0A1E54]" />
+                    <span className="font-semibold">{orderData.fullName}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-[#0A1E54]" />
                     <span>{orderData.phone}</span>
-                  </li>
-                  <li className="flex justify-between border-b pb-2">
-                    <span className="text-stone-500 font-mono uppercase text-[10px]">PAYMENT METHOD:</span>
-                    <span className="uppercase font-semibold text-emerald-800">{orderData.paymentMethod}</span>
-                  </li>
-                  <li className="flex flex-col space-y-1">
-                    <span className="text-stone-500 font-mono uppercase text-[10px] flex items-center gap-1">
-                      <MapPin className="w-3.5 h-3.5" /> SHIPPING WAREHOUSE ADDRESS:
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <MapPin className="w-4 h-4 text-[#0A1E54] shrink-0 mt-0.5" />
+                    <span>{orderData.address}</span>
+                  </div>
+                  <div className="flex items-center gap-2 pt-2 border-t border-stone-100">
+                    <Clock className="w-4 h-4 text-stone-400" />
+                    <span className="text-stone-500 font-mono text-[11px]">
+                      {new Date(orderData.createdAt).toLocaleString()}
                     </span>
-                    <span className="font-sans text-xs italic bg-stone-100 p-2.5 rounded border leading-relaxed capitalize">
-                      {orderData.address}
-                    </span>
-                  </li>
-                </ul>
+                  </div>
+                </div>
               </div>
 
-              {/* Item checklist invoice summary */}
-              <div className="space-y-4">
-                <h3 className="text-xs font-mono tracking-widest uppercase font-extrabold text-stone-550 flex items-center gap-2">
-                  <ClipboardList className="w-4 h-4 text-[#2d728f]" /> CUSTOMER CART ITEMS
-                </h3>
-                
-                <div className="space-y-2.5 max-h-[160px] overflow-y-auto pr-2">
-                  {orderData.items ? orderData.items.map((item: any, id: number) => (
-                    <div key={id} className="flex gap-2 justify-between items-center text-xs text-[#0f2c2e] border-b border-stone-100 pb-2">
+              {/* Items in order */}
+              <div className="glass-card p-6 rounded-2xl border border-white space-y-3">
+                <h4 className="text-xs font-mono font-bold tracking-wider text-[#0A1E54] uppercase border-b border-stone-100 pb-2">
+                  {t("PURCHASED SPECIMENS", "অর্ডারের পণ্যসমূহ")}
+                </h4>
+                <div className="space-y-2.5 max-h-48 overflow-y-auto pr-1">
+                  {orderData.items?.map((item: any, i: number) => (
+                    <div key={i} className="flex items-center justify-between text-xs py-1 border-b border-stone-100 last:border-0">
                       <div className="flex items-center gap-2">
-                        {item.image && <img src={item.image} className="w-6 h-8 object-cover rounded border" alt="thumbnail" />}
-                        <span>{item.title} <strong className="font-mono text-[9px] bg-stone-100 text-stone-600 px-1">{item.variant}</strong> (x{item.quantity})</span>
+                        {item.image && (
+                          <img src={item.image} alt={item.title} className="w-8 h-10 object-cover rounded bg-stone-100" />
+                        )}
+                        <div>
+                          <span className="font-semibold line-clamp-1 text-[#111827]">{item.title}</span>
+                          <span className="text-[10px] text-stone-500 font-mono">Size: {item.variant} &bull; Qty: {item.quantity}</span>
+                        </div>
                       </div>
-                      <span className="font-mono font-bold">BDT {item.price * item.quantity}</span>
+                      <span className="font-mono font-bold text-[#0A1E54] shrink-0">
+                        ৳ {(item.price * item.quantity).toLocaleString()}
+                      </span>
                     </div>
-                  )) : (
-                    <p className="text-xs text-stone-500 italic">No package details retrieved</p>
-                  )}
+                  ))}
                 </div>
 
-                <div className="flex justify-between items-center pt-2 font-mono font-bold text-[#0f2c2e] border-t border-stone-200">
-                  <span className="text-[10px] tracking-wider">TOTAL INVOICE CHARGE:</span>
-                  <span className="text-sm">BDT {orderData.totalPrice}</span>
+                <div className="flex justify-between items-center pt-2 border-t border-stone-200 font-bold text-sm font-mono text-[#0A1E54]">
+                  <span>{t("Total Paid / Payable", "সর্বমোট মূল্য")}</span>
+                  <span>৳ {orderData.totalPrice?.toLocaleString()}</span>
                 </div>
               </div>
 

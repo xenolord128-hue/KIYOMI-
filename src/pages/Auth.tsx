@@ -3,28 +3,31 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { playCinematicIntroSound } from '../utils/voiceUtils';
 import { useLanguage } from '../contexts/LanguageContext';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   Lock, 
   Mail, 
   User, 
   ArrowRight, 
-  Chrome, 
-  Fingerprint, 
+  Facebook, 
   CheckCircle, 
   AlertTriangle,
-  Info,
   Check,
   X,
-  RefreshCw
+  Sparkles,
+  ShieldCheck
 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { OFFICIAL_LOGO_URL } from '../components/BrandLogo';
+import { sendFormViaEmailJS } from '../lib/emailjs';
 
 export const Auth: React.FC = () => {
-  const { user, login, signup, loginWithGoogle } = useAuth();
+  const { user, login, signup, loginWithGoogle, loginWithFacebook } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
 
-  const [isLognMode, setIsLognMode] = useState(true);
+  // Mode state: 'login' | 'register'
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [slideDirection, setSlideDirection] = useState<number>(1); // 1 = forward (to register), -1 = backward (to login)
   const [isForgotPasswordMode, setIsForgotPasswordMode] = useState(false);
   
   // Input fields
@@ -33,7 +36,7 @@ export const Auth: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
 
-  // Forgot password elements
+  // Forgot password
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotSuccess, setForgotSuccess] = useState(false);
 
@@ -41,7 +44,7 @@ export const Auth: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Password creation rules state checks
+  // Password rules for registration
   const ruleMinLength = password.length >= 8;
   const ruleUppercase = /[A-Z]/.test(password);
   const ruleLowercase = /[a-z]/.test(password);
@@ -49,67 +52,91 @@ export const Auth: React.FC = () => {
   const ruleSpecial = /[^A-Za-z0-9]/.test(password);
   const rulesAllPassed = ruleMinLength && ruleUppercase && ruleLowercase && ruleDigit && ruleSpecial;
 
-  // If already logged in, redirect home
+  // If already logged in, redirect to profile or home
   React.useEffect(() => {
     if (user) {
-      navigate('/');
+      navigate('/profile');
     }
   }, [user, navigate]);
+
+  const switchMode = (newMode: 'login' | 'register') => {
+    if (newMode === authMode) return;
+    setSlideDirection(newMode === 'register' ? 1 : -1);
+    setAuthMode(newMode);
+    setErrorMsg(null);
+  };
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
     setLoading(true);
 
-    // Initial email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setErrorMsg(t("INVALID SECURE EMAIL COORDINATES FORM / ইমেইল সঠিক নয়"));
+      setErrorMsg(t("Please enter a valid email address", "সঠিক ইমেইল ঠিকানা লিখুন"));
       setLoading(false);
       return;
     }
 
-    if (isLognMode) {
+    if (authMode === 'login') {
       if (password.length < 6) {
-        setErrorMsg(t("SECURITY GATE MANDATES A MINIMUM 6-CHARACTER KEY / পাসওয়ার্ড অন্তত ৬ অক্ষরের হতে হবে"));
+        setErrorMsg(t("Password must be at least 6 characters", "পাসওয়ার্ড অন্তত ৬ অক্ষরের হতে হবে"));
         setLoading(false);
         return;
       }
       try {
         await login(email, password);
-        playCinematicIntroSound("Login completed. Welcome back to the Kiyomi guild.");
+        playCinematicIntroSound("Login completed. Welcome to Patowary Fashion.");
         navigate('/profile');
       } catch (err: any) {
-        setErrorMsg(err.message || "AUTHENTIC FAULT OCCURED DURING CREDENTIAL CHECKING");
+        setErrorMsg(err.message || "Failed to sign in. Please verify your credentials.");
       } finally {
         setLoading(false);
       }
     } else {
-      // Signup Mode validation rules
       if (!displayName.trim()) {
-        setErrorMsg(t("PLEASE SUPPLY A NOMINAL USERNAME SIGNATURE / নাম লিখুন"));
+        setErrorMsg(t("Please provide your full name", "আপনার পুরো নাম লিখুন"));
         setLoading(false);
         return;
       }
 
       if (!rulesAllPassed) {
-        setErrorMsg(t("PASSWORD DOES NOT MEET ALL CRITERIA / পাসওয়ার্ডের সকল শর্তাবলী মেনে চলুন"));
+        setErrorMsg(t("Please meet all password requirements", "পাসওয়ার্ডের সকল শর্ত পূরণ করুন"));
         setLoading(false);
         return;
       }
 
       if (password !== confirmPassword) {
-        setErrorMsg(t("PASSWORDS DO NOT MATCH / পাসওয়ার্ড দুটি মেলেনি"));
+        setErrorMsg(t("Passwords do not match", "পাসওয়ার্ড দুটি মেলেনি"));
         setLoading(false);
         return;
       }
 
       try {
         await signup(email, password, displayName);
-        playCinematicIntroSound("Registration recorded. Welcome to the Kiyomi clothing guild.");
+        
+        // Transmit customer registration details via EmailJS
+        try {
+          await sendFormViaEmailJS({
+            formType: 'Customer Registration Form',
+            name: displayName.trim(),
+            email: email.trim(),
+            message: 'New customer account registration submitted.',
+            subject: `New Customer Registration: ${displayName.trim()}`,
+            customFields: {
+              'Full Name': displayName.trim(),
+              'Registered Email': email.trim(),
+              'Account Status': 'Customer Registered',
+            },
+          });
+        } catch (mailErr) {
+          console.error('[EmailJS] Registration email notification error:', mailErr);
+        }
+
+        playCinematicIntroSound("Registration recorded. Welcome to Patowary Fashion.");
         navigate('/profile');
       } catch (err: any) {
-        setErrorMsg(err.message || "AUTHENTIC FAULT OCCURED DURING CREDENTIAL CHECKING");
+        setErrorMsg(err.message || "Failed to create account. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -121,72 +148,123 @@ export const Auth: React.FC = () => {
     setLoading(true);
     try {
       await loginWithGoogle();
-      playCinematicIntroSound("Google authentication verified. Welcome back client.");
+      playCinematicIntroSound("Google authentication verified. Welcome to Patowary Fashion.");
       navigate('/profile');
     } catch (err: any) {
-      setErrorMsg(err.message || "GOOGLE GATE REJECTED CREDENTIALS");
+      setErrorMsg(err.message || "Google Sign-In failed or popup was closed.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleForgotPasswordSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleFacebookSignInClick = async () => {
     setErrorMsg(null);
     setLoading(true);
-
-    if (!forgotEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(forgotEmail)) {
-      setErrorMsg(t("PROVIDE A VALID REGISTERED EMAIL ADDRESS / সঠিক ইমেইল দিন"));
+    try {
+      await loginWithFacebook();
+      playCinematicIntroSound("Facebook authentication verified. Welcome to Patowary Fashion.");
+      navigate('/profile');
+    } catch (err: any) {
+      setErrorMsg(err.message || "Facebook Sign-In failed or popup was closed.");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    // Standard secure mock link sending timeout state simulation
-    setTimeout(() => {
-      setForgotSuccess(true);
-      setLoading(false);
-      playCinematicIntroSound("Security recovery link transmitted successfully. Check your spam and inbox directory.");
-    }, 1200);
   };
 
-  // Render Forgot Password mode interface
+  const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotEmail) return;
+    setLoading(true);
+    setErrorMsg(null);
+
+    // Transmit password reset request via EmailJS
+    await sendFormViaEmailJS({
+      formType: 'Password Recovery Request Form',
+      email: forgotEmail.trim(),
+      message: 'Customer requested a password recovery link.',
+      subject: `Password Recovery Request: ${forgotEmail.trim()}`,
+      customFields: {
+        'Request Type': 'Password Recovery',
+        'Customer Email': forgotEmail.trim(),
+      },
+    });
+
+    setForgotSuccess(true);
+    setLoading(false);
+    playCinematicIntroSound("Password recovery link transmitted.");
+  };
+
+  // Swipe animation variants
+  const slideVariants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? 160 : -160,
+      opacity: 0,
+      scale: 0.96,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+      scale: 1,
+      transition: {
+        x: { type: 'spring', stiffness: 320, damping: 30 },
+        opacity: { duration: 0.25 },
+        scale: { duration: 0.25 }
+      }
+    },
+    exit: (direction: number) => ({
+      x: direction > 0 ? -160 : 160,
+      opacity: 0,
+      scale: 0.96,
+      transition: {
+        x: { type: 'spring', stiffness: 320, damping: 30 },
+        opacity: { duration: 0.2 },
+        scale: { duration: 0.2 }
+      }
+    })
+  };
+
+  // Forgot password view
   if (isForgotPasswordMode) {
     return (
-      <div id="auth-portal-view" className="bg-[#E9FDFD] min-h-screen py-16 flex items-center justify-center font-sans selection:bg-[#003E2C] selection:text-white">
-        <div className="max-w-md w-full mx-4 bg-white border border-[#6F7973]/30 p-8 rounded-2xl shadow-xl space-y-8 relative overflow-hidden">
-          {/* Accent decoration ribbon using brand palette */}
-          <div className="absolute top-0 left-0 right-0 h-2 bg-[#003E2C]" />
+      <div id="auth-portal-view" className="min-h-screen py-16 flex items-center justify-center font-sans px-4 bg-gradient-to-b from-[#F8F3EA] via-[#efe8da] to-[#F8F3EA] relative">
+        <div className="max-w-md w-full glass-panel border border-white/80 p-8 sm:p-10 rounded-3xl shadow-2xl space-y-6 text-left relative overflow-hidden backdrop-blur-xl bg-white/85">
+          {/* Subtle gold decorative glow */}
+          <div className="absolute -top-20 -right-20 w-44 h-44 bg-[#C9A66B]/15 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-20 -left-20 w-44 h-44 bg-[#0A1E54]/10 rounded-full blur-3xl pointer-events-none" />
 
-          <div className="text-center space-y-2">
-            <div className="w-12 h-12 bg-[#E9FDFD] text-[#003E2C] rounded-full flex items-center justify-center mx-auto shadow-sm">
-              <RefreshCw className="w-6 h-6 animate-spin" style={{ animationDuration: '6s' }} />
+          <div className="text-center space-y-3 relative z-10">
+            <div className="w-16 h-16 rounded-full overflow-hidden mx-auto shadow-md border-2 border-[#C9A66B]/60 bg-white p-1">
+              <img
+                src={OFFICIAL_LOGO_URL}
+                alt="Patowary Fashion Logo"
+                className="w-full h-full object-contain"
+                referrerPolicy="no-referrer"
+              />
             </div>
-            <h2 className="text-xl font-serif font-extrabold tracking-[0.1em] text-[#0C1E1F] uppercase">
-              RECOVER PASSWORD
+            <h2 className="text-2xl font-serif font-bold text-[#0A1E54]">
+              {t("Recover Password", "পাসওয়ার্ড পুনরুদ্ধার")}
             </h2>
-            <p className="text-[11px] text-[#6F7973] uppercase tracking-wider font-mono">
-              পাসওয়ার্ড পুনরুদ্ধার করুন
+            <p className="text-xs text-stone-500 font-sans">
+              {t("Enter your account email to receive reset instructions", "পাসওয়ার্ড রিসেটের জন্য আপনার অ্যাকাউন্টের ইমেইল দিন")}
             </p>
           </div>
 
           {errorMsg && (
-            <div className="bg-rose-50 border border-rose-200 rounded-lg p-3.5 text-xs text-rose-900 flex gap-2 items-start font-medium leading-relaxed shadow-xs">
-              <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600 mt-0.5" />
+            <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 text-xs text-rose-900 flex gap-2 items-center">
+              <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600" />
               <span>{errorMsg}</span>
             </div>
           )}
 
           {forgotSuccess ? (
-            <div className="bg-[#E9FDFD] border border-[#003E2C]/20 rounded-xl p-5 text-center space-y-4">
-              <CheckCircle className="w-10 h-10 text-[#003E2C] mx-auto" />
-              <div className="space-y-1">
-                <h4 className="text-xs font-bold text-[#0C1E1F] uppercase tracking-wide">
-                  RECOVERY TICKET TRANSMITTED!
-                </h4>
-                <p className="text-[11px] text-[#6F7973] leading-relaxed">
-                  আমরা আপনার রিসিভার ইমেইলে সুরক্ষিত পাসওয়ার্ড রিসেট লিংক প্রেরণ করেছি। দয়া করে আপনার স্প্যাম ও ইনবক্স ফোল্ডার গুলো চেক করুন।
-                </p>
-              </div>
+            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 text-center space-y-3 relative z-10">
+              <CheckCircle className="w-12 h-12 text-emerald-600 mx-auto" />
+              <h4 className="text-sm font-bold text-[#0A1E54]">
+                {t("Reset Link Sent!", "রিসেট লিংক পাঠানো হয়েছে!")}
+              </h4>
+              <p className="text-xs text-stone-600 leading-relaxed font-sans">
+                {t("We have sent password reset details to your inbox and notification system.", "পাসওয়ার্ড রিসেট করার প্রয়োজনীয় লিংক আপনার ইমেইলে পাঠিয়ে দেওয়া হয়েছে।")}
+              </p>
               <button
                 type="button"
                 onClick={() => {
@@ -194,16 +272,16 @@ export const Auth: React.FC = () => {
                   setIsForgotPasswordMode(false);
                   setErrorMsg(null);
                 }}
-                className="w-full py-2.5 bg-[#003E2C] text-white font-mono text-[10px] tracking-widest font-extrabold rounded-lg uppercase hover:bg-[#CBF23D] hover:text-[#0C1E1F] transition-all cursor-pointer"
+                className="w-full py-3 bg-[#0A1E54] hover:bg-[#1A3070] text-white font-mono text-xs tracking-wider font-bold rounded-xl uppercase transition-all cursor-pointer shadow-md"
               >
-                RETURN TO SIGN IN
+                {t("Return to Sign In", "সাইন ইন পেজে ফিরুন")}
               </button>
             </div>
           ) : (
-            <form onSubmit={handleForgotPasswordSubmit} className="space-y-4">
+            <form onSubmit={handleForgotPasswordSubmit} className="space-y-4 relative z-10">
               <div className="space-y-1">
-                <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F7973] font-bold">
-                  {t("REGISTERED EMAIL ADDRESS / ইমেইল ঠিকানা")}
+                <label className="block text-[11px] font-mono uppercase text-stone-600 font-bold tracking-wider">
+                  {t("Registered Email Address", "নিবন্ধিত ইমেইল")}
                 </label>
                 <div className="relative">
                   <input
@@ -211,20 +289,20 @@ export const Auth: React.FC = () => {
                     required
                     value={forgotEmail}
                     onChange={(e) => setForgotEmail(e.target.value)}
-                    placeholder="E.G. USER@HOST.COM"
-                    className="w-full bg-[#E9FDFD]/30 border border-[#6F7973]/30 pl-9 pr-3 py-3 rounded-lg text-xs focus:outline-none focus:border-[#003E2C] hover:border-[#6F7973]/50 transition-colors font-mono uppercase tracking-wider"
+                    placeholder="user@patowary.com"
+                    className="w-full bg-white/90 border border-stone-300 pl-10 pr-3 py-3 rounded-xl text-xs focus:outline-none focus:border-[#0A1E54] focus:ring-2 focus:ring-[#0A1E54]/10 transition-all font-sans"
                   />
-                  <Mail className="w-4 h-4 absolute left-3 top-3.5 text-[#6F7973]" />
+                  <Mail className="w-4 h-4 absolute left-3 top-3.5 text-stone-400" />
                 </div>
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-[#003E2C] text-white hover:bg-[#CBF23D] hover:text-[#0C1E1F] text-xs font-mono tracking-widest font-extrabold uppercase py-3.5 rounded-lg flex items-center justify-center gap-1.5 cursor-pointer shadow-lg active:scale-98 transition-all"
+                className="w-full bg-[#0A1E54] hover:bg-[#1A3070] text-white text-xs font-bold uppercase tracking-wider py-3.5 rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all active:scale-[0.99]"
               >
-                {loading ? "TRANSMITTING..." : "SEND RESET CODE"}
-                <ArrowRight className="w-4 h-4" />
+                <span>{loading ? t("Sending...", "পাঠানো হচ্ছে...") : t("Send Reset Link", "রিসেট লিংক পাঠান")}</span>
+                <ArrowRight className="w-4 h-4 text-[#C9A66B]" />
               </button>
 
               <button
@@ -233,9 +311,9 @@ export const Auth: React.FC = () => {
                   setIsForgotPasswordMode(false);
                   setErrorMsg(null);
                 }}
-                className="w-full py-2 text-center text-xs text-[#003E2C] hover:underline font-mono uppercase font-bold tracking-widest block"
+                className="w-full text-center text-xs text-[#0A1E54] hover:underline font-semibold block pt-2 cursor-pointer"
               >
-                &larr; {t("BACK TO SIGN IN / ফিরে যান")}
+                &larr; {t("Back to Sign In", "ফিরে যান")}
               </button>
             </form>
           )}
@@ -245,228 +323,317 @@ export const Auth: React.FC = () => {
   }
 
   return (
-    <div id="auth-portal-view" className="bg-[#E9FDFD] min-h-screen py-16 flex items-center justify-center font-sans selection:bg-[#003E2C] selection:text-white">
-      <div className="max-w-md w-full mx-4 bg-white border border-[#6F7973]/30 p-8 rounded-2xl shadow-xl space-y-6 relative overflow-hidden">
+    <div id="auth-portal-view" className="min-h-screen py-12 sm:py-16 flex items-center justify-center font-sans text-left px-4 bg-gradient-to-b from-[#F8F3EA] via-[#efe8da] to-[#F8F3EA] relative">
+      {/* Background ambient lighting */}
+      <div className="absolute top-10 left-1/4 w-72 h-72 bg-[#C9A66B]/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-10 right-1/4 w-72 h-72 bg-[#0A1E54]/10 rounded-full blur-3xl pointer-events-none" />
+
+      {/* Main Glassmorphism Card */}
+      <div className="max-w-md w-full glass-panel border border-white/80 p-6 sm:p-9 rounded-3xl shadow-2xl relative overflow-hidden backdrop-blur-xl bg-white/85">
         
-        {/* Visual colored top accent bar from the requested palette */}
-        <div className="absolute top-0 left-0 right-0 h-2 bg-[#003E2C]" />
+        {/* Subtle decorative glass glow line */}
+        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#0A1E54] via-[#C9A66B] to-[#0A1E54]" />
 
         {/* Brand identity header */}
-        <div className="text-center space-y-2">
-          <Fingerprint className="w-10 h-10 text-[#003E2C] mx-auto animate-pulse" />
-          <h2 className="text-xl font-serif font-extrabold tracking-[0.1em] text-[#0C1E1F] uppercase leading-none">
-            {isLognMode ? "GUILD ACCESS" : "SIGN UP MEMBERSHIP"}
+        <div className="text-center space-y-2 mb-6">
+          <div className="w-16 h-16 rounded-full overflow-hidden mx-auto shadow-md border-2 border-[#C9A66B]/60 bg-white p-1">
+            <img
+              src={OFFICIAL_LOGO_URL}
+              alt="Patowary Fashion Logo"
+              className="w-full h-full object-contain"
+              referrerPolicy="no-referrer"
+            />
+          </div>
+          <h2 className="text-2xl font-serif font-bold text-[#0A1E54] tracking-tight">
+            Patowary Fashion
           </h2>
-          <span className="text-[10px] bg-[#CBF23D] text-[#0C1E1F] py-1 px-3 text-[9px] font-mono tracking-widest font-bold uppercase rounded-full inline-block mt-1">
-            {isLognMode ? "Secure Authentication Access" : "Create Private Digital Vault Code"}
-          </span>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0A1E54]/5 border border-[#0A1E54]/10">
+            <Sparkles className="w-3 h-3 text-[#C9A66B]" />
+            <span className="text-[10px] font-mono tracking-widest text-[#0A1E54] uppercase font-bold">
+              {t("OFFICIAL CLIENT PORTAL", "অফিসিয়াল ক্লায়েন্ট পোর্টাল")}
+            </span>
+          </div>
+        </div>
+
+        {/* Swipe Toggle Segmented Slider */}
+        <div className="relative bg-stone-100/90 p-1 rounded-2xl flex border border-stone-200/80 mb-6 shadow-inner">
+          <motion.div
+            className="absolute top-1 bottom-1 rounded-xl bg-[#0A1E54] shadow-md"
+            initial={false}
+            animate={{
+              left: authMode === 'login' ? '4px' : '50%',
+              right: authMode === 'login' ? '50%' : '4px',
+            }}
+            transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+          />
+
+          <button
+            type="button"
+            onClick={() => switchMode('login')}
+            className={`relative z-10 flex-1 py-2.5 text-xs font-mono font-bold tracking-wider uppercase transition-colors cursor-pointer text-center ${
+              authMode === 'login' ? 'text-white' : 'text-stone-600 hover:text-[#0A1E54]'
+            }`}
+          >
+            {t("SIGN IN", "সাইন ইন")}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => switchMode('register')}
+            className={`relative z-10 flex-1 py-2.5 text-xs font-mono font-bold tracking-wider uppercase transition-colors cursor-pointer text-center ${
+              authMode === 'register' ? 'text-white' : 'text-stone-600 hover:text-[#0A1E54]'
+            }`}
+          >
+            {t("REGISTER", "রেজিস্টার")}
+          </button>
         </div>
 
         {/* Dynamic Error display */}
         {errorMsg && (
-          <div className="bg-rose-50 border border-rose-200 rounded-lg p-3.5 text-xs text-rose-900 flex gap-2 items-start font-medium leading-relaxed">
-            <AlertTriangle className="w-4.5 h-4.5 shrink-0 text-rose-600 mt-0.5" />
+          <div className="mb-4 bg-rose-50 border border-rose-200 rounded-xl p-3 text-xs text-rose-900 flex gap-2 items-start font-medium leading-relaxed">
+            <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600 mt-0.5" />
             <span>{errorMsg}</span>
           </div>
         )}
 
-        {/* Form elements */}
-        <form onSubmit={handleAuthSubmit} className="space-y-4">
-          
-          {/* For Sign-up: Display Username input field */}
-          {!isLognMode && (
-            <div className="space-y-1">
-              <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F7973] font-extrabold">
-                {t("NOMINAL PROFILE NAME / আপনার নাম")}
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  required
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="E.G. MAHAFUZUR RAHAMAN"
-                  className="w-full bg-[#E9FDFD]/30 border border-[#6F7973]/30 pl-9 pr-3 py-3 rounded-lg text-xs focus:outline-none focus:border-[#003E2C] hover:border-[#6F7973]/50 transition-colors font-mono uppercase tracking-wider"
-                />
-                <User className="w-4 h-4 absolute left-3 top-3.5 text-[#6F7973]" />
-              </div>
-            </div>
-          )}
+        {/* Swipeable Animated Form Area */}
+        <div className="relative overflow-hidden min-h-[300px]">
+          <AnimatePresence mode="wait" custom={slideDirection}>
+            {authMode === 'login' ? (
+              <motion.div
+                key="login-form"
+                custom={slideDirection}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                className="w-full space-y-4"
+              >
+                <form onSubmit={handleAuthSubmit} className="space-y-4">
+                  {/* Email */}
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-mono uppercase text-stone-600 font-bold tracking-wider">
+                      {t("Email Address", "ইমেইল ঠিকানা")}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="user@patowary.com"
+                        className="w-full bg-white border border-stone-300 pl-10 pr-3 py-3 rounded-xl text-xs focus:outline-none focus:border-[#0A1E54] focus:ring-2 focus:ring-[#0A1E54]/10 transition-all font-sans"
+                      />
+                      <Mail className="w-4 h-4 absolute left-3 top-3.5 text-stone-400" />
+                    </div>
+                  </div>
 
-          {/* Email coordinate input */}
-          <div className="space-y-1">
-            <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F7973] font-extrabold">
-              {t("EMAIL COORDINATE / ইমেইল ঠিকানা")}
-            </label>
-            <div className="relative">
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="E.G. USER@KIYOMI.COM"
-                className="w-full bg-[#E9FDFD]/30 border border-[#6F7973]/30 pl-9 pr-3 py-3 rounded-lg text-xs focus:outline-none focus:border-[#003E2C] hover:border-[#6F7973]/50 transition-colors font-mono uppercase tracking-wider"
-              />
-              <Mail className="w-4 h-4 absolute left-3 top-3.5 text-[#6F7973]" />
-            </div>
-          </div>
+                  {/* Password */}
+                  <div className="space-y-1">
+                    <div className="flex justify-between items-center">
+                      <label className="block text-[11px] font-mono uppercase text-stone-600 font-bold tracking-wider">
+                        {t("Password", "পাসওয়ার্ড")}
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setIsForgotPasswordMode(true)}
+                        className="text-[11px] text-[#0A1E54] hover:underline font-semibold cursor-pointer"
+                      >
+                        {t("Forgot Password?", "পাসওয়ার্ড ভুলে গেছেন?")}
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type="password"
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full bg-white border border-stone-300 pl-10 pr-3 py-3 rounded-xl text-xs focus:outline-none focus:border-[#0A1E54] focus:ring-2 focus:ring-[#0A1E54]/10 transition-all font-sans"
+                      />
+                      <Lock className="w-4 h-4 absolute left-3 top-3.5 text-stone-400" />
+                    </div>
+                  </div>
 
-          {/* Password secure block input */}
-          <div className="space-y-1">
-            <div className="flex justify-between items-center">
-              <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F7973] font-extrabold">
-                {t("SECURE ACCESS PASSWORD / পাসওয়ার্ড")}
-              </label>
-              {isLognMode && (
-                <button
-                  type="button"
-                  onClick={() => setIsForgotPasswordMode(true)}
-                  className="text-[9px] text-[#003E2C] hover:underline font-mono font-bold tracking-widest uppercase cursor-pointer"
-                >
-                  {t("Forgot Password? / পাসওয়ার্ড ভুলে গেছেন?")}
-                </button>
-              )}
-            </div>
-            <div className="relative">
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="******"
-                className="w-full bg-[#E9FDFD]/30 border border-[#6F7973]/30 pl-9 pr-3 py-3 rounded-lg text-xs focus:outline-none focus:border-[#003E2C] hover:border-[#6F7973]/50 transition-colors font-mono tracking-widest text-lg"
-              />
-              <Lock className="w-4 h-4 absolute left-3 top-3.5 text-[#6F7973]" />
-            </div>
-          </div>
+                  {/* Submit button */}
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-[#0A1E54] hover:bg-[#1A3070] text-white text-xs font-bold uppercase tracking-wider py-3.5 rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all active:scale-[0.99] mt-2"
+                  >
+                    <span>{loading ? t("Authenticating...", "যাচাই করা হচ্ছে...") : t("SIGN IN", "সাইন ইন")}</span>
+                    <ArrowRight className="w-4 h-4 text-[#C9A66B]" />
+                  </button>
+                </form>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="register-form"
+                custom={slideDirection}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                className="w-full space-y-4"
+              >
+                <form onSubmit={handleAuthSubmit} className="space-y-3.5">
+                  {/* Full Name */}
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-mono uppercase text-stone-600 font-bold tracking-wider">
+                      {t("Full Name", "আপনার পুরো নাম")}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        required
+                        value={displayName}
+                        onChange={(e) => setDisplayName(e.target.value)}
+                        placeholder="e.g. Tanvir Ahmed"
+                        className="w-full bg-white border border-stone-300 pl-10 pr-3 py-2.5 rounded-xl text-xs focus:outline-none focus:border-[#0A1E54] focus:ring-2 focus:ring-[#0A1E54]/10 transition-all font-sans"
+                      />
+                      <User className="w-4 h-4 absolute left-3 top-3 text-stone-400" />
+                    </div>
+                  </div>
 
-          {/* If REGISTERING: Confirm Password block input + PASSWORD RULES LIST */}
-          {!isLognMode && (
-            <>
-              <div className="space-y-1">
-                <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F7973] font-bold">
-                  {t("CONFIRM PASSWORD / পাসওয়ার্ড নিশ্চিত করুন")}
-                </label>
-                <div className="relative">
-                  <input
-                    type="password"
-                    required
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="******"
-                    className="w-full bg-[#E9FDFD]/30 border border-[#6F7973]/30 pl-9 pr-3 py-3 rounded-lg text-xs focus:outline-none focus:border-[#003E2C] hover:border-[#6F7973]/50 transition-colors font-mono tracking-widest text-lg"
-                  />
-                  <Lock className="w-4 h-4 absolute left-3 top-3.5 text-[#6F7973]" />
-                </div>
-              </div>
+                  {/* Email */}
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-mono uppercase text-stone-600 font-bold tracking-wider">
+                      {t("Email Address", "ইমেইল ঠিকানা")}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="user@patowary.com"
+                        className="w-full bg-white border border-stone-300 pl-10 pr-3 py-2.5 rounded-xl text-xs focus:outline-none focus:border-[#0A1E54] focus:ring-2 focus:ring-[#0A1E54]/10 transition-all font-sans"
+                      />
+                      <Mail className="w-4 h-4 absolute left-3 top-3 text-stone-400" />
+                    </div>
+                  </div>
 
-              {/* Password strength checklist block - visually designed to look extremely premium */}
-              <div className="p-3 bg-[#E9FDFD]/50 border border-[#6F7973]/15 rounded-lg space-y-1.5 font-mono text-[9px] text-stone-700">
-                <span className="block text-[8px] text-[#003E2C] uppercase tracking-widest font-extrabold mb-1">
-                  🔑 {t("SYSTEM RULES TO REGISTER / পাসওয়ার্ডের নিয়মাবলী:")}
-                </span>
-                
-                <div className="flex items-center gap-1.5">
-                  {ruleMinLength ? (
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 stroke-[3]" />
-                  ) : (
-                    <X className="w-3.5 h-3.5 text-rose-500 shrink-0 stroke-[3]" />
-                  )}
-                  <span className={ruleMinLength ? "text-emerald-700" : "text-stone-550"}>
-                    {t("Must be at least 8 characters / অন্তত ৮ অক্ষর")}
-                  </span>
-                </div>
+                  {/* Password */}
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-mono uppercase text-stone-600 font-bold tracking-wider">
+                      {t("Password", "পাসওয়ার্ড")}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="password"
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full bg-white border border-stone-300 pl-10 pr-3 py-2.5 rounded-xl text-xs focus:outline-none focus:border-[#0A1E54] focus:ring-2 focus:ring-[#0A1E54]/10 transition-all font-sans"
+                      />
+                      <Lock className="w-4 h-4 absolute left-3 top-3 text-stone-400" />
+                    </div>
+                  </div>
 
-                <div className="flex items-center gap-1.5">
-                  {ruleUppercase ? (
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 stroke-[3]" />
-                  ) : (
-                    <X className="w-3.5 h-3.5 text-rose-500 shrink-0 stroke-[3]" />
-                  )}
-                  <span className={ruleUppercase ? "text-emerald-700" : "text-stone-550"}>
-                    {t("At least one Uppercase letter / অন্তত ১টি বড় হাতের অক্ষর A-Z")}
-                  </span>
-                </div>
+                  {/* Confirm Password */}
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-mono uppercase text-stone-600 font-bold tracking-wider">
+                      {t("Confirm Password", "পাসওয়ার্ড নিশ্চিত করুন")}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="password"
+                        required
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full bg-white border border-stone-300 pl-10 pr-3 py-2.5 rounded-xl text-xs focus:outline-none focus:border-[#0A1E54] focus:ring-2 focus:ring-[#0A1E54]/10 transition-all font-sans"
+                      />
+                      <Lock className="w-4 h-4 absolute left-3 top-3 text-stone-400" />
+                    </div>
+                  </div>
 
-                <div className="flex items-center gap-1.5">
-                  {ruleLowercase ? (
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 stroke-[3]" />
-                  ) : (
-                    <X className="w-3.5 h-3.5 text-rose-500 shrink-0 stroke-[3]" />
-                  )}
-                  <span className={ruleLowercase ? "text-emerald-700" : "text-stone-550"}>
-                    {t("At least one Lowercase letter / অন্তত ১টি ছোট হাতের অক্ষর a-z")}
-                  </span>
-                </div>
+                  {/* Password strength checklist */}
+                  <div className="bg-stone-50 border border-stone-200/80 rounded-xl p-2.5 space-y-1 text-[10px] font-mono">
+                    <div className={`flex items-center gap-1.5 ${ruleMinLength ? 'text-emerald-700' : 'text-stone-400'}`}>
+                      {ruleMinLength ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
+                      <span>8+ characters</span>
+                    </div>
+                    <div className={`flex items-center gap-1.5 ${ruleUppercase && ruleLowercase ? 'text-emerald-700' : 'text-stone-400'}`}>
+                      {ruleUppercase && ruleLowercase ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
+                      <span>Uppercase & Lowercase letters</span>
+                    </div>
+                    <div className={`flex items-center gap-1.5 ${ruleDigit && ruleSpecial ? 'text-emerald-700' : 'text-stone-400'}`}>
+                      {ruleDigit && ruleSpecial ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
+                      <span>Number & Special character (!@#$)</span>
+                    </div>
+                  </div>
 
-                <div className="flex items-center gap-1.5">
-                  {ruleDigit ? (
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 stroke-[3]" />
-                  ) : (
-                    <X className="w-3.5 h-3.5 text-rose-500 shrink-0 stroke-[3]" />
-                  )}
-                  <span className={ruleDigit ? "text-emerald-700" : "text-stone-550"}>
-                    {t("At least one Numeric digit / অন্তত ১টি সংখ্যা 0-9")}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-1.5">
-                  {ruleSpecial ? (
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 stroke-[3]" />
-                  ) : (
-                    <X className="w-3.5 h-3.5 text-rose-500 shrink-0 stroke-[3]" />
-                  )}
-                  <span className={ruleSpecial ? "text-emerald-700" : "text-stone-550"}>
-                    {t("At least one Special character / অন্তত ১টি বিশেষ চিহ্ন; e.g. @, #, $, %")}
-                  </span>
-                </div>
-              </div>
-            </>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-[#003E2C] hover:bg-[#CBF23D] hover:text-[#0C1E1F] text-[#FFFFFF] text-xs font-mono tracking-[0.15em] font-extrabold uppercase py-3.5 rounded-lg flex items-center justify-center gap-1.5 cursor-pointer shadow-md transition-all active:scale-98"
-          >
-            {loading ? "AUTHENTICATING..." : isLognMode ? t("SIGN IN / প্রবেশ করুন") : t("CREATE DISPATCH KEY / রেজিস্ট্রেশন করুন")} 
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </form>
-
-        <div className="relative flex py-1 items-center">
-          <div className="flex-grow border-t border-stone-200"></div>
-          <span className="flex-shrink mx-3 text-stone-400 font-mono text-[8px] tracking-widest uppercase">OR CONNECT WITH</span>
-          <div className="flex-grow border-t border-stone-200"></div>
+                  {/* Register Submit button */}
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-[#0A1E54] hover:bg-[#1A3070] text-white text-xs font-bold uppercase tracking-wider py-3.5 rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all active:scale-[0.99] mt-2"
+                  >
+                    <span>{loading ? t("Registering...", "রেজিস্টার করা হচ্ছে...") : t("CREATE ACCOUNT", "রেজিস্টার করুন")}</span>
+                    <ArrowRight className="w-4 h-4 text-[#C9A66B]" />
+                  </button>
+                </form>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
-        {/* Google Authentication quick bypass */}
-        <button
-          onClick={handleGoogleSignInClick}
-          disabled={loading}
-          className="w-full bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-sans text-sm py-3 px-4 rounded-md flex items-center justify-center gap-3 transition-all cursor-pointer shadow-sm active:scale-98"
-        >
-          <Chrome className="w-5 h-5 text-slate-600" />
-          <span className="font-medium">Sign in with Google</span>
-        </button>
+        {/* Social Authentication: Google & Facebook */}
+        <div className="space-y-3 pt-4 border-t border-stone-200/80 mt-4">
+          <div className="relative flex items-center justify-center">
+            <span className="bg-white/90 px-3 text-[10px] text-stone-400 uppercase font-mono tracking-wider">
+              {t("OR CONNECT WITH", "অথবা সোশ্যাল দিয়ে লগইন করুন")}
+            </span>
+          </div>
 
-        {/* Switch forms mode block */}
-        <div className="text-center pt-2 border-t border-stone-100">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            {/* Google Sign In */}
+            <button
+              type="button"
+              onClick={handleGoogleSignInClick}
+              disabled={loading}
+              className="bg-white hover:bg-stone-50 text-stone-800 border border-stone-300/80 text-xs font-semibold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer active:scale-[0.98]"
+            >
+              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+                <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+              </svg>
+              <span className="truncate">Google</span>
+            </button>
+
+            {/* Facebook Sign In */}
+            <button
+              type="button"
+              onClick={handleFacebookSignInClick}
+              disabled={loading}
+              className="bg-[#1877F2] hover:bg-[#166fe5] text-white text-xs font-semibold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer active:scale-[0.98]"
+            >
+              <Facebook className="w-4 h-4 fill-white text-[#1877F2] shrink-0" />
+              <span className="truncate">Facebook</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Bottom Switch Note */}
+        <div className="pt-4 text-center text-xs text-stone-600">
+          <span>{authMode === 'login' ? t("Don't have an account?", "অ্যাকাউন্ট নেই?") : t("Already have an account?", "আগে থেকেই অ্যাকাউন্ট আছে?")} </span>
           <button
-            onClick={() => {
-              setIsLognMode(!isLognMode);
-              setErrorMsg(null);
-            }}
-            className="text-xs font-serif text-[#003E2C] hover:text-[#0C1E1F] underline font-bold focus:outline-none cursor-pointer"
+            type="button"
+            onClick={() => switchMode(authMode === 'login' ? 'register' : 'login')}
+            className="text-[#0A1E54] font-bold hover:underline cursor-pointer ml-1 inline-flex items-center gap-1"
           >
-            {isLognMode ? t("New Customer? Create your account / নতুন অ্যাকাউন্ট খুলুন") : t("Already registered? Sign in / লগইন করুন")}
+            {authMode === 'login' ? t("Create one now", "নতুন অ্যাকাউন্ট খুলুন") : t("Sign In here", "সাইন ইন করুন")}
           </button>
         </div>
 
-        <div className="text-center">
-          <span className="text-[8px] font-mono text-[#6F7973] flex items-center justify-center gap-1 uppercase select-none">
-            <Info className="w-3.5 h-3.5 text-amber-600 shrink-0 animate-bounce" /> Account synced securely with server-side gateway.
-          </span>
+        {/* Security badge */}
+        <div className="mt-4 pt-3 border-t border-stone-200/50 flex items-center justify-center gap-2 text-[10px] text-stone-400 font-mono">
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+          <span>{t("256-BIT ENCRYPTED FIREBASE AUTHENTICATION", "২৫৬-বিট এনক্রিপ্টেড ফায়ারবেস অথেনটিকেশন")}</span>
         </div>
 
       </div>

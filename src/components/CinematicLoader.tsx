@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { OFFICIAL_LOGO_URL } from './BrandLogo';
 
 export const CinematicLoader: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const [progress, setProgress] = useState(0);
@@ -13,11 +14,10 @@ export const CinematicLoader: React.FC<{ onComplete: () => void }> = ({ onComple
           clearInterval(interval);
           return 100;
         }
-        // Rapid initially, matching professional loader behaviors
-        const increment = prev < 50 ? Math.random() * 8 + 4 : Math.random() * 4 + 2;
+        const increment = prev < 50 ? Math.random() * 8 + 5 : Math.random() * 5 + 3;
         return Math.min(prev + increment, 100);
       });
-    }, 45);
+    }, 40);
 
     return () => clearInterval(interval);
   }, []);
@@ -31,7 +31,7 @@ export const CinematicLoader: React.FC<{ onComplete: () => void }> = ({ onComple
 
       const completeTimer = setTimeout(() => {
         onComplete();
-      }, 950); // High-fidelity transition timing
+      }, 950);
 
       return () => {
         clearTimeout(exitTimer);
@@ -48,32 +48,29 @@ export const CinematicLoader: React.FC<{ onComplete: () => void }> = ({ onComple
           initial={{ opacity: 1 }}
           exit={{ 
             opacity: 0,
-            scale: 1.08,
-            filter: 'brightness(1.5)',
+            scale: 1.05,
             transition: { duration: 0.65, ease: [0.25, 1, 0.5, 1] } 
           }}
-          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#050D0E] select-none overflow-hidden"
+          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#0A1E54] select-none overflow-hidden"
           style={{ 
             perspective: '1200px',
             willChange: 'opacity, transform'
           }}
         >
-          {/* Hardware-Accelerated Ambient Glow Underlay */}
+          {/* Subtle Ambient Glow Underlay */}
           <div 
-            className="absolute inset-0 bg-radial-gradient from-cyan-950/20 via-[#050D0E] to-[#04090A] pointer-events-none" 
+            className="absolute inset-0 bg-radial-gradient from-[#1A3070]/60 via-[#0A1E54] to-[#061233] pointer-events-none" 
             style={{ transform: 'translateZ(0)' }}
           />
 
-          {/* Thin Glowing High-Tech Background Guideline Matrix */}
+          {/* Thin Gold Guideline Matrix */}
           <div className="absolute inset-0 opacity-15 pointer-events-none">
-            {/* Horizontal Line Grid */}
-            <div className="absolute top-[30%] left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#54a8fc]/40 to-transparent" />
-            <div className="absolute top-[50%] left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#54a8fc]/60 to-transparent" />
-            <div className="absolute top-[70%] left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#54a8fc]/40 to-transparent" />
-            {/* Vertical Line Grid */}
-            <div className="absolute left-[25%] top-0 h-full w-[1px] bg-gradient-to-b from-transparent via-[#54a8fc]/30 to-transparent" />
-            <div className="absolute left-[50%] top-0 h-full w-[1px] bg-gradient-to-b from-transparent via-[#54a8fc]/50 to-transparent" />
-            <div className="absolute left-[75%] top-0 h-full w-[1px] bg-gradient-to-b from-transparent via-[#54a8fc]/30 to-transparent" />
+            <div className="absolute top-[30%] left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#C9A66B]/50 to-transparent" />
+            <div className="absolute top-[50%] left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#C9A66B]/70 to-transparent" />
+            <div className="absolute top-[70%] left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#C9A66B]/50 to-transparent" />
+            <div className="absolute left-[25%] top-0 h-full w-[1px] bg-gradient-to-b from-transparent via-[#C9A66B]/30 to-transparent" />
+            <div className="absolute left-[50%] top-0 h-full w-[1px] bg-gradient-to-b from-transparent via-[#C9A66B]/50 to-transparent" />
+            <div className="absolute left-[75%] top-0 h-full w-[1px] bg-gradient-to-b from-transparent via-[#C9A66B]/30 to-transparent" />
           </div>
 
           {/* Interactive perspective stage */}
@@ -90,8 +87,8 @@ export const CinematicLoader: React.FC<{ onComplete: () => void }> = ({ onComple
               id="cinematic-3d-emblem-card"
               initial={{ rotateY: -180, rotateX: 20, scale: 0.85 }}
               animate={{ 
-                rotateY: [180, 0, -10, 0],
-                rotateX: [20, -10, 5, -5],
+                rotateY: [180, 0, -8, 0],
+                rotateX: [20, -8, 4, 0],
                 scale: 1,
               }}
               transition={{ 
@@ -99,76 +96,85 @@ export const CinematicLoader: React.FC<{ onComplete: () => void }> = ({ onComple
                 ease: [0.25, 1, 0.5, 1],
                 times: [0, 0.6, 0.85, 1]
               }}
-              className="relative w-72 h-44 sm:w-80 sm:h-48 rounded-2xl p-5 flex flex-col justify-between overflow-visible"
+              className="relative w-80 h-52 sm:w-96 sm:h-56 rounded-3xl p-6 flex flex-col justify-between overflow-visible"
               style={{
                 transformStyle: 'preserve-3d',
-                backgroundColor: 'rgba(18, 30, 32, 0.45)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)',
+                backgroundColor: 'rgba(26, 48, 112, 0.45)',
+                border: '1px solid rgba(201, 166, 107, 0.25)',
+                boxShadow: '0 30px 60px -12px rgba(0, 0, 0, 0.7), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)',
+                backdropFilter: 'blur(16px)',
                 willChange: 'transform'
               }}
             >
               {/* Backing Depth Sheet inside Card */}
               <div 
-                className="absolute inset-[1px] rounded-2xl bg-gradient-to-br from-cyan-950/25 via-[#0c1e1f]/35 to-black/80 -z-10 pointer-events-none"
+                className="absolute inset-[1px] rounded-3xl bg-gradient-to-br from-[#1A3070]/40 via-[#0A1E54]/60 to-[#061233]/90 -z-10 pointer-events-none"
                 style={{ transform: 'translateZ(-10px)' }}
               />
 
               {/* Top Row: Brand Info */}
               <div className="flex justify-between items-start">
                 <div>
-                  <span className="text-[8px] font-mono font-bold tracking-widest text-[#54a8fc] uppercase block">
-                    GUILD CODE / VERIFIED
+                  <span className="text-[8px] font-mono font-bold tracking-[0.25em] text-[#C9A66B] uppercase block">
+                    PATOWARY FASHION
                   </span>
-                  <span className="text-[10px] font-mono tracking-widest text-[#CBF23D] block font-semibold mt-1">
-                    SYS-2026.K
+                  <span className="text-[9px] font-mono tracking-widest text-[#F8F3EA]/70 block mt-0.5">
+                    AUTONOMOUS STREETWEAR &bull; 2026
                   </span>
                 </div>
-                <div className="flex gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#54a8fc] animate-ping" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#54a8fc]" />
+                <div className="flex gap-1.5 items-center">
+                  <span className="w-2 h-2 rounded-full bg-[#C9A66B] animate-ping" />
+                  <span className="w-2 h-2 rounded-full bg-[#C9A66B]" />
                 </div>
               </div>
 
-              {/* Core Display: KIYOMI (Preserves physical 3D float) */}
+              {/* Core Display: Patowary Fashion with Official Logo */}
               <div 
-                className="my-auto text-center"
+                className="my-auto text-center flex flex-col items-center"
                 style={{ 
                   transform: 'translateZ(35px)', 
                   transformStyle: 'preserve-3d',
                   willChange: 'transform' 
                 }}
               >
-                <h1 className="text-4xl sm:text-[42px] font-bold tracking-[0.25em] text-white font-serif select-none drop-shadow-lg leading-none">
-                  KIYOMI
+                <div className="w-14 h-14 rounded-full overflow-hidden mb-2.5 border-2 border-[#C9A66B] bg-white p-0.5 shadow-xl shadow-black/50">
+                  <img
+                    src={OFFICIAL_LOGO_URL}
+                    alt="Patowary Fashion Official Logo"
+                    className="w-full h-full object-contain rounded-full"
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
+                <h1 className="text-xl sm:text-2xl font-bold tracking-[0.18em] text-[#F8F3EA] font-serif select-none drop-shadow-md leading-none uppercase">
+                  Patowary Fashion
                 </h1>
-                <div className="h-[1px] w-12 bg-[#CBF23D] mx-auto mt-2.5 opacity-80" />
+                <div className="h-[1.5px] w-16 bg-gradient-to-r from-transparent via-[#C9A66B] to-transparent mx-auto mt-2" />
               </div>
 
               {/* Bottom Row: Specs */}
               <div className="flex justify-between items-end">
-                <span className="text-[8px] font-mono text-zinc-400 uppercase tracking-widest">
-                  EST. 2026 DHAKA
+                <span className="text-[8px] font-mono text-[#F8F3EA]/60 uppercase tracking-widest">
+                  DHAKA, BANGLADESH
                 </span>
-                <span className="text-[8px] font-mono text-[#54a8fc] tracking-widest font-bold">
+                <span className="text-[9px] font-mono text-[#C9A66B] tracking-widest font-bold">
                   {Math.round(progress)}% LOADED
                 </span>
               </div>
 
-              {/* FRONT TRANSLUCENT GLASS PANEL (Creates a stunning 3D shadow/glass parallax) */}
+              {/* Front Glass Panel */}
               <div 
-                className="absolute inset-0 rounded-2xl pointer-events-none"
+                className="absolute inset-0 rounded-3xl pointer-events-none"
                 style={{
                   transform: 'translateZ(45px)',
                   border: '1px solid rgba(255, 255, 255, 0.15)',
-                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
-                  boxShadow: 'inset 0 1px 1px 0 rgba(255, 255, 255, 0.15)',
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%)',
+                  boxShadow: 'inset 0 1px 1px 0 rgba(255, 255, 255, 0.2)',
                   willChange: 'transform'
                 }}
               />
             </motion.div>
 
-            {/* Glowing Ring floating horizontally under the card (Perspective depth) */}
+            {/* Glowing Accent Ring floating horizontally */}
             <motion.div
               initial={{ opacity: 0, scale: 0.6, rotateX: 75, rotateZ: 0 }}
               animate={{ 
@@ -181,39 +187,27 @@ export const CinematicLoader: React.FC<{ onComplete: () => void }> = ({ onComple
                 repeat: Infinity,
                 ease: "linear"
               }}
-              className="absolute -bottom-8 w-44 h-44 rounded-full border border-dashed border-[#54a8fc]/40 pointer-events-none"
+              className="absolute -bottom-8 w-44 h-44 rounded-full border border-dashed border-[#C9A66B]/50 pointer-events-none"
               style={{
                 transformStyle: 'preserve-3d',
                 transform: 'rotateX(75deg) translateZ(-50px)',
                 willChange: 'transform, opacity'
               }}
             />
-
-            {/* Additional fast hardware-rendered particles orbit for immersive UX */}
-            <div className="absolute inset-0 pointer-events-none -z-10 overflow-visible" style={{ transformStyle: 'preserve-3d' }}>
-              <div 
-                className="absolute w-2 h-2 rounded-full bg-[#CBF23D] shadow-[0_0_8px_#CBF23D] animate-ping"
-                style={{ transform: 'translateX(-120px) translateY(-50px) translateZ(20px)' }}
-              />
-              <div 
-                className="absolute w-1.5 h-1.5 rounded-full bg-[#54a8fc] shadow-[0_0_8px_#54a8fc]"
-                style={{ transform: 'translateX(130px) translateY(80px) translateZ(-10px)' }}
-              />
-            </div>
           </div>
 
-          {/* Premium Tech Progress Loading Bar */}
-          <div className="absolute bottom-16 sm:bottom-20 w-48 sm:w-56 flex flex-col items-center gap-2 pointer-events-none">
-            <div className="w-full h-[2px] bg-zinc-900 rounded-full overflow-hidden relative">
+          {/* Progress Loading Bar */}
+          <div className="absolute bottom-16 sm:bottom-20 w-48 sm:w-64 flex flex-col items-center gap-2 pointer-events-none">
+            <div className="w-full h-[2.5px] bg-[#1A3070] rounded-full overflow-hidden relative">
               <motion.div 
-                className="h-full bg-gradient-to-r from-[#54a8fc] via-cyan-400 to-[#CBF23D]"
+                className="h-full bg-gradient-to-r from-[#1A3070] via-[#C9A66B] to-[#F8F3EA]"
                 style={{ width: `${progress}%` }}
                 transition={{ ease: 'easeOut' }}
               />
             </div>
-            <div className="flex justify-between w-full font-mono text-[7px] text-zinc-500 tracking-[0.18em] uppercase">
-              <span>PROT.LAUNCH.V1</span>
-              <span>SECURE ENTRY</span>
+            <div className="flex justify-between w-full font-mono text-[8px] text-[#F8F3EA]/70 tracking-[0.2em] uppercase">
+              <span>INITIALIZING</span>
+              <span>PATOWARY 2026</span>
             </div>
           </div>
         </motion.div>

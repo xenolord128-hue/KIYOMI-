@@ -28,9 +28,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [discountPercentage, setDiscountPercentage] = useState(0);
   const [promoError, setPromoError] = useState<string | null>(null);
 
-  // Load from local storage on mount
+  // Load from local storage
   useEffect(() => {
-    const storedCart = localStorage.getItem('KIYOMI_premium_cart') || localStorage.getItem('dorax_premium_cart');
+    const storedCart = localStorage.getItem('patowary_cart');
     if (storedCart) {
       try {
         setCartItems(JSON.parse(storedCart));
@@ -40,15 +40,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  // Sync to local storage on changes
   const saveCart = (items: CartItem[]) => {
     setCartItems(items);
-    localStorage.setItem('KIYOMI_premium_cart', JSON.stringify(items));
+    localStorage.setItem('patowary_cart', JSON.stringify(items));
   };
 
   const addToCart = (product: Product, variant: string, quantity = 1) => {
-    if (product.outOfStock.includes(variant)) {
-      alert(`Variant ${variant} is out of stock`);
+    if (product.outOfStock && product.outOfStock.includes(variant)) {
+      alert(`Variant ${variant} is currently out of stock`);
       return;
     }
 
@@ -63,7 +62,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       updatedCart.push({ product, selectedVariant: variant, quantity });
     }
     saveCart(updatedCart);
-    setIsOpen(true); // Open the cart drawer immediately for luxury click validation
   };
 
   const removeFromCart = (productId: number, variant: string) => {
@@ -89,17 +87,17 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const applyPromo = (code: string) => {
     const trimmed = code.trim().toUpperCase();
-    if (trimmed === 'KIYOMIVIP' || trimmed === 'DORAXVIP') {
+    if (trimmed === 'PATOWARY10' || trimmed === 'WELCOME10') {
       setPromoCode(trimmed);
-      setDiscountPercentage(20); // 20% Off for VIP elements
+      setDiscountPercentage(10);
       setPromoError(null);
-    } else if (trimmed === 'STREETWEEK') {
+    } else if (trimmed === 'PATOWARYVIP' || trimmed === 'PATOWARY20') {
       setPromoCode(trimmed);
-      setDiscountPercentage(15); // 15% Off
+      setDiscountPercentage(20);
       setPromoError(null);
-    } else if (trimmed === 'FREE100') {
+    } else if (trimmed === 'STREET15') {
       setPromoCode(trimmed);
-      setDiscountPercentage(10); // 10% Off
+      setDiscountPercentage(15);
       setPromoError(null);
     } else {
       setPromoError('INVALID OR EXPIRED PROMO CODE');
@@ -118,13 +116,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsOpen(prev => !prev);
   };
 
-  // Luxury calculations
   const totalBeforeDiscount = cartItems.reduce(
     (sum, item) => sum + item.product.price * item.quantity, 0
   );
   
-  // Custom threshold for Free delivery (e.g. 5000 BDT)
-  const deliveryCharge = totalBeforeDiscount === 0 ? 0 : totalBeforeDiscount >= 5000 ? 0 : 150;
+  // Free delivery threshold: 3500 BDT
+  const deliveryCharge = totalBeforeDiscount === 0 ? 0 : totalBeforeDiscount >= 3500 ? 0 : 100;
 
   const totalPrice = Math.max(
     0,
@@ -148,7 +145,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         applyPromo,
         clearCart,
         setIsOpen,
-        toggleCart
+        toggleCart,
       }}
     >
       {children}
@@ -158,6 +155,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 export const useCart = () => {
   const context = useContext(CartContext);
-  if (!context) throw new Error("useCart must be used inside CartProvider");
+  if (!context) {
+    throw new Error('useCart must be used within a CartProvider');
+  }
   return context;
 };

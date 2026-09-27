@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Flame, Sparkles, AlertCircle } from 'lucide-react';
+import { X, Flame, Sparkles, Tag } from 'lucide-react';
 import { db } from '../lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 
 export const NoticeBoard: React.FC = () => {
   const [isVisible, setIsVisible] = useState(true);
   const [announcements, setAnnouncements] = useState<string[]>([
-    "KIYOMI BANGLADESH: ENJOY FREE COURIER FOR ALL ORDERS ABOVE BDT 5000",
-    "ENTER PROMOCODE [KIYOMIVIP] FOR 20% OFF AT CHECKOUT",
-    "RESTOCKED: EXCLUSIVE HEAVYWEIGHT OVERSIZED STREET HOODIES NOW ACTIVE"
+    "PATOWARY FASHION • ENJOY FREE EXPRESS DELIVERY FOR ORDERS OVER BDT 3500",
+    "USE PROMOCODE [PATOWARY10] FOR 10% OFF ON ALL STREETWEAR",
+    "NEW DROP: HEAVYWEIGHT BAGGY CARGO PANTS & 260 GSM OVERSIZED TEES"
   ]);
   const [index, setIndex] = useState(0);
 
@@ -20,8 +20,8 @@ export const NoticeBoard: React.FC = () => {
         setAnnouncements([docSnap.data().message]);
         setIndex(0);
       }
-    }, (err) => {
-      console.log("No custom admin announcement, using defaults.");
+    }, () => {
+      // Use defaults
     });
     return () => unsub();
   }, []);
@@ -37,31 +37,31 @@ export const NoticeBoard: React.FC = () => {
   if (!isVisible) return null;
 
   return (
-    <div id="notice-board-wrapper" className="bg-big-stone text-seashell border-b border-cascade/10 py-2.5 px-4 relative flex items-center justify-between text-[10px] sm:text-[11px] font-mono tracking-[0.2em] uppercase selection:bg-lime-neon selection:text-big-stone">
+    <div id="notice-board-wrapper" className="bg-[#0A1E54] text-[#F8F3EA] border-b border-[#1A3070] py-2 px-4 relative flex items-center justify-between text-[10px] sm:text-xs font-medium tracking-wider uppercase">
       <div className="w-full flex justify-center items-center overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div
             key={index}
-            initial={{ y: 15, opacity: 0 }}
+            initial={{ y: 12, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -15, opacity: 0 }}
-            transition={{ duration: 0.4 }}
-            className="flex items-center gap-2 font-semibold"
+            exit={{ y: -12, opacity: 0 }}
+            transition={{ duration: 0.35 }}
+            className="flex items-center gap-2 font-medium"
           >
-            {index === 0 ? <Flame className="w-3.5 h-3.5 text-lime-neon animate-pulse" /> : 
-             index === 1 ? <Sparkles className="w-3.5 h-3.5 text-lime-neon" /> : 
-             <AlertCircle className="w-3.5 h-3.5 text-cascade" />}
+            {index === 0 ? <Flame className="w-3.5 h-3.5 text-[#C9A66B] animate-pulse" /> : 
+             index === 1 ? <Tag className="w-3.5 h-3.5 text-[#C9A66B]" /> : 
+             <Sparkles className="w-3.5 h-3.5 text-[#C9A66B]" />}
             <span>{announcements[index]}</span>
           </motion.div>
         </AnimatePresence>
       </div>
       <button 
         id="close-notice-btn"
-        className="text-seashell/75 hover:text-lime-neon transition-colors p-1 cursor-pointer md:absolute md:right-4"
+        className="text-white/60 hover:text-white transition-colors p-1 cursor-pointer md:absolute md:right-4"
         onClick={() => setIsVisible(false)}
         aria-label="Dismiss announcement"
       >
-        <X className="w-4 h-4" />
+        <X className="w-3.5 h-3.5" />
       </button>
     </div>
   );

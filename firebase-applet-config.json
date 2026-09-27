@@ -1,10 +1,9 @@
 {
-  "projectId": "commanding-pager-v07pf",
-  "appId": "1:858297187398:web:915fe8542550a83515de47",
-  "apiKey": "AIzaSyBTw0NAA5HsHLiXamGphvi6tpi2OV990HI",
-  "authDomain": "commanding-pager-v07pf.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-c8b1228c-4262-4cb9-a7fb-6e146ef79c3d",
-  "storageBucket": "commanding-pager-v07pf.firebasestorage.app",
-  "messagingSenderId": "858297187398",
-  "measurementId": ""
+  "projectId": "patowary-130b2",
+  "appId": "1:46020954854:web:17acd52c9d3a70cf188927",
+  "apiKey": "AIzaSyDK13MJ6rO6PN3Z7siPdQqLIL6czkGyjCE",
+  "authDomain": "patowary-130b2.firebaseapp.com",
+  "storageBucket": "patowary-130b2.firebasestorage.app",
+  "messagingSenderId": "46020954854",
+  "measurementId": "G-P2G6R9BJ7Z"
 }
