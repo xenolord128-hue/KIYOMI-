@@ -125,9 +125,13 @@ export default function App() {
                     <Route path="/brand" element={<BrandPortfolio />} />
                     <Route path="/portfolio" element={<BrandPortfolio />} />
                     <Route path="/privacy" element={<PrivacyPolicy />} />
+                    <Route path="/privacy/" element={<PrivacyPolicy />} />
                     <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                    <Route path="/privacy-policy/" element={<PrivacyPolicy />} />
                     <Route path="/terms" element={<TermsOfService />} />
+                    <Route path="/terms/" element={<TermsOfService />} />
                     <Route path="/terms-of-service" element={<TermsOfService />} />
+                    <Route path="/terms-of-service/" element={<TermsOfService />} />
                     <Route path="*" element={<Home />} />
                   </Routes>
                 </main>

@@ -538,11 +538,6 @@ All products are subject to stock availability during high-demand limited drops.
         </div>
       </div>
 
-      {/* Footer copyright */}
-      <footer className="text-center py-8 text-xs font-mono text-stone-500 border-t border-stone-300/50">
-        © 2026 <strong className="text-[#0A1E54] font-bold">Patowary Fashion</strong>. All rights reserved.
-      </footer>
-
     </div>
   );
 };
