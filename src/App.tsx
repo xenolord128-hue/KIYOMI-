@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { HashRouter, Routes, Route } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 
 // Import Contexts
 import { LanguageProvider } from './contexts/LanguageContext';
@@ -29,6 +29,8 @@ import { Wishlist } from './pages/Wishlist';
 import { Profile } from './pages/Profile';
 import { Search } from './pages/Search';
 import { BrandPortfolio } from './pages/BrandPortfolio';
+import { PrivacyPolicy } from './pages/PrivacyPolicy';
+import { TermsOfService } from './pages/TermsOfService';
 import { useLanguage } from './contexts/LanguageContext';
 
 const FloatingButtons: React.FC = () => {
@@ -70,6 +72,17 @@ const FloatingButtons: React.FC = () => {
   );
 };
 
+const HashMigration: React.FC = () => {
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (window.location.hash.startsWith('#/')) {
+      const targetPath = window.location.hash.slice(1);
+      navigate(targetPath, { replace: true });
+    }
+  }, [navigate]);
+  return null;
+};
+
 export default function App() {
   const [initLoading, setInitLoading] = useState(true);
 
@@ -82,7 +95,8 @@ export default function App() {
       <AuthProvider>
         <WishlistProvider>
           <CartProvider>
-            <HashRouter>
+            <BrowserRouter>
+              <HashMigration />
               <div className="flex flex-col min-h-screen bg-[#F8F3EA] text-[#111827] relative selection:bg-[#0A1E54] selection:text-[#F8F3EA]">
                 
                 {/* Central Premium Header */}
@@ -110,6 +124,11 @@ export default function App() {
                     <Route path="/search" element={<Search />} />
                     <Route path="/brand" element={<BrandPortfolio />} />
                     <Route path="/portfolio" element={<BrandPortfolio />} />
+                    <Route path="/privacy" element={<PrivacyPolicy />} />
+                    <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                    <Route path="/terms" element={<TermsOfService />} />
+                    <Route path="/terms-of-service" element={<TermsOfService />} />
+                    <Route path="*" element={<Home />} />
                   </Routes>
                 </main>
   
@@ -117,7 +136,7 @@ export default function App() {
                 <Footer />
   
               </div>
-            </HashRouter>
+            </BrowserRouter>
           </CartProvider>
         </WishlistProvider>
       </AuthProvider>

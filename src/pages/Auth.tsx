@@ -630,8 +630,20 @@ export const Auth: React.FC = () => {
           </button>
         </div>
 
+        {/* Terms and Privacy policy note */}
+        <div className="mt-3 text-center text-[10px] text-stone-500 font-sans leading-normal">
+          <span>{t("By continuing, you agree to our", "চলিয়ে যাওয়ার মাধ্যমে আপনি আমাদের")} </span>
+          <Link to="/terms" className="text-[#0A1E54] font-semibold underline hover:text-[#C9A66B]">
+            {t("Terms of Service", "শর্তাবলী")}
+          </Link>
+          <span> {t("and", "ও")} </span>
+          <Link to="/privacy" className="text-[#0A1E54] font-semibold underline hover:text-[#C9A66B]">
+            {t("Privacy Policy", "প্রাইভেসি পলিসি")}
+          </Link>
+        </div>
+
         {/* Security badge */}
-        <div className="mt-4 pt-3 border-t border-stone-200/50 flex items-center justify-center gap-2 text-[10px] text-stone-400 font-mono">
+        <div className="mt-3 pt-2.5 border-t border-stone-200/50 flex items-center justify-center gap-2 text-[10px] text-stone-400 font-mono">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
           <span>{t("256-BIT ENCRYPTED FIREBASE AUTHENTICATION", "২৫৬-বিট এনক্রিপ্টেড ফায়ারবেস অথেনটিকেশন")}</span>
         </div>

@@ -184,10 +184,12 @@ export const Footer: React.FC = () => {
           <span>© {new Date().getFullYear()} Patowary Fashion. All rights reserved.</span>
         </div>
         
-        <div className="flex items-center gap-6 uppercase text-[11px]">
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 uppercase text-[11px]">
           <Link to="/products" className="hover:text-[#C9A66B] transition-colors">Shop All</Link>
           <Link to="/menu" className="hover:text-[#C9A66B] transition-colors">Catalog Menu</Link>
           <Link to="/track-order" className="hover:text-[#C9A66B] transition-colors">Track Order</Link>
+          <Link to="/privacy" className="hover:text-[#C9A66B] transition-colors">Privacy Policy</Link>
+          <Link to="/terms" className="hover:text-[#C9A66B] transition-colors">Terms of Service</Link>
           <Link to="/admin" className="hover:text-[#C9A66B] transition-colors flex items-center gap-1 font-semibold text-[#C9A66B]">
             <Lock className="w-3 h-3" /> Admin Portal
           </Link>
