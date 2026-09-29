@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import { 
   Lock, 
@@ -14,12 +14,16 @@ import {
   CheckCircle,
   Sliders,
   ChevronRight,
-  Award
+  Award,
+  Bell,
+  Sparkles,
+  Tag
 } from 'lucide-react';
 import { playCinematicIntroSound } from '../utils/voiceUtils';
 import { motion, AnimatePresence } from 'motion/react';
 import { OFFICIAL_LOGO_URL } from '../components/BrandLogo';
 import { sendFormViaEmailJS } from '../lib/emailjs';
+import { updatePageSEO } from '../utils/seoUtils';
 
 const sparkles = [
   { width: 2, deg: 25, duration: 11 },
@@ -39,10 +43,34 @@ const sparkles = [
 export const Profile: React.FC = () => {
   const { user, isAdmin, logout, updateProfile } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { locale, toggleLanguage, t } = useLanguage();
 
+  const getTabFromPath = (path: string): 'history' | 'settings' | 'autofill' | 'notifications' => {
+    if (path.includes('/settings')) return 'settings';
+    if (path.includes('/addresses')) return 'autofill';
+    if (path.includes('/notifications')) return 'notifications';
+    return 'history';
+  };
+
   // Active Profile Section tab selection
-  const [activeTab, setActiveTab] = useState<'history' | 'settings' | 'autofill'>('history');
+  const [activeTab, setActiveTab] = useState<'history' | 'settings' | 'autofill' | 'notifications'>(
+    getTabFromPath(location.pathname)
+  );
+
+  useEffect(() => {
+    const newTab = getTabFromPath(location.pathname);
+    setActiveTab(newTab);
+    if (newTab === 'settings') {
+      updatePageSEO('Account Settings | Patowary Fashion');
+    } else if (newTab === 'autofill') {
+      updatePageSEO('Saved Delivery Addresses | Patowary Fashion');
+    } else if (newTab === 'notifications') {
+      updatePageSEO('Notifications & Drop Alerts | Patowary Fashion');
+    } else {
+      updatePageSEO('My Account & Invoices | Patowary Fashion');
+    }
+  }, [location.pathname]);
 
   // Billing autofill form states
   const [autofillName, setAutofillName] = useState('');
@@ -287,8 +315,16 @@ export const Profile: React.FC = () => {
               </div>
             </div>
 
-            {/* Logout interactive trigger */}
-            <div className="shrink-0 pt-1 w-full sm:w-auto">
+            {/* Admin and Logout interactive triggers */}
+            <div className="shrink-0 pt-1 w-full sm:w-auto flex flex-col sm:flex-row gap-2">
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className="w-full sm:w-auto py-2.5 px-4 rounded-xl bg-[#C9A66B] text-[#0A1E54] hover:bg-[#d8b57b] font-mono text-xs tracking-wider uppercase font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-md active:scale-95"
+                >
+                  <Lock className="w-4 h-4" /> {t("ADMIN TERMINAL", "অ্যাডমিন প্যানেল")}
+                </Link>
+              )}
               <button 
                 onClick={handleSignOutClick}
                 className="w-full sm:w-auto py-2.5 px-4 rounded-xl border border-rose-500/30 text-rose-300 hover:text-white hover:bg-rose-500/20 font-mono text-xs tracking-wider uppercase font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-95"
@@ -309,7 +345,7 @@ export const Profile: React.FC = () => {
               <div className="flex flex-wrap gap-2.5 justify-center">
                 <button
                   onClick={() => {
-                    setActiveTab('history');
+                    navigate('/account');
                     playCinematicIntroSound("Order list loaded.");
                   }}
                   className={`py-2 px-4 rounded-xl font-mono text-xs tracking-wider font-bold uppercase transition-all select-none cursor-pointer flex items-center gap-1.5 active:scale-95 ${
@@ -324,7 +360,7 @@ export const Profile: React.FC = () => {
 
                 <button
                   onClick={() => {
-                    setActiveTab('settings');
+                    navigate('/settings');
                     playCinematicIntroSound("Account details settings toggled.");
                   }}
                   className={`py-2 px-4 rounded-xl font-mono text-xs tracking-wider font-bold uppercase transition-all select-none cursor-pointer flex items-center gap-1.5 active:scale-95 ${
@@ -334,12 +370,12 @@ export const Profile: React.FC = () => {
                   }`}
                 >
                   <Sliders className="w-3.5 h-3.5" />
-                  <span>SETUP</span>
+                  <span>SETTINGS</span>
                 </button>
 
                 <button
                   onClick={() => {
-                    setActiveTab('autofill');
+                    navigate('/addresses');
                     playCinematicIntroSound("Shipping address loaded.");
                   }}
                   className={`py-2 px-4 rounded-xl font-mono text-xs tracking-wider font-bold uppercase transition-all select-none cursor-pointer flex items-center gap-1.5 active:scale-95 ${
@@ -349,7 +385,22 @@ export const Profile: React.FC = () => {
                   }`}
                 >
                   <MapPin className="w-3.5 h-3.5" />
-                  <span>AUTOFILL</span>
+                  <span>ADDRESSES</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    navigate('/notifications');
+                    playCinematicIntroSound("Notifications opened.");
+                  }}
+                  className={`py-2 px-4 rounded-xl font-mono text-xs tracking-wider font-bold uppercase transition-all select-none cursor-pointer flex items-center gap-1.5 active:scale-95 ${
+                    activeTab === 'notifications'
+                      ? 'bg-[#C9A66B] text-[#0A1E54] shadow-md font-bold'
+                      : 'bg-white/10 text-white/80 hover:bg-white/15'
+                  }`}
+                >
+                  <Bell className="w-3.5 h-3.5" />
+                  <span>NOTICES</span>
                 </button>
               </div>
             </div>
@@ -667,6 +718,70 @@ export const Profile: React.FC = () => {
                     <Save className="w-4 h-4 text-[#C9A66B]" /> {t("COMMIT AUTOFILL DATA", "অটোফিল ডাটা সেভ করুন")}
                   </button>
                 </form>
+              </motion.div>
+            )}
+
+            {/* TAB 4: NOTIFICATIONS & VIP ALERTS */}
+            {activeTab === 'notifications' && (
+              <motion.div
+                key="notifications-tab"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                className="glass-panel border border-white rounded-3xl p-6 sm:p-10 shadow-sm space-y-6 text-left"
+              >
+                <div className="flex items-center gap-3 border-b border-stone-200 pb-5">
+                  <div className="p-2.5 bg-[#0A1E54]/10 rounded-xl text-[#0A1E54]">
+                    <Bell className="w-5 h-5 stroke-[2.5]" />
+                  </div>
+                  <div>
+                    <span className="text-[9px] bg-[#C9A66B]/20 text-[#0A1E54] font-bold px-2.5 py-0.5 rounded uppercase tracking-wider font-mono">BROADCAST FEED</span>
+                    <h3 className="text-base sm:text-lg font-serif font-bold text-[#0A1E54] mt-0.5">
+                      {t("VIP DROP NOTICES & DISPATCH ALERTS", "নোটিফিকেশন ও ড্রপ আপডেট")}
+                    </h3>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="p-5 bg-white rounded-2xl border border-[#0A1E54]/10 space-y-2 shadow-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-[#0A1E54] uppercase">
+                        <Tag className="w-3.5 h-3.5 text-[#C9A66B]" />
+                        EXCLUSIVE 10% DISCOUNT CODE
+                      </span>
+                      <span className="text-[10px] font-mono text-stone-400">ACTIVE</span>
+                    </div>
+                    <p className="text-xs text-stone-600">
+                      Use promotional voucher code <strong className="font-mono text-[#0A1E54] bg-[#C9A66B]/20 px-1.5 py-0.5 rounded">PATOWARY10</strong> at checkout to claim 10% instant discount on any cart order.
+                    </p>
+                  </div>
+
+                  <div className="p-5 bg-white rounded-2xl border border-[#0A1E54]/10 space-y-2 shadow-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-[#0A1E54] uppercase">
+                        <Truck className="w-3.5 h-3.5 text-emerald-600" />
+                        FREE EXPRESS COURIER ABOVE ৳2,500
+                      </span>
+                      <span className="text-[10px] font-mono text-emerald-600 font-bold">NATIONWIDE</span>
+                    </div>
+                    <p className="text-xs text-stone-600">
+                      Enjoy complimentary doorstep shipping throughout Bangladesh on all orders totaling ৳2,500 or more.
+                    </p>
+                  </div>
+
+                  <div className="p-5 bg-white rounded-2xl border border-[#0A1E54]/10 space-y-2 shadow-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-[#0A1E54] uppercase">
+                        <Sparkles className="w-3.5 h-3.5 text-[#C9A66B]" />
+                        NEW 260 GSM TEES & CARGO RESTOCK
+                      </span>
+                      <span className="text-[10px] font-mono text-stone-400">RECENT</span>
+                    </div>
+                    <p className="text-xs text-stone-600">
+                      Our Tokyo vintage oversized boxy tees and heavy twill baggy cargos are freshly restocked in sizes M, L, and XL.
+                    </p>
+                  </div>
+                </div>
               </motion.div>
             )}
 

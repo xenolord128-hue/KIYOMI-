@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { playCinematicIntroSound } from '../utils/voiceUtils';
 import { 
   Instagram, 
@@ -18,6 +19,7 @@ import { OFFICIAL_LOGO_URL } from './BrandLogo';
 import { sendFormViaEmailJS } from '../lib/emailjs';
 
 export const Footer: React.FC = () => {
+  const { isAdmin } = useAuth();
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -63,11 +65,11 @@ export const Footer: React.FC = () => {
         {/* Brand Blurb */}
         <div className="md:col-span-5 space-y-6 text-left">
           <div className="flex items-center gap-3">
-            <div className="p-0.5 rounded-full bg-white shadow-sm border border-[#C9A66B]/50">
+            <div className="relative w-12 h-12 rounded-full overflow-hidden ring-2 ring-[#C9A66B] ring-offset-2 ring-offset-[#0A1E54] shadow-md bg-white shrink-0">
               <img
                 src={OFFICIAL_LOGO_URL}
                 alt="Patowary Fashion Logo"
-                className="h-11 w-11 rounded-full object-contain"
+                className="w-full h-full object-cover rounded-full"
                 referrerPolicy="no-referrer"
               />
             </div>
@@ -75,9 +77,6 @@ export const Footer: React.FC = () => {
               <h2 className="text-xl sm:text-2xl font-serif font-bold tracking-tight text-white">
                 Patowary Fashion
               </h2>
-              <span className="text-[10px] font-mono tracking-[0.25em] uppercase text-[#C9A66B]">
-                TRENDING STREETWEAR STORE
-              </span>
             </div>
           </div>
           <p className="text-white/80 text-xs sm:text-sm leading-relaxed font-sans max-w-sm">
@@ -186,13 +185,17 @@ export const Footer: React.FC = () => {
         
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 uppercase text-[11px]">
           <Link to="/products" className="hover:text-[#C9A66B] transition-colors">Shop All</Link>
+          <Link to="/about" className="hover:text-[#C9A66B] transition-colors">About Us</Link>
+          <Link to="/contact" className="hover:text-[#C9A66B] transition-colors">Contact Care</Link>
           <Link to="/menu" className="hover:text-[#C9A66B] transition-colors">Catalog Menu</Link>
           <Link to="/track-order" className="hover:text-[#C9A66B] transition-colors">Track Order</Link>
           <Link to="/privacy" className="hover:text-[#C9A66B] transition-colors">Privacy Policy</Link>
           <Link to="/terms" className="hover:text-[#C9A66B] transition-colors">Terms of Service</Link>
-          <Link to="/admin" className="hover:text-[#C9A66B] transition-colors flex items-center gap-1 font-semibold text-[#C9A66B]">
-            <Lock className="w-3 h-3" /> Admin Portal
-          </Link>
+          {isAdmin && (
+            <Link to="/admin" className="hover:text-[#C9A66B] transition-colors flex items-center gap-1 font-semibold text-[#C9A66B]">
+              <Lock className="w-3 h-3" /> Admin Portal
+            </Link>
+          )}
         </div>
       </div>
     </footer>

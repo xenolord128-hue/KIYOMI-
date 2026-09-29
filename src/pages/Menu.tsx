@@ -31,7 +31,7 @@ export const Menu: React.FC = () => {
       titleBn: "ব্যাগি ও কার্গো প্যান্ট",
       desc: "Heavy twill utility cargos, 6-pocket trousers, wide-leg denim",
       image: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=600",
-      link: "/products?category=Baggy+%26+Cargo+Pants",
+      link: "/category/baggy-cargo-pants",
       num: "01"
     },
     {
@@ -39,7 +39,7 @@ export const Menu: React.FC = () => {
       titleBn: "ওভারসাইজড টি ও পোলো",
       desc: "260 GSM drop-shoulder tees, pique knit polos, boxy drape",
       image: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600",
-      link: "/products?category=Oversized+Tees+%26+Polos",
+      link: "/category/oversized-tees-polos",
       num: "02"
     },
     {
@@ -47,7 +47,7 @@ export const Menu: React.FC = () => {
       titleBn: "হুডি ও সোয়েটশার্ট",
       desc: "420 GSM French Terry double-hooded pullovers, crewneck fleece",
       image: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600",
-      link: "/products?category=Hoodies+%26+Sweatshirts",
+      link: "/category/hoodies-sweatshirts",
       num: "03"
     },
     {
@@ -55,7 +55,7 @@ export const Menu: React.FC = () => {
       titleBn: "উইমেন্স স্ট্রিটওয়্যার",
       desc: "High-waist relaxed trousers, crop boxy tees, fluid silhouettes",
       image: "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=600",
-      link: "/products?category=Women%27s+Collection",
+      link: "/category/womens-collection",
       num: "04"
     },
     {
@@ -63,7 +63,7 @@ export const Menu: React.FC = () => {
       titleBn: "এক্সেসরিজ ও লাইফস্টাইল",
       desc: "Cordura tactical crossbodies, vintage washed dad caps, leather belts",
       image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600",
-      link: "/products?category=Accessories+%26+Lifestyle",
+      link: "/category/accessories-lifestyle",
       num: "05"
     }
   ];
@@ -81,13 +81,15 @@ export const Menu: React.FC = () => {
             <ArrowLeft className="w-4 h-4" /> {t("Back", "পেছনে ফিরুন")}
           </button>
           
-          <Link to="/" className="flex items-center gap-2.5">
-            <img 
-              src={OFFICIAL_LOGO_URL} 
-              alt="Patowary Fashion Logo" 
-              className="w-8 h-8 rounded-full object-contain border border-[#C9A66B]/50 bg-white"
-            />
-            <span className="font-serif font-bold text-[#0A1E54] text-base tracking-tight">
+          <Link to="/" className="flex items-center gap-2.5 group">
+            <div className="relative w-10 h-10 rounded-full overflow-hidden ring-2 ring-[#C9A66B] ring-offset-1 ring-offset-[#F8F3EA] shadow-xs bg-white shrink-0 transition-transform group-hover:scale-105">
+              <img 
+                src={OFFICIAL_LOGO_URL} 
+                alt="Patowary Fashion Logo" 
+                className="w-full h-full object-cover rounded-full"
+              />
+            </div>
+            <span className="font-serif font-bold text-[#0A1E54] text-lg tracking-tight">
               Patowary Fashion
             </span>
           </Link>
@@ -238,18 +240,33 @@ export const Menu: React.FC = () => {
               </div>
             </Link>
 
-            <Link 
-              to="/admin" 
-              className="p-4 rounded-2xl glass-card hover:bg-white flex items-center gap-3 transition-colors"
-            >
-              <div className="w-9 h-9 rounded-xl bg-[#0A1E54]/10 text-[#0A1E54] flex items-center justify-center shrink-0">
-                <Lock className="w-5 h-5 text-[#C9A66B]" />
-              </div>
-              <div>
-                <span className="text-xs font-bold text-[#0A1E54] block">{t("Admin Portal", "অ্যাডমিন পোর্টাল")}</span>
-                <span className="text-[10px] text-stone-500 font-mono">Manage Inventory</span>
-              </div>
-            </Link>
+            {isAdmin ? (
+              <Link 
+                to="/admin" 
+                className="p-4 rounded-2xl glass-card hover:bg-white flex items-center gap-3 transition-colors border border-[#C9A66B]/40"
+              >
+                <div className="w-9 h-9 rounded-xl bg-[#0A1E54] text-[#C9A66B] flex items-center justify-center shrink-0">
+                  <Lock className="w-5 h-5 text-[#C9A66B]" />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-[#0A1E54] block">{t("Admin Terminal", "অ্যাডমিন পোর্টাল")}</span>
+                  <span className="text-[10px] text-[#C9A66B] font-mono font-bold">STORE MANAGEMENT</span>
+                </div>
+              </Link>
+            ) : (
+              <Link 
+                to="/wishlist" 
+                className="p-4 rounded-2xl glass-card hover:bg-white flex items-center gap-3 transition-colors"
+              >
+                <div className="w-9 h-9 rounded-xl bg-[#0A1E54]/10 text-[#0A1E54] flex items-center justify-center shrink-0">
+                  <Heart className="w-5 h-5 text-[#C9A66B]" />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-[#0A1E54] block">{t("Saved Wishlist", "উইশলিস্ট")}</span>
+                  <span className="text-[10px] text-stone-500 font-mono">Saved Streetwear Pieces</span>
+                </div>
+              </Link>
+            )}
           </div>
 
           {/* Official Location Banner */}

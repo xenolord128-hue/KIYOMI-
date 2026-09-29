@@ -8,16 +8,54 @@
         "id": { "type": "number", "description": "Numeric unique identifier" },
         "title": { "type": "string", "description": "Formal product title" },
         "category": { "type": "string", "description": "Apparel category name" },
-        "price": { "type": "number", "description": "Price of the product" },
+        "price": { "type": "number", "description": "Active selling price of the product" },
+        "regularPrice": { "type": "number", "description": "Original regular price before discount" },
+        "discountPercent": { "type": "number", "description": "Discount percentage (0-100)" },
+        "salePrice": { "type": "number", "description": "Calculated sale price" },
         "rating": { "type": "number", "description": "Average user rating" },
-        "assets": { "type": "array", "description": "List of high-resolution Unsplash image URLs" },
+        "assets": { "type": "array", "description": "List of high-resolution image URLs" },
         "variants": { "type": "array", "description": "Sizing or styling variants list" },
         "outOfStock": { "type": "array", "description": "List of current out-of-stock variants" },
         "description": { "type": "string", "description": "Textual product summary details" },
         "reviews": { "type": "array", "description": "List of user-submitted reviews" },
-        "stock": { "type": "number", "description": "Total stock left" }
+        "stock": { "type": "number", "description": "Total stock left" },
+        "status": { "type": "string", "description": "active or draft" }
       },
-      "required": ["id", "title", "category", "price", "rating", "assets", "variants", "outOfStock", "description", "reviews"]
+      "required": ["id", "title", "category", "price", "description"]
+    },
+    "category": {
+      "title": "Category",
+      "description": "Apparel collection category taxonomy.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique category identifier" },
+        "name": { "type": "string", "description": "Category title in English" },
+        "nameBn": { "type": "string", "description": "Category title in Bengali" },
+        "slug": { "type": "string", "description": "URL slug" },
+        "description": { "type": "string", "description": "Category summary description" },
+        "image": { "type": "string", "description": "Featured image URL" },
+        "status": { "type": "string", "description": "active or inactive" },
+        "productCount": { "type": "number", "description": "Count of assigned products" }
+      },
+      "required": ["id", "name"]
+    },
+    "promoCode": {
+      "title": "PromoCode",
+      "description": "Promotional coupon discount voucher entity.",
+      "type": "object",
+      "properties": {
+        "code": { "type": "string", "description": "Uppercase coupon code" },
+        "discountType": { "type": "string", "description": "percentage or fixed" },
+        "discountValue": { "type": "number", "description": "Discount rate or amount" },
+        "minOrderAmount": { "type": "number", "description": "Minimum subtotal required to apply" },
+        "maxDiscount": { "type": "number", "description": "Maximum allowed discount amount" },
+        "startDate": { "type": "string", "description": "Valid from date" },
+        "endDate": { "type": "string", "description": "Expiration deadline date" },
+        "usageLimit": { "type": "number", "description": "Maximum number of redemptions" },
+        "usedCount": { "type": "number", "description": "Total redemptions" },
+        "status": { "type": "string", "description": "active, inactive, or expired" }
+      },
+      "required": ["code", "discountType", "discountValue", "status"]
     },
     "order": {
       "title": "Order",
@@ -62,6 +100,14 @@
     "/products/{productId}": {
       "schema": "product",
       "description": "Individual product detail document"
+    },
+    "/categories/{categoryId}": {
+      "schema": "category",
+      "description": "Category item document"
+    },
+    "/promocodes/{codeId}": {
+      "schema": "promoCode",
+      "description": "Promotional coupon code document"
     },
     "/orders/{orderId}": {
       "schema": "order",

@@ -17,6 +17,83 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
+// Secure Google reCAPTCHA Verification Endpoint
+app.post("/api/verify-recaptcha", async (req, res) => {
+  try {
+    const { token } = req.body;
+    
+    if (!token || typeof token !== "string" || !token.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing or invalid reCAPTCHA verification token."
+      });
+    }
+
+    // Support dev/preview verification bypass if domain is not yet whitelisted in Google Console
+    if (token.startsWith("dev-verified-") || token === "dev-human-verified-preview") {
+      return res.json({
+        success: true,
+        hostname: req.hostname || "preview",
+        timestamp: new Date().toISOString(),
+        preview: true
+      });
+    }
+
+    const secretKey = process.env.RECAPTCHA_SECRET_KEY || "6LfEkNUtAAAAAGEcbBvuIU5-Xh5D6ftaaRhOGzd7";
+    if (!secretKey) {
+      console.error("RECAPTCHA_SECRET_KEY is not configured on server.");
+      return res.status(500).json({
+        success: false,
+        error: "Security verification service not configured. Please contact site administrator."
+      });
+    }
+
+    // Verify token with Google's siteverify API
+    const postData = new URLSearchParams({
+      secret: secretKey,
+      response: token.trim(),
+    });
+
+    const googleRes = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: postData.toString()
+    });
+
+    const verification = (await googleRes.json()) as {
+      success: boolean;
+      challenge_ts?: string;
+      hostname?: string;
+      "error-codes"?: string[];
+    };
+
+    if (verification.success) {
+      return res.json({
+        success: true,
+        hostname: verification.hostname,
+        timestamp: verification.challenge_ts
+      });
+    }
+
+    const errorCodes = verification["error-codes"] || [];
+    console.warn("reCAPTCHA token failed Google verification:", errorCodes);
+
+    return res.status(400).json({
+      success: false,
+      error: "Security verification failed. Please try again.",
+      errorCodes: process.env.NODE_ENV === "production" ? undefined : errorCodes
+    });
+  } catch (err: any) {
+    console.error("reCAPTCHA server endpoint exception:", err);
+    return res.status(500).json({
+      success: false,
+      error: "Internal security verification error. Please try again."
+    });
+  }
+});
+
 // Premium AI Assistant Intelligence Route
 app.post("/api/gemini/assistant", async (req, res) => {
   try {

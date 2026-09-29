@@ -10,6 +10,9 @@ export interface Product {
   title: string;
   category: string;
   price: number;
+  regularPrice?: number;
+  discountPercent?: number;
+  salePrice?: number;
   rating: number;
   assets: string[];
   variants: string[];
@@ -17,6 +20,34 @@ export interface Product {
   description: string;
   reviews: Review[];
   stock?: number;
+  status?: 'active' | 'draft';
+  createdAt?: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  nameBn?: string;
+  slug?: string;
+  description?: string;
+  image?: string;
+  status: 'active' | 'inactive';
+  productCount?: number;
+  createdAt?: string;
+}
+
+export interface PromoCode {
+  code: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: number;
+  minOrderAmount?: number;
+  maxDiscount?: number;
+  startDate?: string;
+  endDate?: string;
+  usageLimit?: number;
+  usedCount?: number;
+  status: 'active' | 'inactive' | 'expired';
+  createdAt?: string;
 }
 
 export interface CartItem {

@@ -10,7 +10,7 @@ interface BrandLogoProps {
 }
 
 export const BrandLogo: React.FC<BrandLogoProps> = ({ 
-  className = "w-10 h-10 object-contain", 
+  className = "w-11 h-11 rounded-full object-cover ring-2 ring-[#C9A66B]/80 shadow-sm", 
   alt = "Official Website Logo",
   onClick 
 }) => {

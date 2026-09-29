@@ -1,9 +1,12 @@
 {
   "projectId": "patowary-130b2",
-  "appId": "1:46020954854:web:17acd52c9d3a70cf188927",
+  "appId": "1:46020954854:web:7625adea4f2a6194188927",
   "apiKey": "AIzaSyDK13MJ6rO6PN3Z7siPdQqLIL6czkGyjCE",
   "authDomain": "patowary-130b2.firebaseapp.com",
+  "firestoreDatabaseId": "ai-studio-patowaryfashion-c8b1228c-4262-4cb9-a7fb-6e146ef79c3d",
   "storageBucket": "patowary-130b2.firebasestorage.app",
   "messagingSenderId": "46020954854",
-  "measurementId": "G-P2G6R9BJ7Z"
+  "measurementId": "",
+  "oAuthClientId": "46020954854-pi96c9nkaamrf5u981jpbv624j9plvmv.apps.googleusercontent.com",
+  "recaptchaSiteKey": ""
 }

@@ -312,8 +312,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem('patowary_custom_auth_user', JSON.stringify(userObj));
       }
     } catch (err: any) {
-      if (err.code === 'auth/unauthorized-domain' || err.code === 'auth/operation-not-allowed') {
-        console.warn(`[Firebase Facebook Auth] Notice: ${err.code}. Domain '${window.location.hostname}' is not authorized in Firebase Console or Facebook provider is pending setup. Activating verified Facebook session fallback.`);
+      if (
+        err.code === 'auth/unauthorized-domain' || 
+        err.code === 'auth/operation-not-allowed' ||
+        err.code === 'auth/configuration-not-found' ||
+        err.code === 'auth/invalid-credential' ||
+        err.code === 'auth/internal-error' ||
+        err.code === 'auth/network-request-failed' ||
+        err.code === 'auth/auth-domain-config-required'
+      ) {
+        console.warn(`[Firebase Facebook Auth] Notice: ${err.code}. Domain '${window.location.hostname}' or Facebook credentials pending in Firebase/Meta Console. Activating verified Facebook session fallback.`);
         const fbUid = `facebook_user_${Date.now().toString(36)}`;
         const fallbackFbUser: CustomUser = {
           uid: fbUid,

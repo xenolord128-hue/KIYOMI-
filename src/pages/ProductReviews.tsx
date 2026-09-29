@@ -7,6 +7,8 @@ import { db } from '../lib/firebase';
 import { doc, onSnapshot, updateDoc, arrayUnion } from 'firebase/firestore';
 import { Product, Review } from '../types';
 import { sendFormViaEmailJS } from '../lib/emailjs';
+import { ReCaptcha } from '../components/ReCaptcha';
+import { verifyRecaptchaToken } from '../utils/recaptcha';
 import { 
   Star, 
   ArrowLeft, 
@@ -45,6 +47,9 @@ export const ProductReviews: React.FC = () => {
   const [revSubmitting, setRevSubmitting] = useState(false);
   const [revError, setRevError] = useState<string | null>(null);
 
+  // reCAPTCHA verification token
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+
   // Filter state
   const [selectedStarFilter, setSelectedStarFilter] = useState<number | 'all'>('all');
 
@@ -75,8 +80,21 @@ export const ProductReviews: React.FC = () => {
     if (revSubmitting) return;
     if (!product || !revName.trim() || !revComment.trim()) return;
 
+    // Enforce Google reCAPTCHA security verification
+    if (!recaptchaToken) {
+      setRevError(t("Please complete the reCAPTCHA security verification below.", "দয়া করে নিচের রিক্যাপচা যাচাইকরণটি সম্পন্ন করুন।"));
+      return;
+    }
+
     setRevSubmitting(true);
     setRevError(null);
+
+    const verification = await verifyRecaptchaToken(recaptchaToken);
+    if (!verification.success) {
+      setRevError(verification.error || t("Security verification failed. Please try again.", "নিরাপত্তা যাচাই ব্যর্থ হয়েছে। পুনরায় চেষ্টা করুন।"));
+      setRevSubmitting(false);
+      return;
+    }
 
     // Send complete review information through EmailJS
     const emailResult = await sendFormViaEmailJS({
@@ -394,6 +412,13 @@ export const ProductReviews: React.FC = () => {
                     className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#0A1E54] text-xs bg-white focus:outline-none resize-none transition-colors"
                   />
                 </div>
+
+                {/* Google reCAPTCHA Security Verification */}
+                <ReCaptcha
+                  onVerify={(tok) => setRecaptchaToken(tok)}
+                  onExpire={() => setRecaptchaToken(null)}
+                  onError={() => setRecaptchaToken(null)}
+                />
 
                 <button
                   type="submit"

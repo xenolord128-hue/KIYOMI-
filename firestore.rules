@@ -10,9 +10,7 @@ service cloud.firestore {
     // Verify if the signed-in user is an administrator
     function isAdmin() {
       return isSignedIn() && (
-        request.auth.token.email == 'lord79915@gmail.com' ||
-        request.auth.token.email == 'xenolord128@gmail.com' ||
-        request.auth.token.email == 'admin@kiyomi.com' ||
+        request.auth.token.email in ['lord79915@gmail.com', 'xenolord128@gmail.com', 'admin@patowary.com'] ||
         request.auth.token.admin == true
       );
     }
@@ -43,6 +41,7 @@ service cloud.firestore {
         && (u.email == null || u.email is string)
         && (u.displayName == null || u.displayName is string)
         && (u.photoURL == null || u.photoURL is string)
+        && (u.role == null || u.role is string)
         && (u.updatedAt == null || u.updatedAt is string);
     }
 
@@ -59,13 +58,30 @@ service cloud.firestore {
         && p.title is string && p.title.size() <= 300
         && p.category is string && p.category.size() <= 100
         && p.price is number && p.price >= 0
+        && (p.regularPrice == null || (p.regularPrice is number && p.regularPrice >= 0))
+        && (p.discountPercent == null || (p.discountPercent is number && p.discountPercent >= 0 && p.discountPercent <= 100))
+        && (p.salePrice == null || (p.salePrice is number && p.salePrice >= 0))
         && (p.rating == null || (p.rating is number && p.rating >= 0 && p.rating <= 5))
         && (p.assets == null || (p.assets is list && p.assets.size() <= 25))
         && (p.variants == null || (p.variants is list && p.variants.size() <= 25))
         && (p.outOfStock == null || (p.outOfStock is list && p.outOfStock.size() <= 25))
         && (p.description == null || (p.description is string && p.description.size() <= 5000))
         && (p.reviews == null || p.reviews is list)
-        && (p.stock == null || (p.stock is number && p.stock >= 0));
+        && (p.stock == null || (p.stock is number && p.stock >= 0))
+        && (p.status == null || (p.status is string && p.status.size() <= 50))
+        && (p.createdAt == null || p.createdAt is string);
+    }
+
+    // --- Categories Collection Validation ---
+    match /categories/{categoryId} {
+      allow get, list: if true;
+      allow create, update, delete: if isSignedIn();
+    }
+
+    // --- Promo Codes Collection Validation ---
+    match /promocodes/{promoId} {
+      allow get, list: if true;
+      allow create, update, delete: if isSignedIn();
     }
 
     // --- Orders Collection Validation ---

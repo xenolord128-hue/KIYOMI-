@@ -8,6 +8,8 @@ import { db } from '../lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
 import { sendFormViaEmailJS } from '../lib/emailjs';
+import { ReCaptcha } from '../components/ReCaptcha';
+import { verifyRecaptchaToken } from '../utils/recaptcha';
 import { 
   CreditCard, 
   MapPin, 
@@ -28,6 +30,9 @@ export const Checkout: React.FC = () => {
   const { user } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
+
+  // reCAPTCHA verification token
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
 
   // Contact States
   const [fullName, setFullName] = useState(() => {
@@ -230,6 +235,20 @@ export const Checkout: React.FC = () => {
     if (cartItems.length === 0) return;
     if (!fullName || !phoneNumber || !shippingAddress) {
       alert("Please complete shipping profile fields");
+      return;
+    }
+
+    // Enforce Google reCAPTCHA security verification
+    if (!recaptchaToken) {
+      setOrderError(t("Please complete the reCAPTCHA security verification before confirming your order.", "অর্ডার নিশ্চিত করার আগে রিক্যাপচা সিকিউরিটি ভেরিফিকেশনটি সম্পন্ন করুন।"));
+      return;
+    }
+
+    setIsOrdering(true);
+    const verification = await verifyRecaptchaToken(recaptchaToken);
+    if (!verification.success) {
+      setOrderError(verification.error || t("Security verification failed. Please try again.", "নিরাপত্তা যাচাই ব্যর্থ হয়েছে। পুনরায় চেষ্টা করুন।"));
+      setIsOrdering(false);
       return;
     }
 
@@ -571,6 +590,15 @@ export const Checkout: React.FC = () => {
                   </div>
                 </div>
               )}
+
+              {/* Google reCAPTCHA Security Verification */}
+              <div className="bg-stone-50/80 border border-stone-200 p-3 rounded-2xl">
+                <ReCaptcha
+                  onVerify={(tok) => setRecaptchaToken(tok)}
+                  onExpire={() => setRecaptchaToken(null)}
+                  onError={() => setRecaptchaToken(null)}
+                />
+              </div>
 
               {/* Order Submit */}
               <button

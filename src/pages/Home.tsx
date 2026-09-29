@@ -27,6 +27,8 @@ import {
 import { NoticeBoard } from '../components/NoticeBoard';
 import { IntroAnimation } from '../components/IntroAnimation';
 import { SocialInfoBar } from '../components/SocialInfoBar';
+import { updatePageSEO } from '../utils/seoUtils';
+import { TrackMyOrder } from '../components/TrackMyOrder';
 
 export const Home: React.FC = () => {
   const { addToCart } = useCart();
@@ -49,6 +51,10 @@ export const Home: React.FC = () => {
 
   // Hero interactive state
   const [heroIndex, setHeroIndex] = useState(0);
+
+  useEffect(() => {
+    updatePageSEO('Patowary Fashion | Premium Streetwear Bangladesh', 'Official Patowary Fashion Store - Heavyweight Baggy Cargo Pants, 260 GSM Oversized Tees, Boxy Polos & Urban Streetwear.');
+  }, []);
 
   // Firestore Sync for products
   useEffect(() => {
@@ -565,6 +571,30 @@ export const Home: React.FC = () => {
             <span>{t("VIEW ALL COLLECTIONS", "সব কালেকশন দেখুন")}</span>
             <ArrowRight className="w-4 h-4 text-[#C9A66B]" />
           </Link>
+        </div>
+      </section>
+
+      {/* Live Order Tracking Section */}
+      <section className="py-8 px-4 sm:px-8 max-w-7xl mx-auto text-left">
+        <div className="bg-[#0A1E54] text-[#F8F3EA] rounded-3xl p-6 sm:p-10 relative overflow-hidden shadow-xl border border-[#C9A66B]/30 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+          <div className="relative z-10 max-w-xl space-y-2">
+            <span className="text-[10px] font-mono tracking-widest text-[#C9A66B] uppercase font-bold flex items-center gap-1.5">
+              <Truck className="w-3.5 h-3.5 text-[#C9A66B]" />
+              LIVE COURIER RADAR
+            </span>
+            <h3 className="text-2xl sm:text-3xl font-serif font-bold text-white">
+              {t("Track Your Order In Real-Time", "অর্ডার লাইভ ট্র্যাক করুন")}
+            </h3>
+            <p className="text-xs text-white/80 leading-relaxed font-sans">
+              {t("Stay informed on parcel packing, handover, and doorstep delivery across 64 districts in Bangladesh.", "পার্সেল প্যাকিং থেকে আপনার হাতে পৌঁছানো পর্যন্ত প্রতিটি আপডেট তাৎক্ষণিক দেখুন।")}
+            </p>
+          </div>
+
+          <div className="relative z-10 w-full lg:w-auto min-w-[300px] sm:min-w-[400px]">
+            <TrackMyOrder compact className="max-w-md ml-auto" />
+          </div>
+
+          <div className="absolute right-0 top-0 w-80 h-80 bg-[#C9A66B]/10 rounded-full blur-3xl pointer-events-none" />
         </div>
       </section>
 

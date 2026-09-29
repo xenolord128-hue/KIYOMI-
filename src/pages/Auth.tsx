@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { playCinematicIntroSound } from '../utils/voiceUtils';
@@ -19,22 +19,37 @@ import {
 } from 'lucide-react';
 import { OFFICIAL_LOGO_URL } from '../components/BrandLogo';
 import { sendFormViaEmailJS } from '../lib/emailjs';
+import { updatePageSEO } from '../utils/seoUtils';
+import { useLocation } from 'react-router-dom';
+import { ReCaptcha } from '../components/ReCaptcha';
+import { verifyRecaptchaToken } from '../utils/recaptcha';
 
 export const Auth: React.FC = () => {
   const { user, login, signup, loginWithGoogle, loginWithFacebook } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Mode state: 'login' | 'register'
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
-  const [slideDirection, setSlideDirection] = useState<number>(1); // 1 = forward (to register), -1 = backward (to login)
-  const [isForgotPasswordMode, setIsForgotPasswordMode] = useState(false);
+  const isInitialRegister = location.pathname.includes('/register');
+  const isInitialForgot = location.pathname.includes('/forgot-password');
+
+  const [authMode, setAuthMode] = useState<'login' | 'register'>(isInitialRegister ? 'register' : 'login');
+  const [slideDirection, setSlideDirection] = useState<number>(isInitialRegister ? 1 : -1);
+  const [isForgotPasswordMode, setIsForgotPasswordMode] = useState(isInitialForgot);
   
   // Input fields
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
+
+  // reCAPTCHA verification token
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+
+  // Social Sign-in Human Verification state
+  const [socialVerificationModal, setSocialVerificationModal] = useState<'google' | 'facebook' | null>(null);
+  const [socialVerificationLoading, setSocialVerificationLoading] = useState(false);
 
   // Forgot password
   const [forgotEmail, setForgotEmail] = useState('');
@@ -44,6 +59,22 @@ export const Auth: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // Sync mode when URL path changes (e.g. browser back/forward)
+  useEffect(() => {
+    if (location.pathname.includes('/register')) {
+      setAuthMode('register');
+      setIsForgotPasswordMode(false);
+      updatePageSEO('Create Account | Patowary Fashion');
+    } else if (location.pathname.includes('/forgot-password')) {
+      setIsForgotPasswordMode(true);
+      updatePageSEO('Reset Password | Patowary Fashion');
+    } else {
+      setAuthMode('login');
+      setIsForgotPasswordMode(false);
+      updatePageSEO('Sign In | Patowary Fashion');
+    }
+  }, [location.pathname]);
+
   // Password rules for registration
   const ruleMinLength = password.length >= 8;
   const ruleUppercase = /[A-Z]/.test(password);
@@ -52,10 +83,17 @@ export const Auth: React.FC = () => {
   const ruleSpecial = /[^A-Za-z0-9]/.test(password);
   const rulesAllPassed = ruleMinLength && ruleUppercase && ruleLowercase && ruleDigit && ruleSpecial;
 
-  // If already logged in, redirect to profile or home
+  const isForAdmin = new URLSearchParams(window.location.search).get('redirect') === '/admin';
+
+  // If already logged in, redirect to requested redirect path or profile
   React.useEffect(() => {
     if (user) {
-      navigate('/profile');
+      const redirect = new URLSearchParams(window.location.search).get('redirect');
+      if (redirect) {
+        navigate(redirect);
+      } else {
+        navigate('/profile');
+      }
     }
   }, [user, navigate]);
 
@@ -63,7 +101,10 @@ export const Auth: React.FC = () => {
     if (newMode === authMode) return;
     setSlideDirection(newMode === 'register' ? 1 : -1);
     setAuthMode(newMode);
+    setIsForgotPasswordMode(false);
     setErrorMsg(null);
+    setRecaptchaToken(null);
+    navigate(newMode === 'register' ? `/register${location.search}` : `/login${location.search}`);
   };
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
@@ -74,6 +115,20 @@ export const Auth: React.FC = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       setErrorMsg(t("Please enter a valid email address", "সঠিক ইমেইল ঠিকানা লিখুন"));
+      setLoading(false);
+      return;
+    }
+
+    // Enforce Google reCAPTCHA security verification
+    if (!recaptchaToken) {
+      setErrorMsg(t("Please complete the reCAPTCHA security verification below", "দয়া করে নিচের রিক্যাপচা সিকিউরিটি ভেরিফিকেশনটি সম্পন্ন করুন"));
+      setLoading(false);
+      return;
+    }
+
+    const verification = await verifyRecaptchaToken(recaptchaToken);
+    if (!verification.success) {
+      setErrorMsg(verification.error || t("Security verification failed. Please try again.", "নিরাপত্তা যাচাই ব্যর্থ হয়েছে। পুনরায় চেষ্টা করুন।"));
       setLoading(false);
       return;
     }
@@ -143,31 +198,58 @@ export const Auth: React.FC = () => {
     }
   };
 
-  const handleGoogleSignInClick = async () => {
+  const executeSocialSignIn = async (provider: 'google' | 'facebook', token: string) => {
+    setSocialVerificationLoading(true);
     setErrorMsg(null);
-    setLoading(true);
     try {
-      await loginWithGoogle();
-      playCinematicIntroSound("Google authentication verified. Welcome to Patowary Fashion.");
+      // 1. Validate reCAPTCHA token with secure backend endpoint first
+      const verification = await verifyRecaptchaToken(token);
+      if (!verification.success) {
+        setErrorMsg(verification.error || t("Human security verification failed. Please try again.", "হিউম্যান ভেরিফিকেশন ব্যর্থ হয়েছে। পুনরায় চেষ্টা করুন।"));
+        setSocialVerificationLoading(false);
+        return;
+      }
+
+      // 2. Only after reCAPTCHA verification succeeds, launch the actual provider authentication
+      setSocialVerificationModal(null);
+      setLoading(true);
+      if (provider === 'google') {
+        await loginWithGoogle();
+        playCinematicIntroSound("Google authentication verified. Welcome to Patowary Fashion.");
+      } else {
+        await loginWithFacebook();
+        playCinematicIntroSound("Facebook authentication verified. Welcome to Patowary Fashion.");
+      }
       navigate('/profile');
     } catch (err: any) {
-      setErrorMsg(err.message || "Google Sign-In failed or popup was closed.");
+      setErrorMsg(err.message || `${provider === 'google' ? 'Google' : 'Facebook'} Sign-In failed or was cancelled.`);
     } finally {
+      setSocialVerificationLoading(false);
       setLoading(false);
+    }
+  };
+
+  const handleGoogleSignInClick = async () => {
+    setErrorMsg(null);
+    if (recaptchaToken) {
+      // Human verification already completed, proceed with Google sign-in
+      await executeSocialSignIn('google', recaptchaToken);
+    } else {
+      // Enforce Google reCAPTCHA human verification before opening Google login
+      setSocialVerificationModal('google');
+      playCinematicIntroSound("Please complete human verification to continue with Google");
     }
   };
 
   const handleFacebookSignInClick = async () => {
     setErrorMsg(null);
-    setLoading(true);
-    try {
-      await loginWithFacebook();
-      playCinematicIntroSound("Facebook authentication verified. Welcome to Patowary Fashion.");
-      navigate('/profile');
-    } catch (err: any) {
-      setErrorMsg(err.message || "Facebook Sign-In failed or popup was closed.");
-    } finally {
-      setLoading(false);
+    if (recaptchaToken) {
+      // Human verification already completed, proceed with Facebook sign-in
+      await executeSocialSignIn('facebook', recaptchaToken);
+    } else {
+      // Enforce Google reCAPTCHA human verification before opening Facebook login
+      setSocialVerificationModal('facebook');
+      playCinematicIntroSound("Please complete human verification to continue with Facebook");
     }
   };
 
@@ -176,6 +258,20 @@ export const Auth: React.FC = () => {
     if (!forgotEmail) return;
     setLoading(true);
     setErrorMsg(null);
+
+    // Enforce Google reCAPTCHA security verification
+    if (!recaptchaToken) {
+      setErrorMsg(t("Please complete the reCAPTCHA security verification below", "দয়া করে নিচের রিক্যাপচা সিকিউরিটি ভেরিফিকেশনটি সম্পন্ন করুন"));
+      setLoading(false);
+      return;
+    }
+
+    const verification = await verifyRecaptchaToken(recaptchaToken);
+    if (!verification.success) {
+      setErrorMsg(verification.error || t("Security verification failed. Please try again.", "নিরাপত্তা যাচাই ব্যর্থ হয়েছে। পুনরায় চেষ্টা করুন।"));
+      setLoading(false);
+      return;
+    }
 
     // Transmit password reset request via EmailJS
     await sendFormViaEmailJS({
@@ -296,6 +392,13 @@ export const Auth: React.FC = () => {
                 </div>
               </div>
 
+              {/* Google reCAPTCHA Verification */}
+              <ReCaptcha
+                onVerify={(tok) => setRecaptchaToken(tok)}
+                onExpire={() => setRecaptchaToken(null)}
+                onError={() => setRecaptchaToken(null)}
+              />
+
               <button
                 type="submit"
                 disabled={loading}
@@ -354,6 +457,21 @@ export const Auth: React.FC = () => {
             </span>
           </div>
         </div>
+
+        {/* Administrator Accreditation Notice if redirected from /admin */}
+        {isForAdmin && (
+          <div className="mb-5 p-3.5 bg-amber-50 border border-amber-300/80 rounded-2xl flex items-start gap-2.5 text-left shadow-xs">
+            <Lock className="w-4 h-4 text-amber-700 mt-0.5 shrink-0" />
+            <div className="text-[11px] leading-tight text-amber-900 font-sans">
+              <span className="font-bold block uppercase tracking-wider text-[10px] text-amber-800 mb-0.5">
+                {t("Administrator Sign-In Required", "অ্যাডমিনিস্ট্রেটর লগইন প্রয়োজন")}
+              </span>
+              <span>
+                {t("To access the Central Store Admin Terminal (/admin), please log in with your authorized store administrator credentials.", "সেন্ট্রাল স্টোর অ্যাডমিন টার্মিনাল (/admin) অ্যাক্সেস করতে আপনার অনুমোদিত স্টোর অ্যাডমিন অ্যাকাউন্টে সাইন ইন করুন।")}
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Swipe Toggle Segmented Slider */}
         <div className="relative bg-stone-100/90 p-1 rounded-2xl flex border border-stone-200/80 mb-6 shadow-inner">
@@ -454,6 +572,13 @@ export const Auth: React.FC = () => {
                       <Lock className="w-4 h-4 absolute left-3 top-3.5 text-stone-400" />
                     </div>
                   </div>
+
+                  {/* Google reCAPTCHA Verification */}
+                  <ReCaptcha
+                    onVerify={(tok) => setRecaptchaToken(tok)}
+                    onExpire={() => setRecaptchaToken(null)}
+                    onError={() => setRecaptchaToken(null)}
+                  />
 
                   {/* Submit button */}
                   <button
@@ -565,6 +690,13 @@ export const Auth: React.FC = () => {
                     </div>
                   </div>
 
+                  {/* Google reCAPTCHA Verification */}
+                  <ReCaptcha
+                    onVerify={(tok) => setRecaptchaToken(tok)}
+                    onExpire={() => setRecaptchaToken(null)}
+                    onError={() => setRecaptchaToken(null)}
+                  />
+
                   {/* Register Submit button */}
                   <button
                     type="submit"
@@ -649,6 +781,75 @@ export const Auth: React.FC = () => {
         </div>
 
       </div>
+
+      {/* Human Verification Modal for Social Sign-In */}
+      {socialVerificationModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="relative w-full max-w-md bg-white border border-[#C9A66B]/50 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5 text-left">
+            <div className="flex items-center justify-between border-b border-stone-150 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-full bg-[#0A1E54] text-[#C9A66B] flex items-center justify-center font-bold">
+                  <ShieldCheck className="w-5 h-5 text-[#C9A66B]" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-serif font-bold text-[#0A1E54]">
+                    {t("Human Verification Required", "হিউম্যান ভেরিফিকেশন প্রয়োজন")}
+                  </h3>
+                  <span className="text-[10px] font-mono text-stone-500 uppercase tracking-wider font-bold">
+                    {socialVerificationModal === 'google' ? 'CONTINUE WITH GOOGLE' : 'CONTINUE WITH FACEBOOK'}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSocialVerificationModal(null)}
+                className="text-stone-400 hover:text-stone-700 p-1.5 rounded-full hover:bg-stone-100 text-sm font-bold cursor-pointer"
+                title="Close"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-stone-600 leading-relaxed font-sans">
+              {t(
+                `Security Rule: Please verify you are human using the Google reCAPTCHA below. Once verified, the official ${socialVerificationModal === 'google' ? 'Google' : 'Facebook'} authentication window will automatically open.`,
+                `নিরাপত্তা নিশ্চিত করতে নিচের 'I am not a robot' যাচাইটি সম্পন্ন করুন। যাচাই সফল হলে স্বয়ংক্রিয়ভাবে ${socialVerificationModal === 'google' ? 'গুগল' : 'ফেসবুক'} লগইন পেজ ওপেন হবে।`
+              )}
+            </p>
+
+            {/* Google reCAPTCHA Widget */}
+            <div className="py-2 flex justify-center bg-stone-50/80 p-4 rounded-2xl border border-stone-200">
+              <ReCaptcha
+                onVerify={(tok) => {
+                  setRecaptchaToken(tok);
+                  executeSocialSignIn(socialVerificationModal, tok);
+                }}
+                onExpire={() => setRecaptchaToken(null)}
+                onError={() => setRecaptchaToken(null)}
+              />
+            </div>
+
+            {socialVerificationLoading && (
+              <div className="flex items-center justify-center gap-2 text-xs font-mono text-[#0A1E54] py-2 bg-[#C9A66B]/15 rounded-xl border border-[#C9A66B]/30 font-bold">
+                <div className="w-4 h-4 border-2 border-[#0A1E54] border-t-transparent rounded-full animate-spin" />
+                <span>{t("Verifying security token with Google server...", "সার্ভারে নিরাপত্তা যাচাই হচ্ছে...")}</span>
+              </div>
+            )}
+
+            <div className="pt-2 border-t border-stone-150 flex items-center justify-between text-[11px] font-mono text-stone-400">
+              <span>Google reCAPTCHA v2 Protected</span>
+              <button
+                type="button"
+                onClick={() => setSocialVerificationModal(null)}
+                className="text-stone-600 hover:text-[#0A1E54] font-bold underline cursor-pointer"
+              >
+                {t("Cancel", "বাতিল")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

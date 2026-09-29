@@ -29,6 +29,8 @@ import { db } from '../lib/firebase';
 import { doc, onSnapshot, updateDoc, arrayUnion } from 'firebase/firestore';
 import { Product, Review } from '../types';
 import { sendFormViaEmailJS } from '../lib/emailjs';
+import { parseProductId } from '../utils/slugUtils';
+import { updatePageSEO } from '../utils/seoUtils';
 
 export const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -37,9 +39,10 @@ export const ProductDetail: React.FC = () => {
   const { t } = useLanguage();
   const { toggleWishlist, isInWishlist } = useWishlist();
 
-  const productId = Number(id);
+  const productId = parseProductId(id) || Number(id);
 
   const [product, setProduct] = useState<Product | null>(() => {
+    if (!productId) return null;
     const localStatic = RAW_PRODUCTS.find(p => p.id === productId);
     if (localStatic) return localStatic;
     
@@ -76,6 +79,15 @@ export const ProductDetail: React.FC = () => {
     }, () => {});
     return () => unsub();
   }, [productId]);
+
+  // Update SEO Title & Meta
+  useEffect(() => {
+    if (product) {
+      updatePageSEO(`${product.title} - ৳${product.price}`, product.description);
+    } else {
+      updatePageSEO('Product Details');
+    }
+  }, [product]);
 
   // Load "Recently Viewed Items"
   useEffect(() => {
