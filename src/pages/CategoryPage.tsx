@@ -21,14 +21,6 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
-const CATEGORY_BENGALI_NAMES: Record<string, string> = {
-  "Baggy & Cargo Pants": "ব্যাগি ও কার্গো প্যান্ট",
-  "Oversized Tees & Polos": "ওভারসাইজড টি ও পোলো",
-  "Hoodies & Sweatshirts": "হুডি ও সোয়েটশার্ট",
-  "Women's Collection": "উইমেন্স কালেকশন",
-  "Accessories & Lifestyle": "এক্সেসরিজ ও লাইফস্টাইল"
-};
-
 const CATEGORY_DESCRIPTIONS: Record<string, string> = {
   "Baggy & Cargo Pants": "Heavy-twill utility trousers, 6-pocket cargo fits, and relaxed skater denim designed for modern urban streetwear.",
   "Oversized Tees & Polos": "260 GSM combed cotton drop-shoulder tees, boxy silhouettes, and knit streetwear polos.",
@@ -136,9 +128,9 @@ export const CategoryPage: React.FC = () => {
         
         {/* Breadcrumb Navigation */}
         <nav className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-stone-500">
-          <Link to="/" className="hover:text-[#0A1E54] transition-colors">{t("Home", "হোম")}</Link>
+          <Link to="/" className="hover:text-[#0A1E54] transition-colors">{t("Home")}</Link>
           <ChevronRight className="w-3.5 h-3.5 text-stone-400" />
-          <Link to="/products" className="hover:text-[#0A1E54] transition-colors">{t("Products", "প্রোডাক্টস")}</Link>
+          <Link to="/products" className="hover:text-[#0A1E54] transition-colors">{t("Products")}</Link>
           <ChevronRight className="w-3.5 h-3.5 text-stone-400" />
           <span className="text-[#0A1E54] font-bold">{categoryName}</span>
         </nav>
@@ -148,27 +140,21 @@ export const CategoryPage: React.FC = () => {
           <div className="relative z-10 max-w-2xl text-left space-y-3">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-[#C9A66B] text-[10px] font-mono tracking-widest uppercase font-bold border border-white/10">
               <Sparkles className="w-3 h-3 text-[#C9A66B]" />
-              <span>{t("CURATED STREETWEAR DROP", "স্ট্রিটওয়্যার কালেকশন")}</span>
+              <span>{t("CURATED STREETWEAR DROP")}</span>
             </div>
             
             <h1 className="text-3xl sm:text-5xl font-serif font-bold tracking-tight text-white">
               {categoryName}
             </h1>
 
-            {CATEGORY_BENGALI_NAMES[categoryName] && (
-              <p className="text-sm sm:text-base font-serif text-[#C9A66B] font-medium">
-                {CATEGORY_BENGALI_NAMES[categoryName]}
-              </p>
-            )}
-
             <p className="text-xs sm:text-sm text-white/80 leading-relaxed font-sans max-w-xl">
-              {CATEGORY_DESCRIPTIONS[categoryName] || t("Discover our handcrafted premium fits designed for everyday luxury and effortless style.", "পাটোয়ারী ফ্যাশনের বিশেষ ট্রেন্ডিং কালেকশন এক্সপ্লোর করুন।")}
+              {CATEGORY_DESCRIPTIONS[categoryName] || t("Discover our handcrafted premium fits designed for everyday luxury and effortless style.")}
             </p>
 
             <div className="pt-2 flex items-center gap-4 text-xs font-mono text-[#C9A66B]">
-              <span>{filteredProducts.length} {t("Products Available", "টি প্রোডাক্ট উপলব্ধ")}</span>
+              <span>{filteredProducts.length} {t("Products Available")}</span>
               <span>•</span>
-              <span>100% {t("Authentic Fabrics", "অরিজিনাল ফেব্রিক")}</span>
+              <span>100% {t("Authentic Fabrics")}</span>
             </div>
           </div>
 
@@ -182,7 +168,7 @@ export const CategoryPage: React.FC = () => {
             to="/products"
             className="px-4 py-2 rounded-full text-xs font-mono tracking-wider whitespace-nowrap bg-white/80 hover:bg-white text-[#0A1E54] border border-[#0A1E54]/10 transition-all shadow-xs"
           >
-            {t("All Products", "সব প্রোডাক্ট")}
+            {t("All Products")}
           </Link>
           {allAvailableCategories.map((cat) => {
             const isActive = cat.slug === categorySlug || cat.name === categoryName;
@@ -196,7 +182,7 @@ export const CategoryPage: React.FC = () => {
                     : 'bg-white/80 hover:bg-white text-[#0A1E54] border border-[#0A1E54]/10'
                 }`}
               >
-                {t(cat.name, CATEGORY_BENGALI_NAMES[cat.name] || cat.name)}
+                {t(cat.name)}
               </Link>
             );
           })}
@@ -206,7 +192,7 @@ export const CategoryPage: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/70 backdrop-blur-sm p-4 rounded-2xl border border-[#0A1E54]/10 shadow-xs">
           <div className="flex items-center gap-4">
             <span className="text-xs font-mono tracking-wider text-stone-500 uppercase">
-              {t("Showing", "দেখাচ্ছে")}: <strong className="text-[#0A1E54]">{filteredProducts.length}</strong> {t("items", "আইটেম")}
+              {t("Showing")}: <strong className="text-[#0A1E54]">{filteredProducts.length}</strong> {t("items")}
             </span>
             <label className="flex items-center gap-2 text-xs font-mono text-[#0A1E54] cursor-pointer">
               <input
@@ -215,22 +201,22 @@ export const CategoryPage: React.FC = () => {
                 onChange={(e) => setFilterStock(e.target.checked)}
                 className="rounded text-[#0A1E54] focus:ring-[#C9A66B]"
               />
-              <span>{t("In Stock Only", "শুধু ইন-স্টক")}</span>
+              <span>{t("In Stock Only")}</span>
             </label>
           </div>
 
           <div className="flex items-center gap-2">
             <SlidersHorizontal className="w-3.5 h-3.5 text-stone-500" />
-            <span className="text-xs font-mono text-stone-500 uppercase">{t("Sort By", "সর্ট")}:</span>
+            <span className="text-xs font-mono text-stone-500 uppercase">{t("Sort By")}:</span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
               className="bg-white border border-stone-200 text-[#0A1E54] text-xs font-medium rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-[#0A1E54]"
             >
-              <option value="featured">{t("Featured", "ফিচার্ড")}</option>
-              <option value="price-asc">{t("Price: Low to High", "দাম: কম থেকে বেশি")}</option>
-              <option value="price-desc">{t("Price: High to Low", "দাম: বেশি থেকে কম")}</option>
-              <option value="rating">{t("Highest Rated", "সর্বোচ্চ রেটিং")}</option>
+              <option value="featured">{t("Featured")}</option>
+              <option value="price-asc">{t("Price: Low to High")}</option>
+              <option value="price-desc">{t("Price: High to Low")}</option>
+              <option value="rating">{t("Highest Rated")}</option>
             </select>
           </div>
         </div>
@@ -242,17 +228,17 @@ export const CategoryPage: React.FC = () => {
               <PackageX className="w-8 h-8" />
             </div>
             <h3 className="text-xl font-serif font-bold text-[#0A1E54]">
-              {t("No products found in this category", "এই ক্যাটাগরিতে কোনো প্রোডাক্ট পাওয়া যায়নি")}
+              {t("No products found in this category")}
             </h3>
             <p className="text-xs text-stone-500 max-w-md mx-auto">
-              {t("We are currently restocking this collection. Check back shortly or browse our full catalogue.", "আমরা শীঘ্রই নতুন স্টক যোগ করছি। অন্যান্য কালেকশন দেখতে পারেন।")}
+              {t("We are currently restocking this collection. Check back shortly or browse our full catalogue.")}
             </p>
             <Link
               to="/products"
               className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#0A1E54] text-[#F8F3EA] text-xs font-mono uppercase tracking-wider hover:bg-[#1A3070] transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              {t("Browse All Products", "সব প্রোডাক্ট দেখুন")}
+              {t("Browse All Products")}
             </Link>
           </div>
         ) : (
@@ -270,10 +256,10 @@ export const CategoryPage: React.FC = () => {
                   transition={{ duration: 0.25 }}
                   className="bg-white rounded-2xl overflow-hidden border border-[#0A1E54]/10 hover:border-[#C9A66B]/50 hover:shadow-lg transition-all duration-300 flex flex-col group relative"
                 >
-                  {/* Image container */}
+                  {/* Image container (4:4 Aspect Ratio) */}
                   <Link
                     to={getProductUrl(product.id, product.title)}
-                    className="relative aspect-3/4 overflow-hidden bg-stone-100 block"
+                    className="relative aspect-square overflow-hidden bg-stone-100 block"
                   >
                     <img
                       src={product.assets[0] || 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=600'}
@@ -285,7 +271,7 @@ export const CategoryPage: React.FC = () => {
                     {/* Stock badge */}
                     {isOut ? (
                       <span className="absolute top-2.5 left-2.5 bg-red-600/90 text-white text-[9px] font-mono tracking-wider uppercase px-2 py-0.5 rounded-md font-bold shadow-xs">
-                        {t("SOLD OUT", "স্টক শেষ")}
+                        {t("SOLD OUT")}
                       </span>
                     ) : product.discountPercent ? (
                       <span className="absolute top-2.5 left-2.5 bg-[#C9A66B] text-white text-[9px] font-mono tracking-wider uppercase px-2 py-0.5 rounded-md font-bold shadow-xs">
@@ -352,7 +338,7 @@ export const CategoryPage: React.FC = () => {
                             : 'bg-[#0A1E54] hover:bg-[#1A3070] text-[#F8F3EA] shadow-xs active:scale-95'
                         }`}
                         aria-label="Add to bag"
-                        title={isOut ? t("Out of stock", "স্টক শেষ") : t("Add to Bag", "ব্যাগে যোগ করুন")}
+                        title={isOut ? t("Out of stock") : t("Add to Bag")}
                       >
                         <ShoppingBag className="w-4 h-4" />
                       </button>

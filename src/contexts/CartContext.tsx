@@ -96,7 +96,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const applyPromo = async (code: string): Promise<boolean> => {
     const trimmed = code.trim().toUpperCase();
     if (!trimmed) {
-      setPromoError('Please enter a coupon code / কুপন কোড লিখুন');
+      setPromoError('Please enter a valid coupon code.');
       return false;
     }
 
@@ -110,7 +110,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // Check if inactive
         if (promo.status === 'inactive') {
-          setPromoError('This promo code is currently disabled / এই কুপন কোডটি নিষ্ক্রিয় রয়েছে');
+          setPromoError('This promo code is currently disabled.');
           setPromoCode('');
           setDiscountPercentage(0);
           setDiscountAmount(0);
@@ -123,7 +123,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Compare with end of day
           deadline.setHours(23, 59, 59, 999);
           if (Date.now() > deadline.getTime()) {
-            setPromoError('This promo code has expired / এই কুপন কোডটির মেয়াদ উত্তীর্ণ হয়েছে');
+            setPromoError('This promo code has expired.');
             setPromoCode('');
             setDiscountPercentage(0);
             setDiscountAmount(0);
@@ -133,7 +133,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // Check minimum order amount
         if (promo.minOrderAmount && totalBeforeDiscount < promo.minOrderAmount) {
-          setPromoError(`Minimum order amount of ৳${promo.minOrderAmount} required / নূন্যতম ৳${promo.minOrderAmount} টাকার অর্ডার প্রয়োজন`);
+          setPromoError(`Minimum order amount of BDT ${promo.minOrderAmount} required.`);
           setPromoCode('');
           setDiscountPercentage(0);
           setDiscountAmount(0);
@@ -177,7 +177,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setPromoError(null);
       return true;
     } else {
-      setPromoError('Invalid or expired promo code / কুপন কোডটি সঠিক নয় বা মেয়াদ উত্তীর্ণ');
+      setPromoError('Invalid or expired coupon code. Please try another code.');
       setDiscountPercentage(0);
       setDiscountAmount(0);
       setPromoCode('');

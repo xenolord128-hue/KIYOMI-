@@ -29,7 +29,7 @@ export const Wishlist: React.FC = () => {
             to="/products"
             className="inline-flex items-center gap-2 text-xs font-mono tracking-wider text-[#0A1E54] uppercase font-bold hover:text-[#1A3070] transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" /> {t("Continue Shopping", "কেনাকাটা চালিয়ে যান")}
+            <ArrowLeft className="w-4 h-4" /> Continue Shopping
           </Link>
         </div>
 
@@ -40,11 +40,11 @@ export const Wishlist: React.FC = () => {
               PATOWARY FASHION
             </span>
             <h1 className="text-2xl sm:text-4xl font-serif font-bold text-[#0A1E54] uppercase mt-1">
-              {t("Saved Fits & Wishlist", "পছন্দের তালিকা")}
+              Saved Fits & Wishlist
             </h1>
           </div>
           <span className="text-xs font-mono text-stone-500">
-            {wishlist.length} {t("ITEMS SAVED", "পণ্য সংরক্ষিত")}
+            {wishlist.length} ITEMS SAVED
           </span>
         </div>
 
@@ -54,16 +54,16 @@ export const Wishlist: React.FC = () => {
               <Heart className="w-8 h-8 fill-rose-200" />
             </div>
             <h3 className="text-base font-bold text-[#0A1E54]">
-              {t("Your Wishlist is Empty", "আপনার পছন্দের তালিকাটি খালি")}
+              Your Wishlist is Empty
             </h3>
             <p className="text-stone-600 text-xs font-sans max-w-sm mx-auto leading-relaxed">
-              {t("Browse our trending baggy pants, oversized tees, hoodies, and accessories to save your favorite fits.", "আমাদের ট্রেন্ডিং স্ট্রিটওয়্যার ব্রাউজ করে পছন্দের পণ্য সেভ করুন।")}
+              Browse our trending baggy pants, oversized tees, hoodies, and accessories to save your favorite fits.
             </p>
             <button
               onClick={() => navigate('/products')}
               className="bg-[#0A1E54] hover:bg-[#1A3070] text-[#F8F3EA] text-xs font-mono tracking-wider uppercase font-bold py-3 px-8 rounded-xl transition-all shadow-sm cursor-pointer"
             >
-              {t("Explore Catalog", "ক্যাটালগ দেখুন")}
+              Explore Catalog
             </button>
           </div>
         ) : (
@@ -73,7 +73,7 @@ export const Wishlist: React.FC = () => {
                 key={product.id}
                 className="glass-card rounded-2xl overflow-hidden flex flex-col justify-between group border border-white hover:border-[#C9A66B]/50 shadow-xs transition-all"
               >
-                <div className="relative aspect-[4/5] bg-stone-100 overflow-hidden">
+                <div className="relative aspect-square bg-stone-100 overflow-hidden">
                   <Link to={`/product/${product.id}`} className="block w-full h-full">
                     <img 
                       src={product.assets[0]} 
@@ -101,7 +101,7 @@ export const Wishlist: React.FC = () => {
                       </Link>
                     </h3>
                     <p className="text-sm font-bold font-mono text-[#0A1E54] mt-2">
-                      ৳ {product.price.toLocaleString()}
+                      BDT {product.price.toLocaleString()}
                     </p>
                   </div>
 
@@ -111,7 +111,7 @@ export const Wishlist: React.FC = () => {
                       className="w-full py-2.5 bg-[#0A1E54] hover:bg-[#1A3070] text-white text-xs font-bold uppercase rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs"
                     >
                       <ShoppingBag className="w-3.5 h-3.5 text-[#C9A66B]" />
-                      <span>{t("Add to Bag", "ব্যাগে যোগ করুন")}</span>
+                      <span>Add to Bag</span>
                     </button>
                   </div>
                 </div>

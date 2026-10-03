@@ -65,7 +65,7 @@ export const CartDrawer: React.FC = () => {
               <div className="flex items-center gap-2.5">
                 <ShoppingBag className="w-5 h-5 text-[#0A1E54]" />
                 <h2 className="text-sm font-mono tracking-wider uppercase font-bold text-[#0A1E54]">
-                  {t("SHOPPING BAG", "শপিং ব্যাগ")} ({cartItems.reduce((acc, i) => acc + i.quantity, 0)})
+                  Shopping Bag ({cartItems.reduce((acc, i) => acc + i.quantity, 0)})
                 </h2>
               </div>
               <button 
@@ -85,10 +85,10 @@ export const CartDrawer: React.FC = () => {
                     <ShoppingBag className="w-8 h-8 text-[#0A1E54]" />
                   </div>
                   <h3 className="text-sm font-bold text-[#0A1E54]">
-                    {t("Your Bag is Empty", "আপনার ব্যাগটি খালি")}
+                    Your Shopping Bag is Empty
                   </h3>
                   <p className="text-xs text-stone-500 max-w-xs">
-                    {t("Explore trending baggy cargo pants, wide-leg denims, and oversized tees.", "ট্রেন্ডিং ব্যাগি কার্গো ও ওভারসাইজড স্ট্রিটওয়্যার ব্রাউজ করুন।")}
+                    Explore trending baggy cargo pants, wide-leg denims, and oversized tees.
                   </p>
                   <button
                     onClick={() => {
@@ -97,7 +97,7 @@ export const CartDrawer: React.FC = () => {
                     }}
                     className="bg-[#0A1E54] hover:bg-[#1A3070] text-white text-xs font-bold uppercase tracking-wider py-3 px-6 rounded-xl transition-all shadow-sm cursor-pointer"
                   >
-                    {t("Shop Collection", "কালেকশন ব্রাউজ করুন")}
+                    Explore Collection
                   </button>
                 </div>
               ) : (
@@ -127,10 +127,10 @@ export const CartDrawer: React.FC = () => {
                           </button>
                         </div>
                         <p className="text-[10px] font-mono text-stone-500 uppercase mt-0.5">
-                          {t("Size:", "সাইজ:")} <span className="font-bold text-[#0A1E54]">{item.selectedVariant}</span>
+                          Size: <span className="font-bold text-[#0A1E54]">{item.selectedVariant}</span>
                         </p>
                         <p className="text-xs font-bold text-[#0A1E54] font-mono mt-1">
-                          ৳ {item.product.price.toLocaleString()}
+                          BDT {item.product.price.toLocaleString()}
                         </p>
                       </div>
 
@@ -154,7 +154,7 @@ export const CartDrawer: React.FC = () => {
                         </div>
 
                         <span className="text-xs font-mono font-bold text-stone-800">
-                          ৳ {(item.product.price * item.quantity).toLocaleString()}
+                          BDT {(item.product.price * item.quantity).toLocaleString()}
                         </span>
                       </div>
                     </div>
@@ -197,25 +197,25 @@ export const CartDrawer: React.FC = () => {
                 {/* Subtotal, delivery, total */}
                 <div className="space-y-1.5 text-xs font-mono">
                   <div className="flex justify-between text-stone-600">
-                    <span>{t("Subtotal", "মোট")}</span>
-                    <span>৳ {totalBeforeDiscount.toLocaleString()}</span>
+                    <span>Subtotal</span>
+                    <span>BDT {totalBeforeDiscount.toLocaleString()}</span>
                   </div>
 
                   {discountPercentage > 0 && (
                     <div className="flex justify-between text-emerald-700 font-semibold">
-                      <span>{t("Discount", "ছাড়")} ({discountPercentage}%)</span>
-                      <span>- ৳ {Math.round(totalBeforeDiscount * (discountPercentage / 100)).toLocaleString()}</span>
+                      <span>Discount ({discountPercentage}%)</span>
+                      <span>- BDT {Math.round(totalBeforeDiscount * (discountPercentage / 100)).toLocaleString()}</span>
                     </div>
                   )}
 
                   <div className="flex justify-between text-stone-600">
-                    <span>{t("Delivery Charge", "ডেলিভারি চার্জ")}</span>
-                    <span>{deliveryCharge === 0 ? <strong className="text-emerald-700">FREE</strong> : `৳ ${deliveryCharge}`}</span>
+                    <span>Delivery Charge</span>
+                    <span>{deliveryCharge === 0 ? <strong className="text-emerald-700">FREE</strong> : `BDT ${deliveryCharge}`}</span>
                   </div>
 
                   <div className="flex justify-between text-sm sm:text-base font-bold text-[#0A1E54] pt-2 border-t border-stone-200">
-                    <span>{t("Total", "সর্বমোট")}</span>
-                    <span>৳ {totalPrice.toLocaleString()}</span>
+                    <span>Total</span>
+                    <span>BDT {totalPrice.toLocaleString()}</span>
                   </div>
                 </div>
 
@@ -223,7 +223,7 @@ export const CartDrawer: React.FC = () => {
                   onClick={handleCheckoutClick}
                   className="w-full bg-[#0A1E54] hover:bg-[#1A3070] text-[#F8F3EA] text-xs font-bold uppercase tracking-wider py-4 rounded-xl flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all cursor-pointer"
                 >
-                  <span>{t("PROCEED TO CHECKOUT", "চেকআউট করুন")}</span>
+                  <span>PROCEED TO CHECKOUT</span>
                   <ArrowRight className="w-4 h-4 text-[#C9A66B]" />
                 </button>
               </div>

@@ -7,8 +7,6 @@ import { db } from '../lib/firebase';
 import { doc, onSnapshot, updateDoc, arrayUnion } from 'firebase/firestore';
 import { Product, Review } from '../types';
 import { sendFormViaEmailJS } from '../lib/emailjs';
-import { ReCaptcha } from '../components/ReCaptcha';
-import { verifyRecaptchaToken } from '../utils/recaptcha';
 import { 
   Star, 
   ArrowLeft, 
@@ -47,9 +45,6 @@ export const ProductReviews: React.FC = () => {
   const [revSubmitting, setRevSubmitting] = useState(false);
   const [revError, setRevError] = useState<string | null>(null);
 
-  // reCAPTCHA verification token
-  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
-
   // Filter state
   const [selectedStarFilter, setSelectedStarFilter] = useState<number | 'all'>('all');
 
@@ -80,21 +75,8 @@ export const ProductReviews: React.FC = () => {
     if (revSubmitting) return;
     if (!product || !revName.trim() || !revComment.trim()) return;
 
-    // Enforce Google reCAPTCHA security verification
-    if (!recaptchaToken) {
-      setRevError(t("Please complete the reCAPTCHA security verification below.", "দয়া করে নিচের রিক্যাপচা যাচাইকরণটি সম্পন্ন করুন।"));
-      return;
-    }
-
     setRevSubmitting(true);
     setRevError(null);
-
-    const verification = await verifyRecaptchaToken(recaptchaToken);
-    if (!verification.success) {
-      setRevError(verification.error || t("Security verification failed. Please try again.", "নিরাপত্তা যাচাই ব্যর্থ হয়েছে। পুনরায় চেষ্টা করুন।"));
-      setRevSubmitting(false);
-      return;
-    }
 
     // Send complete review information through EmailJS
     const emailResult = await sendFormViaEmailJS({
@@ -171,7 +153,7 @@ export const ProductReviews: React.FC = () => {
             to={`/product/${product.id}`}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card hover:bg-white text-xs font-mono tracking-wider text-[#0A1E54] uppercase font-bold transition-all shadow-xs"
           >
-            <ArrowLeft className="w-4 h-4" /> {t("Back to Product", "প্রোডাক্টে ফিরুন")}
+            <ArrowLeft className="w-4 h-4" /> {t("Back to Product")}
           </Link>
 
           <span className="text-[10px] font-mono tracking-widest text-[#0A1E54]/70 uppercase font-bold">
@@ -209,7 +191,7 @@ export const ProductReviews: React.FC = () => {
             to={`/product/${product.id}`}
             className="w-full sm:w-auto px-6 py-3 bg-[#0A1E54] hover:bg-[#1A3070] text-white text-xs font-mono font-bold tracking-wider uppercase rounded-xl transition-all shadow-sm text-center shrink-0"
           >
-            {t("View Product Details", "প্রোডাক্ট বিবরণ দেখুন")}
+            {t("View Product Details")}
           </Link>
         </div>
 
@@ -223,7 +205,7 @@ export const ProductReviews: React.FC = () => {
             <div className="glass-card p-6 rounded-3xl border border-white space-y-4">
               <div className="flex items-center justify-between border-b border-stone-200 pb-3">
                 <h2 className="font-serif font-bold text-lg text-[#0A1E54]">
-                  {t("Authentic Customer Reviews", "আসল গ্রাহকদের মতামত")}
+                  {t("Authentic Customer Reviews")}
                 </h2>
                 <span className="text-[10px] font-mono text-[#0A1E54]/70 uppercase font-bold">
                   GENUINE VERIFIED FEEDBACK
@@ -346,14 +328,14 @@ export const ProductReviews: React.FC = () => {
                   SUBMIT FEEDBACK
                 </span>
                 <h3 className="text-lg font-serif font-bold text-[#0A1E54]">
-                  {t("Write a Genuine Review", "আপনার আসল রিভিউ লিখুন")}
+                  {t("Write a Genuine Review")}
                 </h3>
               </div>
 
               {revSuccess && (
                 <div className="p-3.5 bg-emerald-50 text-emerald-900 border border-emerald-200 rounded-2xl text-xs flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>{t("Thank you! Your review has been submitted and recorded.", "ধন্যবাদ! আপনার রিভিউটি গ্রহণ করা হয়েছে।")}</span>
+                  <span>{t("Thank you! Your review has been submitted and recorded.")}</span>
                 </div>
               )}
 
@@ -367,7 +349,7 @@ export const ProductReviews: React.FC = () => {
               <form onSubmit={handleReviewSubmit} className="space-y-4">
                 <div>
                   <label className="text-[10px] font-mono uppercase tracking-wider text-stone-600 font-bold block mb-1">
-                    {t("Your Full Name", "আপনার নাম")} *
+                    {t("Your Full Name")} *
                   </label>
                   <input
                     type="text"
@@ -381,7 +363,7 @@ export const ProductReviews: React.FC = () => {
 
                 <div>
                   <label className="text-[10px] font-mono uppercase tracking-wider text-stone-600 font-bold block mb-1">
-                    {t("Rating Score", "রেটিং")} *
+                    {t("Rating Score")} *
                   </label>
                   <div className="flex gap-2">
                     {[1, 2, 3, 4, 5].map((star) => (
@@ -401,24 +383,17 @@ export const ProductReviews: React.FC = () => {
 
                 <div>
                   <label className="text-[10px] font-mono uppercase tracking-wider text-stone-600 font-bold block mb-1">
-                    {t("Your Honest Experience", "আপনার আসল অভিজ্ঞতা")} *
+                    {t("Your Honest Experience")} *
                   </label>
                   <textarea
                     required
                     rows={4}
                     value={revComment}
                     onChange={(e) => setRevComment(e.target.value)}
-                    placeholder={t("Share details on the fabric weight, sizing, drape, or courier care...", "কাপড়, সাইজ, ফিটিং ও ডেলিভারি সম্পর্কে লিখুন...")}
+                    placeholder={t("Share details on the fabric weight, sizing, drape, or courier care...")}
                     className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#0A1E54] text-xs bg-white focus:outline-none resize-none transition-colors"
                   />
                 </div>
-
-                {/* Google reCAPTCHA Security Verification */}
-                <ReCaptcha
-                  onVerify={(tok) => setRecaptchaToken(tok)}
-                  onExpire={() => setRecaptchaToken(null)}
-                  onError={() => setRecaptchaToken(null)}
-                />
 
                 <button
                   type="submit"
@@ -428,8 +403,8 @@ export const ProductReviews: React.FC = () => {
                   }`}
                 >
                   {revSubmitting
-                    ? t("Submitting Review...", "রিভিউ জমা হচ্ছে...")
-                    : t("Submit Review", "রিভিউ জমা দিন")}
+                    ? t("Submitting Review...")
+                    : t("Submit Review")}
                 </button>
               </form>
             </div>

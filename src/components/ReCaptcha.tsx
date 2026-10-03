@@ -159,7 +159,7 @@ export const ReCaptcha: React.FC<ReCaptchaProps> = ({
       {!isLoaded && !loadError && (
         <div className="flex items-center gap-2 p-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-500 text-xs font-mono">
           <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#C9A66B]" />
-          <span>{t("Loading Google reCAPTCHA Security Check...", "নিরাপত্তা যাচাই লোড হচ্ছে...")}</span>
+          <span>Loading Google reCAPTCHA Security Check...</span>
         </div>
       )}
 
@@ -168,13 +168,10 @@ export const ReCaptcha: React.FC<ReCaptchaProps> = ({
         <div className="p-3 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl text-xs space-y-1.5 font-mono max-w-sm text-left">
           <div className="flex items-center gap-2 font-bold text-[#0A1E54]">
             <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
-            <span>{t("Security Verification Notice", "নিরাপত্তা নোটিশ")}</span>
+            <span>Security Verification Notice</span>
           </div>
           <p className="text-[11px] text-amber-800">
-            {t(
-              "reCAPTCHA script could not be loaded from Google servers. Please check your internet connection or ad-blocker.",
-              "গুগল রিক্যাপচা স্ক্রিপ্ট লোড করা যায়নি। ইন্টারনেট সংযোগ বা অ্যাড-ব্লকার পরীক্ষা করুন।"
-            )}
+            reCAPTCHA script could not be loaded from Google servers. Please check your internet connection or ad-blocker.
           </p>
         </div>
       )}
@@ -195,7 +192,7 @@ export const ReCaptcha: React.FC<ReCaptchaProps> = ({
           }}
           className="text-[10px] text-stone-400 hover:text-[#0A1E54] hover:underline transition-colors font-mono cursor-pointer"
         >
-          {t("[Testing Notice: If reCAPTCHA domain error occurs, click here to verify]", "[টেস্টিং নোটিশ: রিক্যাপচা ডোমেইন এরর দেখালে এখানে ক্লিক করে ভেরিফাই করুন]")}
+          [Testing Notice: If reCAPTCHA domain error occurs, click here to verify]
         </button>
       </div>
     </div>

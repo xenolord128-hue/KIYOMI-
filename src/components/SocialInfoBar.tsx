@@ -35,17 +35,15 @@ export const SocialInfoBar: React.FC = () => {
           <div className="min-w-0 text-left">
             <div className="flex items-center gap-2 mb-0.5">
               <span className="text-[10px] sm:text-xs font-mono font-bold tracking-wider text-[#C9A66B] uppercase">
-                {isBn ? "লাইভ ট্রেন্ডিং ড্রপ" : "TRENDING STREETWEAR"}
+                TRENDING STREETWEAR
               </span>
               <span className="px-1.5 py-0.2 bg-emerald-500/20 text-emerald-300 rounded text-[8px] font-mono tracking-wider font-semibold uppercase flex items-center gap-1">
                 <span className="w-1 h-1 rounded-full bg-emerald-400 animate-ping" />
-                {isBn ? "অনলাইন স্টোর" : "IN STOCK"}
+                IN STOCK
               </span>
             </div>
             <p className="text-[10px] sm:text-xs text-white/80 font-sans tracking-wide truncate max-w-[240px] sm:max-w-md">
-              {isBn 
-                ? "পাটোয়ারী ফ্যাশন — প্রিমিয়াম ব্যাগি প্যান্ট ও ওভারসাইজড স্ট্রিটওয়্যার।" 
-                : "Patowary Fashion — Heavyweight baggy fits & curated urban couture."}
+              Patowary Fashion — Heavyweight baggy fits & curated urban couture.
             </p>
           </div>
         </div>
@@ -76,7 +74,7 @@ export const SocialInfoBar: React.FC = () => {
                 {activeProduct.title}
               </h5>
               <span className="text-[10px] sm:text-xs font-mono text-[#F8F3EA] font-bold">
-                ৳ {activeProduct.price.toLocaleString()}
+                BDT {activeProduct.price.toLocaleString()}
               </span>
             </div>
           </motion.div>
@@ -86,7 +84,7 @@ export const SocialInfoBar: React.FC = () => {
           onClick={() => navigate(`/product/${activeProduct.id}`)}
           className="bg-[#C9A66B] hover:bg-[#d6b47c] text-[#0A1E54] font-bold text-[10px] sm:text-xs uppercase tracking-wider px-3.5 py-2 rounded-lg cursor-pointer flex items-center gap-1 shrink-0 transition-all shadow-xs"
         >
-          <span>{isBn ? "দেখুন" : "VIEW"}</span>
+          <span>VIEW</span>
           <MoveRight className="w-3.5 h-3.5" />
         </button>
       </div>

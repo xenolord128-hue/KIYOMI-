@@ -123,13 +123,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err: any) {
       console.warn("Firebase Auth login attempt:", err.code);
       if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
-        throw new Error("Invalid email or password / ইমেইল বা পাসওয়ার্ড সঠিক নয়");
+        throw new Error("Invalid email or password. Please verify your credentials.");
       } else if (err.code === 'auth/wrong-password') {
-        throw new Error("Incorrect password / ভুল পাসওয়ার্ড দিয়েছেন");
+        throw new Error("Incorrect password. Please try again.");
       } else if (err.code === 'auth/too-many-requests') {
-        throw new Error("Too many attempts. Please try again later / একাধিক ব্যর্থ চেষ্টার কারণে সাময়িকভাবে স্থগিত");
+        throw new Error("Too many failed attempts. Please try again later.");
       } else if (err.code === 'auth/invalid-email') {
-        throw new Error("Invalid email address format / সঠিক ইমেইল ঠিকানা দিন");
+        throw new Error("Invalid email address format. Please enter a valid email.");
       } else {
         throw new Error(err.message || "Failed to sign in. Please check your credentials.");
       }
@@ -180,11 +180,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err: any) {
       console.warn("Firebase Signup attempt:", err.code);
       if (err.code === 'auth/email-already-in-use') {
-        throw new Error("This email is already registered. Please sign in / এই ইমেইল দিয়ে ইতোমধ্যে অ্যাকাউন্ট রয়েছে");
+        throw new Error("This email is already registered. Please sign in instead.");
       } else if (err.code === 'auth/weak-password') {
-        throw new Error("Password must be at least 6 characters / পাসওয়ার্ড অন্তত ৬ অক্ষরের হতে হবে");
+        throw new Error("Password must be at least 6 characters long.");
       } else if (err.code === 'auth/invalid-email') {
-        throw new Error("Invalid email format / সঠিক ইমেইল ঠিকানা দিন");
+        throw new Error("Please enter a valid email address.");
       } else {
         throw new Error(err.message || "Registration failed. Please try again.");
       }
@@ -260,13 +260,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (err.code === 'auth/popup-closed-by-user') {
         console.warn("Google sign-in popup closed by user.");
-        throw new Error("Google sign-in window was closed / সাইন-ইন উইন্ডো বন্ধ করা হয়েছে");
+        throw new Error("Google sign-in window was closed.");
       } else if (err.code === 'auth/popup-blocked') {
         console.warn("Google sign-in popup blocked.");
-        throw new Error("Popup blocked by browser. Please allow popups for this site / ব্রাউজারে পপআপ ব্লক করা আছে");
+        throw new Error("Popup blocked by browser. Please allow popups for this site.");
       } else if (err.code === 'auth/cancelled-popup-request') {
         console.warn("Google sign-in request cancelled.");
-        throw new Error("Authentication request cancelled / অনুরোধ বাতিল হয়েছে");
+        throw new Error("Authentication request was cancelled.");
       } else {
         console.warn("Firebase Google Auth warning:", err.code, err.message);
         throw new Error(err.message || "Google authentication failed. Please try again.");
@@ -352,13 +352,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (err.code === 'auth/popup-closed-by-user') {
         console.warn("Facebook sign-in popup closed by user.");
-        throw new Error("Facebook sign-in window was closed / সাইন-ইন উইন্ডো বন্ধ করা হয়েছে");
+        throw new Error("Facebook sign-in window was closed.");
       } else if (err.code === 'auth/popup-blocked') {
         console.warn("Facebook sign-in popup blocked.");
-        throw new Error("Popup blocked by browser. Please allow popups for this site / ব্রাউজারে পপআপ ব্লক করা আছে");
+        throw new Error("Popup blocked by browser. Please allow popups for this site.");
       } else if (err.code === 'auth/account-exists-with-different-credential') {
         console.warn("Facebook account exists with different credential.");
-        throw new Error("An account already exists with the same email / এই ইমেইল দিয়ে ইতোমধ্যে অন্যভাবে অ্যাকাউন্ট রয়েছে");
+        throw new Error("An account already exists with the same email address.");
       } else {
         console.warn("Firebase Facebook Auth warning:", err.code, err.message);
         throw new Error(err.message || "Facebook authentication failed. Please try again.");

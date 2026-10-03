@@ -5,7 +5,7 @@ import { playCinematicIntroSound } from '../utils/voiceUtils';
 import { 
   Instagram, 
   Facebook, 
-  Twitter, 
+  MessageCircle, 
   MapPin, 
   Mail, 
   Phone, 
@@ -84,13 +84,22 @@ export const Footer: React.FC = () => {
           </p>
           <div className="flex items-center space-x-4 text-white/70">
             <a 
-              href="https://www.facebook.com/share/19JHtW2Eft/" 
+              href="https://www.facebook.com/share/1bjdW3mmQ4/" 
               target="_blank" 
               rel="noopener noreferrer" 
               className="hover:text-[#C9A66B] transition-colors p-2 rounded-full bg-white/5 hover:bg-white/10" 
               aria-label="Facebook page"
             >
               <Facebook className="w-4 h-4" />
+            </a>
+            <a 
+              href="https://wa.me/8801730943993" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="hover:text-[#25D366] transition-colors p-2 rounded-full bg-white/5 hover:bg-white/10" 
+              aria-label="WhatsApp customer care"
+            >
+              <MessageCircle className="w-4 h-4" />
             </a>
             <a 
               href="https://www.instagram.com/patowaryfashion" 
@@ -162,15 +171,29 @@ export const Footer: React.FC = () => {
           <ul className="space-y-3 text-white/80 font-mono text-xs uppercase tracking-wider">
             <li className="flex items-start gap-2.5">
               <MapPin className="w-4 h-4 text-[#C9A66B] shrink-0 mt-0.5" />
-              <span>বাংলাদেশ, চাঁদপুর ৩৬৫০, ফরিদগঞ্জ</span>
+              <span>Faridganj, Chandpur 3650, Bangladesh</span>
             </li>
             <li className="flex items-center gap-2.5">
               <Mail className="w-4 h-4 text-[#C9A66B] shrink-0" />
-              <span className="lowercase">support@patowaryfashion.com</span>
+              <a 
+                href="mailto:fashionpatowary@gmail.com" 
+                className="lowercase hover:text-[#C9A66B] transition-colors"
+                title="Support Email"
+              >
+                fashionpatowary@gmail.com
+              </a>
             </li>
             <li className="flex items-center gap-2.5">
               <Phone className="w-4 h-4 text-[#C9A66B] shrink-0" />
-              <span>+880 1633-704001</span>
+              <a 
+                href="https://wa.me/8801730943993" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="hover:text-[#C9A66B] transition-colors"
+                title="WhatsApp Customer Care"
+              >
+                +880 1730-943993
+              </a>
             </li>
           </ul>
         </div>

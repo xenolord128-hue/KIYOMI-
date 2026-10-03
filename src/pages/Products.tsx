@@ -113,21 +113,21 @@ export const Products: React.FC = () => {
       <div className="bg-[#0A1E54] text-[#F8F3EA] py-14 px-4 sm:px-8 border-b border-[#1A3070]">
         <div className="max-w-7xl mx-auto text-center space-y-3">
           <span className="text-xs font-mono font-bold tracking-[0.3em] text-[#C9A66B] uppercase block">
-            {showFavorites ? t("SAVED WISHLIST", "সংরক্ষিত উইশলিস্ট") : t("PATOWARY FASHION STREETWEAR", "পাটোয়ারী ফ্যাশন স্ট্রিটওয়্যার")}
+            {showFavorites ? t("SAVED WISHLIST") : t("PATOWARY FASHION STREETWEAR")}
           </span>
           <h1 className="text-3xl sm:text-5xl font-serif font-bold text-white uppercase tracking-tight">
             {showFavorites 
-              ? t("Your Saved Items", "আপনার পছন্দের তালিকা") 
+              ? t("Your Saved Items") 
               : searchQuery 
-                ? `${t("Search:", "অনুসন্ধান:")} "${searchQuery}"` 
+                ? `${t("Search:")} "${searchQuery}"` 
                 : selectedCategory !== 'All' 
                   ? t(selectedCategory) 
-                  : t("Trending Fashion Catalog", "ট্রেন্ডিং ফ্যাশন ক্যাটালগ")}
+                  : t("Trending Fashion Catalog")}
           </h1>
           <p className="text-white/80 text-xs sm:text-sm max-w-xl mx-auto font-normal leading-relaxed">
             {showFavorites 
-              ? t("Items flagged for future purchase. Add to bag anytime.", "পরবর্তী কেনাকাটার জন্য সংরক্ষিত পণ্যসমূহ।")
-              : t("Explore heavy-twill baggy cargo pants, wide-leg denims, 260 GSM oversized tees, and luxury accessories.", "ব্যাগি কার্গো প্যান্ট, ওয়াইড-লেগ ডেনিম এবং প্রিমিয়াম ওভারসাইজড স্ট্রিটওয়্যার।")}
+              ? t("Items flagged for future purchase. Add to bag anytime.")
+              : t("Explore heavy-twill baggy cargo pants, wide-leg denims, 260 GSM oversized tees, and luxury accessories.")}
           </p>
         </div>
       </div>
@@ -149,7 +149,7 @@ export const Products: React.FC = () => {
                     : 'bg-stone-100/80 hover:bg-stone-200 text-stone-700'
                 }`}
               >
-                {cat === 'All' ? t("All Items", "সব পণ্য") : t(cat)}
+                {cat === 'All' ? t("All Items") : t(cat)}
               </button>
             ))}
           </div>
@@ -168,10 +168,10 @@ export const Products: React.FC = () => {
         {filteredProducts.length === 0 ? (
           <div className="bg-white/90 backdrop-blur-md border border-white rounded-3xl p-16 text-center space-y-4 shadow-sm max-w-lg mx-auto">
             <h3 className="text-base font-bold text-[#0A1E54]">
-              {t("No products found in this selection", "এই ফিল্টারে কোনো পণ্য পাওয়া যায়নি")}
+              {t("No products found in this selection")}
             </h3>
             <p className="text-xs text-stone-600">
-              {t("Try clearing your search query or selecting a different category.", "অনুসন্ধান ক্লিয়ার করুন অথবা অন্য ক্যাটাগরি বেছে নিন।")}
+              {t("Try clearing your search query or selecting a different category.")}
             </p>
             <button
               onClick={() => {
@@ -179,7 +179,7 @@ export const Products: React.FC = () => {
               }}
               className="px-6 py-2.5 bg-[#0A1E54] hover:bg-[#1A3070] text-white text-xs font-bold uppercase rounded-xl transition-all shadow-sm cursor-pointer"
             >
-              {t("Reset Filters", "ফিল্টার রিসেট")}
+              {t("Reset Filters")}
             </button>
           </div>
         ) : (
@@ -194,8 +194,8 @@ export const Products: React.FC = () => {
                   onClick={() => navigate(`/product/${product.id}`)}
                   className="glass-card rounded-2xl overflow-hidden flex flex-col justify-between group cursor-pointer border border-white hover:border-[#C9A66B]/50 shadow-xs hover:shadow-md transition-all"
                 >
-                  {/* Image Frame */}
-                  <div className="relative aspect-[4/5] bg-stone-100 overflow-hidden">
+                  {/* Image Frame (4:4 Ratio / aspect-square for luxury presentation) */}
+                  <div className="relative aspect-square bg-stone-100 overflow-hidden">
                     <img
                       src={product.assets[0]}
                       alt={product.title}
@@ -255,7 +255,7 @@ export const Products: React.FC = () => {
 
                     <div className="mt-3 pt-3 border-t border-stone-200/50 flex items-center justify-between">
                       <div>
-                        <span className="text-[10px] text-stone-500 block uppercase font-mono tracking-wider">{t("Price", "মূল্য")}</span>
+                        <span className="text-[10px] text-stone-500 block uppercase font-mono tracking-wider">{t("Price")}</span>
                         <span className="text-sm sm:text-base font-bold text-[#0A1E54] font-mono">
                           ৳ {product.price.toLocaleString()}
                         </span>
@@ -271,7 +271,7 @@ export const Products: React.FC = () => {
                         aria-label="Add to cart"
                       >
                         <ShoppingBag className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">{t("Add", "ব্যাগ")}</span>
+                        <span className="hidden sm:inline">{t("Add to Bag")}</span>
                       </button>
                     </div>
                   </div>

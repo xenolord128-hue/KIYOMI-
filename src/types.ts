@@ -15,6 +15,7 @@ export interface Product {
   salePrice?: number;
   rating: number;
   assets: string[];
+  videoUrl?: string;
   variants: string[];
   outOfStock: string[];
   description: string;
@@ -56,21 +57,85 @@ export interface CartItem {
   quantity: number;
 }
 
+export type OrderStatus =
+  | 'Pending'
+  | 'Payment Verification'
+  | 'Confirmed'
+  | 'Processing'
+  | 'Shipped'
+  | 'Out for Delivery'
+  | 'Delivered'
+  | 'Completed'
+  | 'Cancelled'
+  | 'Received';
+
+export type PaymentMethodType = 'bKash' | 'Nagad' | 'Upay' | 'Cash on Delivery' | 'Bank Payment' | string;
+
+export type PaymentStatusType =
+  | 'Pending Verification'
+  | 'Paid'
+  | 'Rejected'
+  | 'Cash on Delivery'
+  | 'Pending (Bank Transfer)'
+  | string;
+
+export interface OrderCustomer {
+  name: string;
+  phone: string;
+  email?: string;
+  address: string;
+  city?: string;
+  area?: string;
+  note?: string;
+}
+
+export interface OrderPricing {
+  subtotal: number;
+  discount: number;
+  deliveryCharge: number;
+  total: number;
+}
+
+export interface OrderPayment {
+  method: PaymentMethodType;
+  transactionId?: string;
+  senderNumber?: string;
+  screenshotUrl?: string;
+  status: PaymentStatusType;
+  adminVerificationNote?: string;
+  verifiedAt?: string;
+}
+
+export interface OrderItem {
+  productId: number;
+  title: string;
+  productName?: string;
+  price: number;
+  variant: string;
+  quantity: number;
+  size?: string;
+  color?: string;
+  image: string;
+}
+
 export interface Order {
-  id: string; // Unique Tracking ID
+  id: string; // Unique Tracking ID / Order ID (e.g. PF-20261002-XXXX)
+  orderId?: string;
   fullName: string;
   phone: string;
+  email?: string;
   address: string;
-  paymentMethod: string;
-  items: {
-    productId: number;
-    title: string;
-    price: number;
-    variant: string;
-    quantity: number;
-    image: string;
-  }[];
+  city?: string;
+  area?: string;
+  note?: string;
+  customer?: OrderCustomer;
+  paymentMethod: PaymentMethodType;
+  paymentStatus?: PaymentStatusType;
+  payment?: OrderPayment;
+  items: OrderItem[];
   totalPrice: number;
-  status: 'Received' | 'Processing' | 'Shipped' | 'Out for Delivery' | 'Completed';
+  pricing?: OrderPricing;
+  status: OrderStatus;
+  orderStatus?: OrderStatus;
   createdAt: string; // ISO date string
 }

@@ -44,10 +44,10 @@ export const NotFound: React.FC = () => {
             4<span className="text-[#C9A66B]">0</span>4
           </h1>
           <h2 className="text-2xl sm:text-3xl font-serif font-bold text-[#0A1E54]">
-            {t("Page Not Found", "পেজটি খুঁজে পাওয়া যায়নি")}
+            Page Not Found
           </h2>
           <p className="text-xs sm:text-sm text-stone-600 max-w-md mx-auto leading-relaxed">
-            {t("The URL you followed might be broken, expired, or temporarily unavailable in our catalog directory.", "আপনি যে লিংকটি অনুসন্ধান করছেন তা হয়তো স্থানান্তরিত হয়েছে অথবা উপলব্ধ নেই।")}
+            The URL you followed might be broken, expired, or temporarily unavailable in our catalog directory.
           </p>
         </div>
 
@@ -57,7 +57,7 @@ export const NotFound: React.FC = () => {
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder={t("Search baggy pants, tees, hoodies...", "ব্যাগি প্যান্ট, টি-শার্ট, হুডি সার্চ করুন...")}
+            placeholder="Search baggy pants, tees, hoodies..."
             className="w-full pl-5 pr-28 py-3 bg-white border border-[#0A1E54]/15 rounded-full text-xs text-[#0A1E54] font-medium shadow-xs focus:outline-none focus:border-[#0A1E54]"
           />
           <button
@@ -65,7 +65,7 @@ export const NotFound: React.FC = () => {
             className="absolute right-1.5 top-1.5 bottom-1.5 px-4 bg-[#0A1E54] hover:bg-[#1A3070] text-[#F8F3EA] rounded-full text-xs font-mono uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition-colors"
           >
             <Search className="w-3.5 h-3.5" />
-            <span>{t("Search", "সার্চ")}</span>
+            <span>Search</span>
           </button>
         </form>
 
@@ -76,7 +76,7 @@ export const NotFound: React.FC = () => {
             className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#0A1E54] hover:bg-[#1A3070] text-[#F8F3EA] text-xs font-mono uppercase tracking-wider font-bold transition-all shadow-md active:scale-95"
           >
             <Home className="w-4 h-4" />
-            <span>{t("Back to Home", "হোম পেজে ফিরুন")}</span>
+            <span>Back to Home</span>
           </Link>
 
           <Link
@@ -84,7 +84,7 @@ export const NotFound: React.FC = () => {
             className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white hover:bg-stone-50 text-[#0A1E54] border border-[#0A1E54]/20 text-xs font-mono uppercase tracking-wider font-bold transition-all shadow-xs active:scale-95"
           >
             <ShoppingBag className="w-4 h-4 text-[#C9A66B]" />
-            <span>{t("Continue Shopping", "শপিং চালিয়ে যান")}</span>
+            <span>Continue Shopping</span>
           </Link>
 
           <Link
@@ -92,7 +92,7 @@ export const NotFound: React.FC = () => {
             className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-stone-100 hover:bg-stone-200 text-[#0A1E54] text-xs font-mono uppercase tracking-wider transition-all"
           >
             <Truck className="w-4 h-4 text-stone-500" />
-            <span>{t("Track Order", "অর্ডার ট্র্যাক")}</span>
+            <span>Track Order</span>
           </Link>
         </div>
 

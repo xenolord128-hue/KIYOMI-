@@ -28,7 +28,6 @@ export const Menu: React.FC = () => {
   const categories = [
     {
       title: "Baggy & Cargo Pants",
-      titleBn: "ব্যাগি ও কার্গো প্যান্ট",
       desc: "Heavy twill utility cargos, 6-pocket trousers, wide-leg denim",
       image: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=600",
       link: "/category/baggy-cargo-pants",
@@ -36,7 +35,6 @@ export const Menu: React.FC = () => {
     },
     {
       title: "Oversized Tees & Polos",
-      titleBn: "ওভারসাইজড টি ও পোলো",
       desc: "260 GSM drop-shoulder tees, pique knit polos, boxy drape",
       image: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600",
       link: "/category/oversized-tees-polos",
@@ -44,7 +42,6 @@ export const Menu: React.FC = () => {
     },
     {
       title: "Hoodies & Sweatshirts",
-      titleBn: "হুডি ও সোয়েটশার্ট",
       desc: "420 GSM French Terry double-hooded pullovers, crewneck fleece",
       image: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600",
       link: "/category/hoodies-sweatshirts",
@@ -52,7 +49,6 @@ export const Menu: React.FC = () => {
     },
     {
       title: "Women's Streetwear",
-      titleBn: "উইমেন্স স্ট্রিটওয়্যার",
       desc: "High-waist relaxed trousers, crop boxy tees, fluid silhouettes",
       image: "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=600",
       link: "/category/womens-collection",
@@ -60,7 +56,6 @@ export const Menu: React.FC = () => {
     },
     {
       title: "Accessories & Lifestyle",
-      titleBn: "এক্সেসরিজ ও লাইফস্টাইল",
       desc: "Cordura tactical crossbodies, vintage washed dad caps, leather belts",
       image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600",
       link: "/category/accessories-lifestyle",
@@ -78,7 +73,7 @@ export const Menu: React.FC = () => {
             onClick={() => navigate(-1)}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card hover:bg-white text-xs font-mono tracking-wider text-[#0A1E54] uppercase font-bold transition-all shadow-xs cursor-pointer"
           >
-            <ArrowLeft className="w-4 h-4" /> {t("Back", "পেছনে ফিরুন")}
+            <ArrowLeft className="w-4 h-4" /> {t("Back")}
           </button>
           
           <Link to="/" className="flex items-center gap-2.5 group">
@@ -104,7 +99,7 @@ export const Menu: React.FC = () => {
                 PATOWARY NAVIGATION INDEX
               </span>
               <h1 className="text-3xl sm:text-5xl font-serif font-bold text-[#0A1E54] tracking-tight">
-                {t("Catalog & Menu", "মেনু ও কালেকশন")}
+                {t("Catalog & Menu")}
               </h1>
             </div>
             
@@ -114,25 +109,25 @@ export const Menu: React.FC = () => {
                 to="/search"
                 className="px-4 py-2 rounded-full bg-white/70 hover:bg-white border border-[#0A1E54]/10 text-xs font-mono text-[#0A1E54] font-bold flex items-center gap-1.5 transition-all shadow-xs"
               >
-                <Search className="w-3.5 h-3.5 text-[#C9A66B]" /> {t("Search", "সার্চ")}
+                <Search className="w-3.5 h-3.5 text-[#C9A66B]" /> {t("Search")}
               </Link>
               <Link
                 to="/cart"
                 className="px-4 py-2 rounded-full bg-white/70 hover:bg-white border border-[#0A1E54]/10 text-xs font-mono text-[#0A1E54] font-bold flex items-center gap-1.5 transition-all shadow-xs"
               >
-                <ShoppingBag className="w-3.5 h-3.5 text-[#C9A66B]" /> {t("Bag / Cart", "কার্ট")}
+                <ShoppingBag className="w-3.5 h-3.5 text-[#C9A66B]" /> {t("Cart")}
               </Link>
               <Link
                 to="/wishlist"
                 className="px-4 py-2 rounded-full bg-white/70 hover:bg-white border border-[#0A1E54]/10 text-xs font-mono text-[#0A1E54] font-bold flex items-center gap-1.5 transition-all shadow-xs"
               >
-                <Heart className="w-3.5 h-3.5 text-[#C9A66B]" /> {t("Wishlist", "উইশলিস্ট")}
+                <Heart className="w-3.5 h-3.5 text-[#C9A66B]" /> {t("Wishlist")}
               </Link>
               <Link
                 to="/profile"
                 className="px-4 py-2 rounded-full bg-[#0A1E54] text-white hover:bg-[#1A3070] text-xs font-mono font-bold flex items-center gap-1.5 transition-all shadow-xs"
               >
-                <User className="w-3.5 h-3.5 text-[#C9A66B]" /> {user ? user.displayName || t("Profile", "প্রোফাইল") : t("Sign In", "লগইন")}
+                <User className="w-3.5 h-3.5 text-[#C9A66B]" /> {user ? user.displayName || t("Profile") : t("Sign In")}
               </Link>
             </div>
           </div>
@@ -140,7 +135,7 @@ export const Menu: React.FC = () => {
           {/* Categories Grid */}
           <div className="space-y-4">
             <h2 className="text-xs font-mono uppercase tracking-[0.2em] text-[#0A1E54]/70 font-black">
-              {t("APPAREL COLLECTIONS / প্রধান কালেকশনসমূহ", "APPAREL COLLECTIONS")}
+              {t("APPAREL COLLECTIONS")}
             </h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -163,7 +158,7 @@ export const Menu: React.FC = () => {
 
                   <div className="space-y-1">
                     <h3 className="font-serif font-bold text-lg text-[#0A1E54] group-hover:text-[#1A3070] transition-colors flex items-center justify-between">
-                      <span>{t(cat.title, cat.titleBn)}</span>
+                      <span>{t(cat.title)}</span>
                       <ArrowRight className="w-4 h-4 text-[#C9A66B] -translate-x-1 group-hover:translate-x-0 transition-transform" />
                     </h3>
                     <p className="text-stone-600 text-xs line-clamp-2 font-sans">
@@ -183,7 +178,7 @@ export const Menu: React.FC = () => {
                     EXPLORE EVERYTHING
                   </span>
                   <h3 className="font-serif font-bold text-2xl text-white">
-                    {t("View Full Catalog", "সম্পূর্ণ ক্যাটালগ")}
+                    {t("View Full Catalog")}
                   </h3>
                   <p className="text-white/80 text-xs leading-relaxed font-sans">
                     Browse all active baggy pants, heavyweight hoodies, vintage tees, and luxury accessories.
@@ -209,7 +204,7 @@ export const Menu: React.FC = () => {
                 <Truck className="w-5 h-5 text-[#0A1E54]" />
               </div>
               <div>
-                <span className="text-xs font-bold text-[#0A1E54] block">{t("Track Dispatch", "অর্ডার ট্র্যাক")}</span>
+                <span className="text-xs font-bold text-[#0A1E54] block">{t("Track Dispatch")}</span>
                 <span className="text-[10px] text-stone-500 font-mono">Live Voucher ID Lookup</span>
               </div>
             </Link>
@@ -222,7 +217,7 @@ export const Menu: React.FC = () => {
                 <Sparkles className="w-5 h-5 text-[#C9A66B]" />
               </div>
               <div>
-                <span className="text-xs font-bold text-[#0A1E54] block">{t("Brand Story", "ব্র্যান্ড পরিচিতি")}</span>
+                <span className="text-xs font-bold text-[#0A1E54] block">{t("Brand Story")}</span>
                 <span className="text-[10px] text-stone-500 font-mono">Patowary Fashion Manifesto</span>
               </div>
             </Link>
@@ -235,8 +230,8 @@ export const Menu: React.FC = () => {
                 <ShieldCheck className="w-5 h-5 text-[#0A1E54]" />
               </div>
               <div>
-                <span className="text-xs font-bold text-[#0A1E54] block">{t("Fast Checkout", "চেকআউট")}</span>
-                <span className="text-[10px] text-stone-500 font-mono">bKash & Cash on Delivery</span>
+                <span className="text-xs font-bold text-[#0A1E54] block">{t("Fast Checkout")}</span>
+                <span className="text-[10px] text-stone-500 font-mono">bKash, Nagad, Upay & COD</span>
               </div>
             </Link>
 
@@ -249,7 +244,7 @@ export const Menu: React.FC = () => {
                   <Lock className="w-5 h-5 text-[#C9A66B]" />
                 </div>
                 <div>
-                  <span className="text-xs font-bold text-[#0A1E54] block">{t("Admin Terminal", "অ্যাডমিন পোর্টাল")}</span>
+                  <span className="text-xs font-bold text-[#0A1E54] block">{t("Admin Terminal")}</span>
                   <span className="text-[10px] text-[#C9A66B] font-mono font-bold">STORE MANAGEMENT</span>
                 </div>
               </Link>
@@ -262,7 +257,7 @@ export const Menu: React.FC = () => {
                   <Heart className="w-5 h-5 text-[#C9A66B]" />
                 </div>
                 <div>
-                  <span className="text-xs font-bold text-[#0A1E54] block">{t("Saved Wishlist", "উইশলিস্ট")}</span>
+                  <span className="text-xs font-bold text-[#0A1E54] block">{t("Saved Wishlist")}</span>
                   <span className="text-[10px] text-stone-500 font-mono">Saved Streetwear Pieces</span>
                 </div>
               </Link>
@@ -274,11 +269,11 @@ export const Menu: React.FC = () => {
             <div className="flex items-center gap-2.5">
               <MapPin className="w-4 h-4 text-[#C9A66B] shrink-0" />
               <span className="font-medium font-sans">
-                {t("Store Location: বাংলাদেশ, চাঁদপুর ৩৬৫০, ফরিদগঞ্জ", "স্টোর লোকেশন: বাংলাদেশ, চাঁদপুর ৩৬৫০, ফরিদগঞ্জ")}
+                {t("Store Location: Faridganj, Chandpur 3650, Bangladesh")}
               </span>
             </div>
             <div className="flex items-center gap-4 text-xs font-mono">
-              <span className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5 text-[#C9A66B]" /> +880 1633-704001</span>
+              <span className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5 text-[#C9A66B]" /> +880 1730-943993</span>
             </div>
           </div>
 

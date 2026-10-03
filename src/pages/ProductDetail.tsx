@@ -23,7 +23,9 @@ import {
   Check,
   Facebook,
   MessageCircle,
-  AlertCircle
+  AlertCircle,
+  Video,
+  Play
 } from 'lucide-react';
 import { db } from '../lib/firebase';
 import { doc, onSnapshot, updateDoc, arrayUnion } from 'firebase/firestore';
@@ -58,6 +60,7 @@ export const ProductDetail: React.FC = () => {
   });
 
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isVideoActive, setIsVideoActive] = useState(false);
   const [sharedCopied, setSharedCopied] = useState(false);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
   const [selectedVariant, setSelectedVariant] = useState('');
@@ -121,6 +124,7 @@ export const ProductDetail: React.FC = () => {
       const available = product.variants.find(v => !product.outOfStock.includes(v));
       setSelectedVariant(available || product.variants[0] || 'Standard');
       setActiveImageIdx(0);
+      setIsVideoActive(false);
     }
   }, [product]);
 
@@ -224,7 +228,7 @@ export const ProductDetail: React.FC = () => {
           className="inline-flex items-center gap-2 text-xs font-bold text-[#0A1E54] hover:text-[#1A3070] transition-colors uppercase font-mono tracking-wider"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>{t("Back to Collection", "সব প্রোডাক্টে ফিরুন")}</span>
+          <span>{t("Back to Collection")}</span>
         </Link>
         <span className="text-xs text-stone-500 font-mono hidden sm:inline">
           PATOWARY FASHION / {product.category.toUpperCase()}
@@ -235,58 +239,111 @@ export const ProductDetail: React.FC = () => {
         
         {/* Left Side: Images Gallery (7-cols) */}
         <div className="lg:col-span-7 space-y-4">
-          <div className="relative aspect-[4/5] bg-stone-100 overflow-hidden rounded-2xl shadow-sm border border-stone-200">
-            <AnimatePresence mode="wait">
-              <motion.img
-                key={activeImageIdx}
-                src={product.assets[activeImageIdx]}
-                alt={product.title}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="w-full h-full object-cover object-center"
-              />
-            </AnimatePresence>
-
-            {product.assets.length > 1 && (
+          <div className="relative aspect-square sm:aspect-[4/4] bg-stone-100 overflow-hidden rounded-3xl shadow-md border border-stone-200">
+            {isVideoActive && product.videoUrl ? (
+              <div className="w-full h-full bg-black flex items-center justify-center relative">
+                {product.videoUrl.includes('youtube.com') || product.videoUrl.includes('youtu.be') ? (
+                  <iframe
+                    src={product.videoUrl.replace('watch?v=', 'embed/')}
+                    title="Product Showcase Video"
+                    className="w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                ) : (
+                  <video
+                    src={product.videoUrl}
+                    controls
+                    autoPlay
+                    className="w-full h-full object-contain bg-black"
+                  />
+                )}
+                <button
+                  onClick={() => setIsVideoActive(false)}
+                  className="absolute top-3 right-3 bg-black/70 hover:bg-black text-white px-3 py-1 rounded-full text-xs font-mono"
+                >
+                  Close Video
+                </button>
+              </div>
+            ) : (
               <>
-                <button
-                  onClick={() => setActiveImageIdx(prev => (prev - 1 + product.assets.length) % product.assets.length)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-md text-[#0A1E54] cursor-pointer"
-                  aria-label="Previous image"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => setActiveImageIdx(prev => (prev + 1) % product.assets.length)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-md text-[#0A1E54] cursor-pointer"
-                  aria-label="Next image"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
+                <AnimatePresence mode="wait">
+                  <motion.img
+                    key={activeImageIdx}
+                    src={product.assets[activeImageIdx]}
+                    alt={product.title}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="w-full h-full object-cover object-center"
+                  />
+                </AnimatePresence>
+
+                {product.assets.length > 1 && (
+                  <>
+                    <button
+                      onClick={() => {
+                        setIsVideoActive(false);
+                        setActiveImageIdx(prev => (prev - 1 + product.assets.length) % product.assets.length);
+                      }}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-md text-[#0A1E54] cursor-pointer"
+                      aria-label="Previous image"
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsVideoActive(false);
+                        setActiveImageIdx(prev => (prev + 1) % product.assets.length);
+                      }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-md text-[#0A1E54] cursor-pointer"
+                      aria-label="Next image"
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  </>
+                )}
               </>
             )}
           </div>
 
-          {/* Thumbnails */}
-          {product.assets.length > 1 && (
-            <div className="flex flex-wrap gap-3">
-              {product.assets.map((asset, index) => (
-                <button
-                  key={index}
-                  onClick={() => setActiveImageIdx(index)}
-                  className={`w-18 sm:w-20 aspect-[4/5] rounded-xl overflow-hidden border-2 transition-all cursor-pointer ${
-                    activeImageIdx === index 
-                      ? 'border-[#0A1E54] scale-102 shadow-sm' 
-                      : 'border-stone-200 hover:border-stone-400'
-                  }`}
-                >
-                  <img src={asset} alt="thumbnail" className="w-full h-full object-cover" />
-                </button>
-              ))}
-            </div>
-          )}
+          {/* Thumbnails (Supports 4 to 5 Photos + Video Showcase) */}
+          <div className="flex flex-wrap gap-2.5 sm:gap-3 items-center">
+            {product.assets.map((asset, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  setIsVideoActive(false);
+                  setActiveImageIdx(index);
+                }}
+                className={`w-16 sm:w-20 aspect-square rounded-2xl overflow-hidden border-2 transition-all cursor-pointer ${
+                  !isVideoActive && activeImageIdx === index 
+                    ? 'border-[#0A1E54] ring-2 ring-[#C9A66B]/50 scale-102 shadow-sm' 
+                    : 'border-stone-200 hover:border-stone-400 opacity-80 hover:opacity-100'
+                }`}
+              >
+                <img src={asset} alt={`Product Angle ${index + 1}`} className="w-full h-full object-cover" />
+              </button>
+            ))}
+
+            {/* Video Showcase Thumbnail Button */}
+            {product.videoUrl && (
+              <button
+                type="button"
+                onClick={() => setIsVideoActive(true)}
+                className={`w-16 sm:w-20 aspect-square rounded-2xl overflow-hidden border-2 transition-all cursor-pointer bg-[#0A1E54] text-white flex flex-col items-center justify-center gap-1 shadow-sm ${
+                  isVideoActive 
+                    ? 'border-[#C9A66B] ring-2 ring-[#C9A66B] scale-102' 
+                    : 'border-white/20 hover:border-[#C9A66B]'
+                }`}
+                title="Watch Product Showcase Video"
+              >
+                <Play className="w-5 h-5 text-[#C9A66B] fill-[#C9A66B]" />
+                <span className="text-[9px] font-mono uppercase font-bold text-[#F8F3EA]">Video</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Right Side: Product Details & Buying Actions (5-cols) */}
@@ -318,19 +375,19 @@ export const ProductDetail: React.FC = () => {
               <Link 
                 to={`/product/${product.id}/reviews`}
                 className="flex items-center gap-2.5 text-xs font-mono group"
-                title={t("View all customer reviews on dedicated page", "রিভিউ পেজ দেখুন")}
+                title={t("View all customer reviews on dedicated page")}
               >
                 <div className="flex items-center gap-1 text-[#C9A66B] font-bold">
                   <Star className="w-4 h-4 fill-current" />
                   <span>
                     {product.reviews.length > 0
                       ? `${(product.reviews.reduce((acc, r) => acc + r.rating, 0) / product.reviews.length).toFixed(1)} / 5.0`
-                      : t("No reviews yet", "রিভিউ নেই")}
+                      : t("No reviews yet")}
                   </span>
                 </div>
                 <span className="text-stone-300">·</span>
                 <span className="text-[#0A1E54] font-sans font-bold group-hover:text-[#C9A66B] transition-colors underline decoration-dotted">
-                  {product.reviews.length} {t("Customer Reviews ↗", "গ্রাহকদের রিভিউ ↗")}
+                  {product.reviews.length} {t("Customer Reviews ↗")}
                 </span>
               </Link>
 
@@ -343,8 +400,8 @@ export const ProductDetail: React.FC = () => {
             {product.variants.length > 0 && (
               <div className="space-y-2.5 pt-2 border-t border-stone-200/60">
                 <div className="flex justify-between text-xs font-mono uppercase tracking-wider text-stone-600">
-                  <span className="font-bold">{t("Select Size / Fit", "সাইজ বা ফিট নির্বাচন করুন")}</span>
-                  <span className="text-[#C9A66B] font-semibold">{t("Size Guide", "সাইজ গাইড")}</span>
+                  <span className="font-bold">{t("Select Size / Fit")}</span>
+                  <span className="text-[#C9A66B] font-semibold">{t("Size Guide")}</span>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
@@ -375,7 +432,7 @@ export const ProductDetail: React.FC = () => {
             {/* Description */}
             <div className="space-y-2 pt-2 border-t border-stone-200/60">
               <span className="text-xs font-mono uppercase tracking-wider text-stone-500 font-bold">
-                {t("Product Description", "পণ্যের বিবরণ")}
+                {t("Product Description")}
               </span>
               <p className="text-xs sm:text-sm text-stone-700 leading-relaxed font-sans">
                 {product.description}
@@ -389,15 +446,25 @@ export const ProductDetail: React.FC = () => {
                 className="w-full bg-[#0A1E54] hover:bg-[#1A3070] text-[#F8F3EA] text-xs font-bold uppercase tracking-widest py-4 rounded-xl flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all hover:scale-[1.01] active:scale-98 cursor-pointer"
               >
                 <ShoppingBag className="w-4 h-4 text-[#C9A66B]" />
-                <span>{t("ADD TO SHOPPING BAG", "ব্যাগে যোগ করুন")}</span>
+                <span>{t("ADD TO SHOPPING BAG")}</span>
               </button>
+
+              <a
+                href={`https://wa.me/8801730943993?text=${encodeURIComponent(`Hello Patowary Fashion, I want to order "${product.title}" (Size: ${selectedVariant || 'Standard'}, Price: BDT ${product.price}). Link: ${window.location.href}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full bg-[#25D366] hover:bg-[#1ebd54] text-white text-xs font-mono font-bold uppercase tracking-wider py-3.5 rounded-xl flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all hover:scale-[1.01] active:scale-98 cursor-pointer"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>Order via WhatsApp (+8801730943993)</span>
+              </a>
 
               <button
                 onClick={() => setIsShareModalOpen(true)}
                 className="w-full bg-white hover:bg-stone-50 text-stone-700 border border-stone-300 text-xs font-semibold uppercase tracking-wider py-3 rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
                 <Share2 className="w-4 h-4" />
-                <span>{t("Share This Streetwear Fit", "শেয়ার করুন")}</span>
+                <span>{t("Share This Streetwear Fit")}</span>
               </button>
             </div>
 
@@ -429,19 +496,19 @@ export const ProductDetail: React.FC = () => {
           <div className="lg:col-span-7 space-y-6">
             <div className="border-b border-[#0A1E54]/10 pb-3 flex items-center justify-between">
               <h3 className="text-xl font-serif font-bold text-[#0A1E54]">
-                {t("Customer Reviews", "গ্রাহকদের রিভিউ")} ({product.reviews.length})
+                {t("Customer Reviews")} ({product.reviews.length})
               </h3>
               <Link 
                 to={`/product/${product.id}/reviews`}
                 className="px-3.5 py-1.5 rounded-full bg-white hover:bg-stone-50 border border-stone-200 text-xs font-mono font-bold text-[#0A1E54] hover:text-[#1A3070] transition-all flex items-center gap-1 shadow-xs"
               >
-                {t("Full Review Page ↗", "সম্পূর্ণ রিভিউ পেজ ↗")}
+                {t("Full Review Page ↗")}
               </Link>
             </div>
 
             {product.reviews.length === 0 ? (
               <p className="text-xs text-stone-500 italic">
-                {t("No reviews yet. Be the first to review this fit!", "এখনো কোনো রিভিউ দেওয়া হয়নি। প্রথম রিভিউটি আপনি দিন!")}
+                {t("No reviews yet. Be the first to review this fit!")}
               </p>
             ) : (
               <div className="space-y-4">
@@ -466,12 +533,12 @@ export const ProductDetail: React.FC = () => {
           <div className="lg:col-span-5">
             <div className="glass-panel p-6 rounded-3xl border border-white shadow-sm space-y-4">
               <h4 className="text-base font-serif font-bold text-[#0A1E54]">
-                {t("Write a Review", "রিভিউ দিন")}
+                {t("Write a Review")}
               </h4>
 
               {revSuccess && (
                 <div className="p-3 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl text-xs">
-                  {t("Thank you! Your review has been recorded.", "ধন্যবাদ! আপনার রিভিউটি যুক্ত হয়েছে।")}
+                  {t("Thank you! Your review has been recorded.")}
                 </div>
               )}
 
@@ -484,7 +551,7 @@ export const ProductDetail: React.FC = () => {
 
               <form onSubmit={handleReviewSubmit} className="space-y-3">
                 <div>
-                  <label className="text-xs font-mono uppercase text-stone-600 block mb-1">{t("Your Name", "আপনার নাম")}</label>
+                  <label className="text-xs font-mono uppercase text-stone-600 block mb-1">{t("Your Name")}</label>
                   <input
                     type="text"
                     required
@@ -496,7 +563,7 @@ export const ProductDetail: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="text-xs font-mono uppercase text-stone-600 block mb-1">{t("Rating", "রেটিং")}</label>
+                  <label className="text-xs font-mono uppercase text-stone-600 block mb-1">{t("Rating")}</label>
                   <div className="flex gap-2">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <button
@@ -512,13 +579,13 @@ export const ProductDetail: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="text-xs font-mono uppercase text-stone-600 block mb-1">{t("Your Experience", "আপনার অভিজ্ঞতা")}</label>
+                  <label className="text-xs font-mono uppercase text-stone-600 block mb-1">{t("Your Experience")}</label>
                   <textarea
                     required
                     rows={3}
                     value={revComment}
                     onChange={(e) => setRevComment(e.target.value)}
-                    placeholder={t("Share details on fabric, fit, and styling...", "কাপড়, সাইজ ও ফিটিং সম্পর্কে জানান...")}
+                    placeholder={t("Share details on fabric, fit, and styling...")}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 focus:border-[#0A1E54] text-xs bg-white focus:outline-none"
                   />
                 </div>
@@ -531,8 +598,8 @@ export const ProductDetail: React.FC = () => {
                   }`}
                 >
                   {revSubmitting
-                    ? t("Submitting Review...", "রিভিউ পাঠানো হচ্ছে...")
-                    : t("Submit Review", "রিভিউ জমা দিন")}
+                    ? t("Submitting Review...")
+                    : t("Submit Review")}
                 </button>
               </form>
             </div>
@@ -552,7 +619,7 @@ export const ProductDetail: React.FC = () => {
             >
               <div className="flex items-center justify-between pb-3 border-b border-stone-200">
                 <h4 className="text-sm font-bold text-[#0A1E54]">
-                  {t("Share Patowary Fashion Fit", "পাটোয়ারী ফ্যাশন শেয়ার করুন")}
+                  {t("Share Patowary Fashion Fit")}
                 </h4>
                 <button
                   onClick={() => setIsShareModalOpen(false)}
@@ -576,7 +643,7 @@ export const ProductDetail: React.FC = () => {
                   className="flex-1 py-2.5 bg-[#0A1E54] hover:bg-[#1A3070] text-white text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   {sharedCopied ? <Check className="w-4 h-4 text-[#C9A66B]" /> : <Copy className="w-4 h-4" />}
-                  <span>{sharedCopied ? t("Link Copied!", "কপি হয়েছে!") : t("Copy Link", "লিংক কপি")}</span>
+                  <span>{sharedCopied ? t("Link Copied!") : t("Copy Link")}</span>
                 </button>
 
                 <a

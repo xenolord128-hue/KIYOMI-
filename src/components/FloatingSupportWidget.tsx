@@ -38,7 +38,7 @@ export const FloatingSupportWidget: React.FC = () => {
     const nextState = !isOpen;
     setIsOpen(nextState);
     if (nextState) {
-      playCinematicIntroSound(t("How can we assist you?", "আপনাকে কিভাবে সহায়তা করতে পারি?"));
+      playCinematicIntroSound("How can we assist you today?");
     }
   };
 
@@ -57,10 +57,10 @@ export const FloatingSupportWidget: React.FC = () => {
           {/* 1. Facebook Page Bubble Button */}
           <div className="flex items-center gap-2.5 group">
             <span className="bg-[#0A1E54] text-[#F8F3EA] text-xs font-mono px-3 py-1.5 rounded-xl shadow-lg border border-[#C9A66B]/30 whitespace-nowrap opacity-90 group-hover:opacity-100 transition-opacity">
-              {t("Facebook Page / ফেসবুক", "ফেসবুক অফিসিয়াল পেজ")}
+              Official Facebook Page
             </span>
             <a
-              href="https://www.facebook.com/share/19JHtW2Eft/"
+              href="https://www.facebook.com/share/1bjdW3mmQ4/"
               target="_blank"
               rel="noopener noreferrer"
               className="w-13 h-13 bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-full shadow-2xl flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 active:scale-95 border-2 border-white ring-2 ring-[#1877F2]/30"
@@ -75,15 +75,15 @@ export const FloatingSupportWidget: React.FC = () => {
           {/* 2. WhatsApp Support Bubble Button */}
           <div className="flex items-center gap-2.5 group">
             <span className="bg-[#0A1E54] text-[#F8F3EA] text-xs font-mono px-3 py-1.5 rounded-xl shadow-lg border border-[#C9A66B]/30 whitespace-nowrap opacity-90 group-hover:opacity-100 transition-opacity">
-              {t("WhatsApp 01633-701001", "হোয়াটসঅ্যাপ সাপোর্ট")}
+              WhatsApp (+880 1730 943993)
             </span>
             <a
-              href="https://wa.me/8801633701001"
+              href="https://wa.me/8801730943993"
               target="_blank"
               rel="noopener noreferrer"
               className="w-13 h-13 bg-[#25D366] hover:bg-[#1ebd54] text-white rounded-full shadow-2xl flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 active:scale-95 border-2 border-white ring-2 ring-[#25D366]/30"
               aria-label="Connect with Patowary Fashion WhatsApp support"
-              title="WhatsApp Customer Care (01633-701001)"
+              title="WhatsApp Customer Care (01730943993)"
               onClick={() => setIsOpen(false)}
             >
               <svg className="w-6 h-6 fill-current text-white" viewBox="0 0 24 24">
@@ -105,7 +105,7 @@ export const FloatingSupportWidget: React.FC = () => {
         }`}
         aria-label={isOpen ? "Close customer support options" : "Open customer support options"}
         aria-expanded={isOpen}
-        title={isOpen ? t("Close support options", "সাপোর্ট অপশন বন্ধ করুন") : t("Customer Support", "কাস্টমার সাপোর্ট")}
+        title={isOpen ? "Close support options" : "Customer Support"}
       >
         {isOpen ? (
           <X className="w-6 h-6 text-white transition-transform" />

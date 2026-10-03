@@ -31,7 +31,7 @@ export const About: React.FC = () => {
           <div className="relative z-10 max-w-2xl space-y-4">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-[#C9A66B] text-[10px] font-mono tracking-widest uppercase font-bold border border-white/10">
               <Sparkles className="w-3 h-3 text-[#C9A66B]" />
-              <span>{t("CONTEMPORARY URBAN STREETWEAR", "সমসাময়িক স্ট্রিটওয়্যার ব্র্যান্ড")}</span>
+              <span>CONTEMPORARY URBAN STREETWEAR</span>
             </div>
 
             <h1 className="text-3xl sm:text-5xl font-serif font-bold tracking-tight text-white leading-tight">
@@ -47,14 +47,14 @@ export const About: React.FC = () => {
                 to="/products"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#C9A66B] text-[#0A1E54] font-mono font-bold text-xs uppercase tracking-wider hover:bg-[#d8b57d] transition-all shadow-md active:scale-95"
               >
-                <span>{t("Explore Catalogue", "কালেকশন দেখুন")}</span>
+                <span>Explore Catalogue</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
                 to="/contact"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white/10 text-white font-mono text-xs uppercase tracking-wider hover:bg-white/20 transition-all border border-white/15"
               >
-                {t("Visit Support Desk", "যোগাযোগ করুন")}
+                Visit Support Desk
               </Link>
             </div>
           </div>

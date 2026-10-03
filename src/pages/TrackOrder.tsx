@@ -42,7 +42,7 @@ export const TrackOrder: React.FC = () => {
             className="inline-flex items-center gap-1.5 text-stone-500 hover:text-[#0A1E54] uppercase tracking-wider transition-colors font-bold"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>{t("Back to Store", "হোম পেজে ফিরুন")}</span>
+            <span>Back to Store</span>
           </Link>
 
           <div className="flex items-center gap-4 text-stone-500">
@@ -50,14 +50,14 @@ export const TrackOrder: React.FC = () => {
               to="/orders"
               className="hover:text-[#0A1E54] hover:underline uppercase tracking-wider"
             >
-              {t("My Orders Archive", "আমার অর্ডারসমূহ")}
+              My Orders Archive
             </Link>
             <span>•</span>
             <Link
               to="/contact"
               className="hover:text-[#0A1E54] hover:underline uppercase tracking-wider"
             >
-              {t("Support Desk", "হেল্পডেস্ক")}
+              Support Desk
             </Link>
           </div>
         </div>

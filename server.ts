@@ -133,8 +133,8 @@ app.post("/api/gemini/assistant", async (req, res) => {
       - Delivery duration: Dhaka takes 24 to 48 hours. Outside Dhaka takes 2 to 4 business days.
       - Fitting & Exchange Policy: 7-day hassle-free doorstep size/fitting exchange guarantee.
       - Promo / Coupon codes: Customers can use code 'PATOWARYVIP' at checkout to receive a 20% discount on all trending fashion items, or 'PATOWARY10' for 10% off!
-      - Payment Methods: Cash on Delivery (COD) anywhere in Bangladesh, bKash, Nagad, credit/debit cards.
-      - Support Details: WhatsApp / Phone: +8801633701001. Facebook Page: https://www.facebook.com/share/19JHtW2Eft/
+      - Payment Methods: bKash (Send money: 01730943993), Nagad (Send money: 01730943993), Upay (Send money: 01730943993), Cash on Delivery, Bank Payment (demo/placeholder).
+      - Support Details: WhatsApp / Phone: +8801730943993. Support Email: fashionpatowary@gmail.com. Facebook Page: https://www.facebook.com/share/1bjdW3mmQ4/
 
       Available Products database currently active in the store:
       ${productsContext}

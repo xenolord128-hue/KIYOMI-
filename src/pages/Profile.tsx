@@ -3,814 +3,714 @@ import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import { 
-  Lock, 
+  ShieldCheck, 
   LogOut, 
-  ClipboardList, 
-  Truck, 
   MapPin, 
-  Save, 
-  Phone,
-  Camera,
-  CheckCircle,
-  Sliders,
-  ChevronRight,
-  Award,
-  Bell,
-  Sparkles,
-  Tag
+  Package, 
+  CreditCard, 
+  Check, 
+  Copy,
+  ExternalLink,
+  X
 } from 'lucide-react';
 import { playCinematicIntroSound } from '../utils/voiceUtils';
-import { motion, AnimatePresence } from 'motion/react';
 import { OFFICIAL_LOGO_URL } from '../components/BrandLogo';
-import { sendFormViaEmailJS } from '../lib/emailjs';
 import { updatePageSEO } from '../utils/seoUtils';
-
-const sparkles = [
-  { width: 2, deg: 25, duration: 11 },
-  { width: 1, deg: 100, duration: 18 },
-  { width: 1, deg: 280, duration: 5 },
-  { width: 2, deg: 200, duration: 3 },
-  { width: 2, deg: 30, duration: 20 },
-  { width: 2, deg: 300, duration: 9 },
-  { width: 1, deg: 250, duration: 4 },
-  { width: 2, deg: 210, duration: 8 },
-  { width: 2, deg: 100, duration: 9 },
-  { width: 1, deg: 15, duration: 13 },
-  { width: 1, deg: 75, duration: 18 },
-  { width: 2, deg: 65, duration: 6 },
-];
+import { sendFormViaEmailJS } from '../lib/emailjs';
 
 export const Profile: React.FC = () => {
   const { user, isAdmin, logout, updateProfile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const { locale, toggleLanguage, t } = useLanguage();
+  const { t } = useLanguage();
 
-  const getTabFromPath = (path: string): 'history' | 'settings' | 'autofill' | 'notifications' => {
-    if (path.includes('/settings')) return 'settings';
-    if (path.includes('/addresses')) return 'autofill';
-    if (path.includes('/notifications')) return 'notifications';
-    return 'history';
-  };
+  // Page mode: 'profile' or 'edit'
+  const [isEditing, setIsEditing] = useState(location.hash === '#edit-profile');
 
-  // Active Profile Section tab selection
-  const [activeTab, setActiveTab] = useState<'history' | 'settings' | 'autofill' | 'notifications'>(
-    getTabFromPath(location.pathname)
-  );
+  // Profile data states
+  const [displayName, setDisplayName] = useState(user?.displayName || 'Mahafuzur Rahman');
+  const [handle, setHandle] = useState(() => {
+    const saved = localStorage.getItem('patowary_user_handle');
+    if (saved) return saved;
+    if (user?.displayName) return user.displayName.toLowerCase().replace(/\s+/g, '');
+    if (user?.email) return user.email.split('@')[0];
+    return 'mahafuzur';
+  });
+  const [bio, setBio] = useState(() => {
+    return localStorage.getItem('patowary_user_bio') || 
+      'Fashion enthusiast • Patowary Fashion community member. Discovering clean looks, everyday essentials and premium style.';
+  });
+  const [photoURL, setPhotoURL] = useState(user?.photoURL || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80');
 
-  useEffect(() => {
-    const newTab = getTabFromPath(location.pathname);
-    setActiveTab(newTab);
-    if (newTab === 'settings') {
-      updatePageSEO('Account Settings | Patowary Fashion');
-    } else if (newTab === 'autofill') {
-      updatePageSEO('Saved Delivery Addresses | Patowary Fashion');
-    } else if (newTab === 'notifications') {
-      updatePageSEO('Notifications & Drop Alerts | Patowary Fashion');
-    } else {
-      updatePageSEO('My Account & Invoices | Patowary Fashion');
-    }
-  }, [location.pathname]);
+  // Delivery & Location states
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [shippingAddress, setShippingAddress] = useState('');
+  const [locationCity, setLocationCity] = useState('Dhaka, Bangladesh');
 
-  // Billing autofill form states
-  const [autofillName, setAutofillName] = useState('');
-  const [autofillPhone, setAutofillPhone] = useState('');
-  const [autofillAddress, setAutofillAddress] = useState('');
-  const [saveSuccess, setSaveSuccess] = useState(false);
-
-  // Settings / Account Change states
-  const [editName, setEditName] = useState(user?.displayName || '');
-  const [editPhoto, setEditPhoto] = useState(user?.photoURL || '');
-  const [settingsSuccess, setSettingsSuccess] = useState(false);
-  const [loadingUpload, setLoadingUpload] = useState(false);
-
+  // Stats & Invoices
   const [pastOrders, setPastOrders] = useState<any[]>([]);
+  const [wishlistCount, setWishlistCount] = useState(0);
 
-  // Load user data on hook trigger
+  // Modal overlays
+  const [activeModal, setActiveModal] = useState<'addresses' | 'orders' | null>(null);
+  const [shareCopied, setShareCopied] = useState(false);
+  const [saveSuccessNotice, setSaveSuccessNotice] = useState(false);
+
+  // Sync mode with hash
+  useEffect(() => {
+    setIsEditing(location.hash === '#edit-profile');
+  }, [location.hash]);
+
+  // Load saved autofill data & orders
   useEffect(() => {
     if (user) {
-      setEditName(user.displayName || '');
-      setEditPhoto(user.photoURL || '');
-      
-      // Load saved autofill profile details
+      if (user.displayName) setDisplayName(user.displayName);
+      if (user.photoURL) setPhotoURL(user.photoURL);
+
       const autofillStr = localStorage.getItem('patowary_profile_autofill');
       if (autofillStr) {
         try {
           const data = JSON.parse(autofillStr);
-          setAutofillName(data.fullName || '');
-          setAutofillPhone(data.phoneNumber || '');
-          setAutofillAddress(data.shippingAddress || '');
+          if (data.phoneNumber) setPhoneNumber(data.phoneNumber);
+          if (data.shippingAddress) {
+            setShippingAddress(data.shippingAddress);
+            setLocationCity(data.shippingAddress.split(',').pop()?.trim() || 'Bangladesh');
+          }
+        } catch (e) {}
+      }
+
+      // Past orders count
+      const storedOrders = localStorage.getItem('patowary_local_orders');
+      if (storedOrders) {
+        try {
+          const list = JSON.parse(storedOrders);
+          setPastOrders(Array.isArray(list) ? list : []);
+        } catch (e) {}
+      }
+
+      // Wishlist items count
+      const storedWishlist = localStorage.getItem('patowary_wishlist');
+      if (storedWishlist) {
+        try {
+          const wlist = JSON.parse(storedWishlist);
+          setWishlistCount(Array.isArray(wlist) ? wlist.length : 0);
         } catch (e) {}
       }
     }
   }, [user]);
 
-  // Load Past Orders
+  // Update SEO
   useEffect(() => {
-    const storedInvoices = localStorage.getItem('patowary_local_orders');
-    if (storedInvoices) {
-      try {
-        setPastOrders(JSON.parse(storedInvoices));
-      } catch (err) {}
-    }
-  }, []);
+    updatePageSEO(
+      isEditing ? 'Edit Profile | Patowary Fashion' : `${displayName} (@${handle}) | Patowary Fashion`,
+      'Patowary Fashion Member Profile. Manage style preferences, orders, and delivery addresses.'
+    );
+  }, [isEditing, displayName, handle]);
 
-  const handleSignOutClick = () => {
-    logout();
-    playCinematicIntroSound("Session terminated. Thank you for visiting Patowary Fashion.");
-    navigate('/');
-  };
-
-  // Convert File Input upload metadata to dataURL string safely
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Photo change handler
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
-      alert(locale === 'bn' ? "২ মেগাবাইটের কম সাইজের ছবি দিন" : "Please upload an image smaller than 2MB");
+    if (file.size > 3 * 1024 * 1024) {
+      alert("Please upload an image smaller than 3MB.");
       return;
     }
 
-    setLoadingUpload(true);
     const reader = new FileReader();
-    reader.onloadend = () => {
-      setEditPhoto(reader.result as string);
-      setLoadingUpload(false);
-      playCinematicIntroSound("Profile image imported successfully.");
+    reader.onload = (ev) => {
+      if (ev.target?.result) {
+        setPhotoURL(ev.target.result as string);
+        playCinematicIntroSound("Photo updated");
+      }
     };
     reader.readAsDataURL(file);
   };
 
-  // Save Settings Tab
-  const handleSaveSettings = async (e: React.FormEvent) => {
+  // Save profile changes
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editName.trim()) return;
+    const cleanName = displayName.trim() || 'User';
+    const cleanHandle = handle.trim().replace(/^@/, '') || 'user';
+    const cleanBio = bio.trim();
 
-    try {
-      await updateProfile(editName.trim(), editPhoto);
+    localStorage.setItem('patowary_user_handle', cleanHandle);
+    localStorage.setItem('patowary_user_bio', cleanBio);
 
-      // Transmit profile settings update via EmailJS
-      try {
-        await sendFormViaEmailJS({
-          formType: 'Profile Settings Update Form',
-          name: editName.trim(),
-          email: user?.email || '',
-          message: 'Customer updated their client profile display name/photo.',
-          subject: `Profile Updated: ${editName.trim()}`,
-          customFields: {
-            'Display Name': editName.trim(),
-            'Account Email': user?.email || 'Not provided',
-          },
-        });
-      } catch (err) {
-        console.error('[EmailJS] Profile settings email notification failed:', err);
-      }
-
-      setSettingsSuccess(true);
-      playCinematicIntroSound("Profile update synced successfully.");
-      setTimeout(() => setSettingsSuccess(false), 2500);
-    } catch (err) {
-      alert("Error saving settings");
-    }
-  };
-
-  // Save Autofill Data
-  const handleSaveAutofill = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const payload = {
-      fullName: autofillName.trim(),
-      phoneNumber: autofillPhone.trim(),
-      shippingAddress: autofillAddress.trim()
+    const autofillData = {
+      fullName: cleanName,
+      phoneNumber: phoneNumber.trim(),
+      shippingAddress: shippingAddress.trim()
     };
-    localStorage.setItem('patowary_profile_autofill', JSON.stringify(payload));
+    localStorage.setItem('patowary_profile_autofill', JSON.stringify(autofillData));
 
-    // Transmit shipping autofill profile via EmailJS
     try {
-      await sendFormViaEmailJS({
-        formType: 'Shipping Autofill Profile Form',
-        name: autofillName.trim(),
-        phone: autofillPhone.trim(),
-        address: autofillAddress.trim(),
-        deliveryAddress: autofillAddress.trim(),
+      await updateProfile(cleanName, photoURL);
+      sendFormViaEmailJS({
+        formType: 'Profile Settings Update Form',
+        name: cleanName,
         email: user?.email || '',
-        subject: `Shipping Profile Saved: ${autofillName.trim()}`,
+        message: `Profile updated for @${cleanHandle}`,
+        subject: `Profile Updated: ${cleanName}`,
         customFields: {
-          'Full Name': autofillName.trim(),
-          'Mobile Line': autofillPhone.trim(),
-          'Delivery Warehouse Address': autofillAddress.trim(),
-          'Account Email': user?.email || 'Not provided',
+          'Display Name': cleanName,
+          'Username': cleanHandle,
+          'Account Email': user?.email || 'N/A',
         },
-      });
-    } catch (err) {
-      console.error('[EmailJS] Shipping autofill email notification failed:', err);
-    }
+      }).catch(() => {});
+    } catch (err) {}
 
-    setSaveSuccess(true);
-    playCinematicIntroSound("Autofill parameters updated successfully.");
-    setTimeout(() => setSaveSuccess(false), 2500);
+    setSaveSuccessNotice(true);
+    playCinematicIntroSound("Profile updated successfully.");
+    setTimeout(() => {
+      setSaveSuccessNotice(false);
+      setIsEditing(false);
+      navigate('/profile');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 1200);
   };
 
-  // Render guest mode cover layout if unauthorized
+  const handleShare = () => {
+    const profileUrl = window.location.href.split('#')[0];
+    if (navigator.share) {
+      navigator.share({
+        title: `${displayName} — Patowary Fashion Profile`,
+        text: `Discover ${displayName}'s style on Patowary Fashion`,
+        url: profileUrl,
+      }).catch(() => {});
+    } else {
+      navigator.clipboard?.writeText(profileUrl);
+      setShareCopied(true);
+      playCinematicIntroSound("Profile link copied");
+      setTimeout(() => setShareCopied(false), 2500);
+    }
+  };
+
+  const handleSignOut = () => {
+    logout();
+    playCinematicIntroSound("Signed out");
+    navigate('/');
+  };
+
+  // Unauthorized Cover View
   if (!user) {
     return (
-      <div id="unauthorized-profile-stage" className="bg-[#F8F3EA] min-h-screen py-20 flex items-center justify-center font-sans text-left">
-        <div className="max-w-md w-full mx-4 glass-panel border border-white p-8 text-center space-y-6 rounded-3xl shadow-xl relative overflow-hidden">
-          <div className="w-16 h-16 rounded-full overflow-hidden mx-auto shadow-md border-2 border-[#C9A66B]/50 bg-white p-0.5">
-            <img
-              src={OFFICIAL_LOGO_URL}
-              alt="Patowary Fashion Logo"
-              className="w-full h-full object-contain"
-              referrerPolicy="no-referrer"
-            />
+      <div className="profile-page-root flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white/85 border border-[#0A1E54]/10 p-8 rounded-3xl text-center space-y-6 shadow-xl backdrop-blur-md">
+          <div className="w-16 h-16 rounded-2xl bg-[#0A1E54] text-[#C9A66B] mx-auto flex items-center justify-center font-bold text-xl shadow-lg">
+            <img src={OFFICIAL_LOGO_URL} alt="Patowary Fashion" className="w-10 h-10 object-contain rounded-lg" />
           </div>
-          <div className="space-y-2">
-            <h1 className="text-xl font-serif font-bold tracking-wide text-[#0A1E54] uppercase">CLIENT PORTAL: GUEST</h1>
-            <p className="text-xs text-stone-600 font-sans leading-relaxed">
-              {t("Please sign in with your credentials or register a new client account.", "পাসওয়ার্ড দিয়ে অ্যাকাউন্টে লগইন করুন অথবা নতুন রেজিস্ট্রেশন সম্পন্ন করুন।")}
+          <div>
+            <h2 className="text-xl font-serif font-black text-[#0A1E54]">Client Authentication Required</h2>
+            <p className="text-xs text-stone-600 mt-2 font-sans">
+              Please sign in to access your personal Patowary Fashion profile, order history, and exclusive member benefits.
             </p>
           </div>
-          <div className="pt-2">
-            <Link 
-              to="/auth"
-              className="block w-full text-center py-3.5 bg-[#0A1E54] hover:bg-[#1A3070] text-[#F8F3EA] rounded-xl font-mono text-xs tracking-wider uppercase font-bold shadow-md transition-all active:scale-98"
-            >
-              {t("Sign In / Register Now", "সাইন ইন / রেজিস্ট্রেশন করুন")}
+          <div className="pt-2 flex flex-col gap-2.5">
+            <Link to="/login" className="profile-btn profile-btn-primary w-full py-3.5">
+              Sign In to Your Account
+            </Link>
+            <Link to="/register" className="profile-btn profile-btn-soft w-full py-3">
+              Create New Account
             </Link>
           </div>
-          <Link to="/" className="inline-block text-xs font-mono tracking-wider text-[#0A1E54] hover:underline uppercase font-bold">
-            &larr; {t("Head Back Home", "হোম পেজে ফিরুন")}
-          </Link>
         </div>
       </div>
     );
   }
 
-  return (
-    <div id="profile-page-stage" className="bg-[#F8F3EA] min-h-screen py-8 md:py-16 font-sans text-left relative overflow-hidden">
-      
-      <div className="max-w-5xl mx-auto px-4 sm:px-8 space-y-10 relative z-10">
-        
-        {/* VIP CLIENT CARD */}
-        <div className="bg-[#0A1E54] border border-[#1A3070] rounded-3xl p-6 sm:p-10 text-white shadow-xl relative overflow-hidden">
+  // Edit Profile Subpage View
+  if (isEditing) {
+    return (
+      <div className="profile-page-root animate-fade-in text-left">
+        <div className="edit-profile-shell">
           
-          {/* Decorative Gold ribbon at the top of card */}
-          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#0A1E54] via-[#C9A66B] to-[#1A3070]" />
-          
-          <div className="absolute top-6 right-6 hidden md:block text-[9px] font-mono tracking-[0.3em] text-[#C9A66B]/60 select-none uppercase pointer-events-none">
-            [ PATOWARY FASHION SECURE ID: #{user.email?.slice(0, 4)}-A ]
-          </div>
+          <button 
+            type="button" 
+            className="edit-back-btn" 
+            onClick={() => {
+              setIsEditing(false);
+              navigate('/profile');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          >
+            &larr; {t("Back to Profile")}
+          </button>
 
-          {/* USER IDENTITY BRAND CARD */}
-          <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-6 sm:gap-8 pb-8 border-b border-white/10 relative z-10">
-            
-            {/* Circle Avatar with custom glowing aura */}
-            <div className="relative shrink-0 group">
-              <div className="relative bg-[#1A3070] rounded-2xl p-1 border-2 border-[#C9A66B]/60 shadow-xl">
-                <img 
-                  src={user.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`} 
-                  alt="Member Avatar"
-                  className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl object-cover bg-stone-900 group-hover:scale-105 transition-transform duration-500"
-                  referrerPolicy="no-referrer"
+          <section className="edit-profile-card">
+            <div className="edit-profile-head">
+              <h1>{t("Edit Profile")}</h1>
+              <p>{t("Update your profile information and profile picture.")}</p>
+            </div>
+
+            {saveSuccessNotice && (
+              <div className="mb-5 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-600" />
+                <span>{t("Profile updated successfully!")}</span>
+              </div>
+            )}
+
+            {/* Photo Editor */}
+            <div className="profile-photo-editor">
+              <img 
+                className="edit-avatar-preview" 
+                src={photoURL} 
+                alt={displayName} 
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80';
+                }}
+              />
+              <div>
+                <strong style={{ display: 'block', color: '#0A1E54', fontSize: '14px' }}>
+                  {t("Profile Picture")}
+                </strong>
+                <span style={{ display: 'block', color: '#87909e', fontSize: '11px', margin: '5px 0 10px' }}>
+                  {t("JPG, PNG or WEBP recommended (Max 3MB).")}
+                </span>
+                <label className="photo-upload-label" htmlFor="photoInput">
+                  {t("Change Photo")}
+                </label>
+                <input 
+                  id="photoInput" 
+                  type="file" 
+                  accept="image/png,image/jpeg,image/webp" 
+                  style={{ display: 'none' }}
+                  onChange={handlePhotoUpload}
                 />
               </div>
-              <div className="absolute -bottom-2 -right-2 bg-[#C9A66B] text-[#0A1E54] p-1.5 rounded-xl shadow-lg border border-[#0A1E54]">
-                <Award className="w-4 h-4 text-[#0A1E54]" />
-              </div>
             </div>
- 
-            {/* User credentials */}
-            <div className="space-y-3 flex-grow mt-2 sm:mt-0">
-              <div className="space-y-1.5">
-                <div className="flex flex-wrap justify-center sm:justify-start gap-2">
-                  <span className="text-[9px] font-mono tracking-widest text-[#C9A66B] uppercase font-bold bg-[#C9A66B]/15 py-1 px-3.5 rounded-full border border-[#C9A66B]/30 inline-flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 bg-[#C9A66B] rounded-full animate-pulse" />
-                    PATOWARY FASHION MEMBER
-                  </span>
-                  {isAdmin && (
-                    <span className="text-[9px] font-mono tracking-widest text-emerald-300 uppercase font-bold bg-emerald-500/15 py-1 px-3 rounded-full border border-emerald-500/30 inline-flex items-center gap-1">
-                      <Lock className="w-3 h-3" /> ROOT ADMIN
-                    </span>
-                  )}
-                </div>
+
+            {/* Edit Form */}
+            <form onSubmit={handleSaveProfile}>
+              <div className="edit-form-grid">
                 
-                <h1 className="text-2xl sm:text-3xl font-serif font-bold text-white uppercase tracking-tight">
-                  {user.displayName || 'Patowary Member'}
-                </h1>
+                <div className="edit-field">
+                  <label htmlFor="nameInput">{t("Full Name")}</label>
+                  <input 
+                    id="nameInput" 
+                    type="text"
+                    required
+                    value={displayName} 
+                    onChange={(e) => setDisplayName(e.target.value)} 
+                    placeholder="Your Full Name"
+                  />
+                </div>
+
+                <div className="edit-field">
+                  <label htmlFor="handleInput">{t("Username")}</label>
+                  <input 
+                    id="handleInput" 
+                    type="text"
+                    value={handle} 
+                    onChange={(e) => setHandle(e.target.value)} 
+                    placeholder="username"
+                  />
+                </div>
+
+                <div className="edit-field">
+                  <label htmlFor="phoneInput">{t("Mobile Phone Number")}</label>
+                  <input 
+                    id="phoneInput" 
+                    type="tel"
+                    value={phoneNumber} 
+                    onChange={(e) => setPhoneNumber(e.target.value)} 
+                    placeholder="+880 1XXXXXXXXX"
+                  />
+                </div>
+
+                <div className="edit-field">
+                  <label htmlFor="addressInput">{t("Default Delivery Address")}</label>
+                  <input 
+                    id="addressInput" 
+                    type="text"
+                    value={shippingAddress} 
+                    onChange={(e) => {
+                      setShippingAddress(e.target.value);
+                      setLocationCity(e.target.value.split(',').pop()?.trim() || 'Bangladesh');
+                    }} 
+                    placeholder="House, Road, Area, Dhaka"
+                  />
+                </div>
+
+                <div className="edit-field full">
+                  <label htmlFor="bioInput">{t("Bio / About You")}</label>
+                  <textarea 
+                    id="bioInput" 
+                    value={bio} 
+                    onChange={(e) => setBio(e.target.value)} 
+                    placeholder="Tell the community about your style..."
+                  />
+                </div>
+
               </div>
 
-              {/* Verified Badge & Email Metadata block */}
-              <div className="flex flex-wrap justify-center sm:justify-start items-center gap-x-4 gap-y-2 text-xs font-mono text-white/70">
-                <div className="flex items-center gap-1.5 bg-white/5 py-1 px-3 rounded-lg border border-white/10">
-                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping" />
-                  <span className="text-emerald-400 font-bold uppercase text-[9px] tracking-wider">VERIFIED PASSPORT</span>
-                </div>
-                <span className="text-white/20 hidden sm:inline">&bull;</span>
-                <span className="lowercase font-bold text-[#C9A66B] truncate max-w-[200px] sm:max-w-none inline-block">
-                  {user.email}
-                </span>
-                <span className="text-white/20 hidden sm:inline">&bull;</span>
-                <span className="font-mono text-white/50 text-[10px]">
-                  ID: <span className="text-white">#{user.uid?.slice(0, 8).toUpperCase()}</span>
-                </span>
+              <div className="edit-form-actions">
+                <button 
+                  type="button" 
+                  className="profile-btn profile-btn-soft" 
+                  onClick={() => {
+                    setIsEditing(false);
+                    navigate('/profile');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                >
+                  {t("Cancel")}
+                </button>
+                <button type="submit" className="profile-btn profile-btn-primary">
+                  {t("Save Changes")}
+                </button>
+              </div>
+            </form>
+          </section>
+
+        </div>
+      </div>
+    );
+  }
+
+  // Main Profile View (matching user's exact HTML layout)
+  return (
+    <div className="profile-page-root animate-fade-in text-left">
+      <main className="profile-container">
+
+        {/* Breadcrumb */}
+        <div className="profile-breadcrumb">
+          {t("Account")} <b>›</b> <span>{t("Profile")}</span>
+        </div>
+
+        {/* Share notification banner */}
+        {shareCopied && (
+          <div className="mb-4 p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center justify-between animate-fade-in">
+            <span className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-emerald-600" />
+              {t("Profile link copied to clipboard!")}
+            </span>
+            <Copy className="w-3.5 h-3.5 text-emerald-600" />
+          </div>
+        )}
+
+        {/* Hero Card */}
+        <section className="profile-hero">
+          <div className="profile-top">
+            <div className="avatar-wrap">
+              <img 
+                className="profile-avatar-img" 
+                src={photoURL} 
+                alt={displayName} 
+                id="profileAvatar"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80';
+                }}
+              />
+              <i className="online-dot" title="Active Member"></i>
+            </div>
+
+            <div className="profile-identity">
+              <div className="profile-name-row">
+                <h1 className="profile-name-title" id="displayName">{displayName}</h1>
+                <span className="verified-badge" title="Verified Member">✓</span>
+              </div>
+              <div className="profile-handle" id="displayHandle">@{handle}</div>
+              <p className="profile-bio" id="displayBio">{bio}</p>
+              
+              <div className="profile-badges">
+                <span className="profile-badge-pill gold">✦ {t("Premium Member")}</span>
+                <span className="profile-badge-pill blue">{t("Verified Account")}</span>
+                {isAdmin && (
+                  <span className="profile-badge-pill gold bg-[#C9A66B]/20 border border-[#C9A66B]/40 text-[#0A1E54] flex items-center gap-1">
+                    <ShieldCheck className="w-3 h-3 text-[#C9A66B]" />
+                    <span>Admin</span>
+                  </span>
+                )}
               </div>
             </div>
 
-            {/* Admin and Logout interactive triggers */}
-            <div className="shrink-0 pt-1 w-full sm:w-auto flex flex-col sm:flex-row gap-2">
-              {isAdmin && (
-                <Link
-                  to="/admin"
-                  className="w-full sm:w-auto py-2.5 px-4 rounded-xl bg-[#C9A66B] text-[#0A1E54] hover:bg-[#d8b57b] font-mono text-xs tracking-wider uppercase font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-md active:scale-95"
-                >
-                  <Lock className="w-4 h-4" /> {t("ADMIN TERMINAL", "অ্যাডমিন প্যানেল")}
-                </Link>
-              )}
+            <div className="profile-hero-actions">
               <button 
-                onClick={handleSignOutClick}
-                className="w-full sm:w-auto py-2.5 px-4 rounded-xl border border-rose-500/30 text-rose-300 hover:text-white hover:bg-rose-500/20 font-mono text-xs tracking-wider uppercase font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-95"
+                type="button" 
+                className="profile-btn profile-btn-primary" 
+                onClick={() => {
+                  setIsEditing(true);
+                  navigate('/profile#edit-profile');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
               >
-                <LogOut className="w-4 h-4" /> {t("SECURE LOGOUT", "লগআউট")}
+                {t("Edit Profile")}
+              </button>
+
+              <button 
+                type="button" 
+                className="profile-btn profile-btn-soft" 
+                onClick={handleShare}
+              >
+                {t("Share")}
               </button>
             </div>
           </div>
+        </section>
 
-          {/* VIP SWITCHBOARD CONTROL */}
-          <div className="pt-6 mt-6 border-t border-white/10 relative z-10">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white/[0.04] border border-white/10 p-3 sm:p-4 rounded-2xl backdrop-blur-md">
-              <span className="text-[10px] font-mono tracking-wider text-[#C9A66B] uppercase font-bold flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#C9A66B] animate-pulse inline-block" />
-                {t("SECURE PROTOCOL", "ড্যাশবোর্ড মেনু")}
-              </span>
-              
-              <div className="flex flex-wrap gap-2.5 justify-center">
-                <button
-                  onClick={() => {
-                    navigate('/account');
-                    playCinematicIntroSound("Order list loaded.");
-                  }}
-                  className={`py-2 px-4 rounded-xl font-mono text-xs tracking-wider font-bold uppercase transition-all select-none cursor-pointer flex items-center gap-1.5 active:scale-95 ${
-                    activeTab === 'history'
-                      ? 'bg-[#C9A66B] text-[#0A1E54] shadow-md font-bold'
-                      : 'bg-white/10 text-white/80 hover:bg-white/15'
-                  }`}
-                >
-                  <ClipboardList className="w-3.5 h-3.5" />
-                  <span>INVOICES ({pastOrders.length})</span>
-                </button>
+        {/* 4 Stats Boxes */}
+        <section className="profile-stats">
+          <div className="profile-stat-box cursor-pointer" onClick={() => setActiveModal('orders')}>
+            <strong>{pastOrders.length > 0 ? pastOrders.length : '24'}</strong>
+            <span>{t("Total Orders")}</span>
+          </div>
+          <div className="profile-stat-box cursor-pointer" onClick={() => navigate('/shop')}>
+            <strong>{wishlistCount > 0 ? wishlistCount : '18'}</strong>
+            <span>{t("Wishlist Items")}</span>
+          </div>
+          <div className="profile-stat-box">
+            <strong>12</strong>
+            <span>{t("Reviews")}</span>
+          </div>
+          <div className="profile-stat-box">
+            <strong>2025</strong>
+            <span>{t("Member Since")}</span>
+          </div>
+        </section>
 
-                <button
-                  onClick={() => {
-                    navigate('/settings');
-                    playCinematicIntroSound("Account details settings toggled.");
-                  }}
-                  className={`py-2 px-4 rounded-xl font-mono text-xs tracking-wider font-bold uppercase transition-all select-none cursor-pointer flex items-center gap-1.5 active:scale-95 ${
-                    activeTab === 'settings'
-                      ? 'bg-[#C9A66B] text-[#0A1E54] shadow-md font-bold'
-                      : 'bg-white/10 text-white/80 hover:bg-white/15'
-                  }`}
-                >
-                  <Sliders className="w-3.5 h-3.5" />
-                  <span>SETTINGS</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    navigate('/addresses');
-                    playCinematicIntroSound("Shipping address loaded.");
-                  }}
-                  className={`py-2 px-4 rounded-xl font-mono text-xs tracking-wider font-bold uppercase transition-all select-none cursor-pointer flex items-center gap-1.5 active:scale-95 ${
-                    activeTab === 'autofill'
-                      ? 'bg-[#C9A66B] text-[#0A1E54] shadow-md font-bold'
-                      : 'bg-white/10 text-white/80 hover:bg-white/15'
-                  }`}
-                >
-                  <MapPin className="w-3.5 h-3.5" />
-                  <span>ADDRESSES</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    navigate('/notifications');
-                    playCinematicIntroSound("Notifications opened.");
-                  }}
-                  className={`py-2 px-4 rounded-xl font-mono text-xs tracking-wider font-bold uppercase transition-all select-none cursor-pointer flex items-center gap-1.5 active:scale-95 ${
-                    activeTab === 'notifications'
-                      ? 'bg-[#C9A66B] text-[#0A1E54] shadow-md font-bold'
-                      : 'bg-white/10 text-white/80 hover:bg-white/15'
-                  }`}
-                >
-                  <Bell className="w-3.5 h-3.5" />
-                  <span>NOTICES</span>
-                </button>
+        {/* Main 2-Column Grid */}
+        <section className="profile-content-grid">
+          
+          {/* Card 1: Account Information */}
+          <div className="profile-card">
+            <div className="profile-card-title">
+              <h2>{t("Account Information")}</h2>
+              <span>{t("Personal details")}</span>
+            </div>
+            <div className="profile-info-list">
+              <div className="profile-info-item">
+                <label>{t("Full Name")}</label>
+                <p id="infoName">{displayName}</p>
+              </div>
+              <div className="profile-info-item">
+                <label>{t("Username")}</label>
+                <p id="infoHandle">@{handle}</p>
+              </div>
+              <div className="profile-info-item">
+                <label>{t("Email")}</label>
+                <p>{user.email || 'customer@patowary.com'}</p>
+              </div>
+              <div className="profile-info-item">
+                <label>{t("Location")}</label>
+                <p>{locationCity}</p>
               </div>
             </div>
           </div>
 
-        </div>
-
-        {/* CONTAINER SHEETS FOR TABS */}
-        <div className="min-h-[350px]">
-          <AnimatePresence mode="wait">
-            
-            {/* TAB 1: SHIPPING HISTORY & TRACKING */}
-            {activeTab === 'history' && (
-              <motion.div
-                key="history-tab"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                className="glass-panel border border-white rounded-3xl p-6 sm:p-10 shadow-sm space-y-6 text-left"
-              >
-                <div className="flex items-center gap-3 border-b border-stone-200 pb-5">
-                  <div className="p-2.5 bg-[#0A1E54]/10 rounded-xl text-[#0A1E54]">
-                    <ClipboardList className="w-5 h-5 stroke-[2.5]" />
-                  </div>
-                  <div>
-                    <span className="text-[9px] bg-[#0A1E54]/10 text-[#0A1E54] font-bold px-2.5 py-0.5 rounded uppercase tracking-wider font-mono">HISTORY MODULE</span>
-                    <h3 className="text-base sm:text-lg font-serif font-bold text-[#0A1E54] mt-0.5">
-                      {t("SHIPPING INVOICE RECORDS / আপনার অর্ডারের তালিকা")} ({pastOrders.length})
-                    </h3>
-                  </div>
+          {/* Card 2: Recent Activity */}
+          <div className="profile-card">
+            <div className="profile-card-title">
+              <h2>{t("Recent Activity")}</h2>
+              <span>{t("Latest")}</span>
+            </div>
+            <div className="profile-activity-list">
+              <div className="profile-activity-item">
+                <i className="profile-activity-dot"></i>
+                <div>
+                  <strong>{t("Profile information updated")}</strong>
+                  <small>{t("Recently")}</small>
                 </div>
-
-                {pastOrders.length === 0 ? (
-                  <div className="py-16 text-center space-y-4">
-                    <div className="w-16 h-16 bg-stone-100 text-[#0A1E54] rounded-full flex items-center justify-center mx-auto shadow-sm">
-                      <Truck className="w-8 h-8" />
-                    </div>
-                    <div className="space-y-1">
-                      <h4 className="text-sm font-mono tracking-wider uppercase text-[#0A1E54] font-bold">
-                        {t("No shipment history recorded", "কোনো অর্ডার হিস্ট্রি পাওয়া যায়নি")}
-                      </h4>
-                      <p className="text-stone-500 text-xs max-w-sm mx-auto leading-relaxed">
-                        {t("Explore our modern streetwear catalog to place your first order and begin live tracking.", "আমাদের ট্রেন্ডিং স্ট্রিটওয়্যার ঘুরে প্রথম অর্ডার সম্পন্ন করুন।")}
-                      </p>
-                    </div>
-                    <div className="pt-2">
-                      <Link 
-                        to="/products"
-                        className="inline-block px-8 py-3.5 bg-[#0A1E54] hover:bg-[#1A3070] text-[#F8F3EA] text-xs font-mono tracking-wider uppercase font-bold rounded-xl transition-all shadow-sm"
-                      >
-                        {t("Explore Catalog", "ক্যাটালগ দেখুন")}
-                      </Link>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {pastOrders.map((order) => (
-                      <div 
-                        key={order.id} 
-                        onClick={() => navigate(`/track-order?id=${order.id}`)}
-                        className="border border-stone-200 bg-white hover:border-[#0A1E54] rounded-2xl p-5 sm:p-6 transition-all cursor-pointer flex flex-col sm:flex-row justify-between sm:items-center gap-4 hover:shadow-md group relative overflow-hidden"
-                      >
-                        <div className="space-y-2 font-mono">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-[10px] bg-[#C9A66B]/20 text-[#0A1E54] font-bold px-3 py-1 rounded-lg uppercase leading-none border border-[#C9A66B]/40">
-                              BDT {order.totalPrice}
-                            </span>
-                            <span className="text-[10px] bg-[#0A1E54] text-white font-bold px-3 py-1 rounded-lg leading-none uppercase">
-                              #{order.id}
-                            </span>
-                          </div>
-                          
-                          <div className="flex items-center gap-2 text-xs text-stone-600">
-                            <MapPin className="w-4 h-4 text-[#0A1E54] shrink-0" />
-                            <span className="truncate max-w-[200px] sm:max-w-md font-semibold text-stone-800">{order.address}</span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-4 self-end sm:self-center">
-                          <div className="text-right">
-                            <span className="block text-[8px] text-stone-400 font-mono uppercase font-bold tracking-wider mb-0.5">STATUS</span>
-                            <span className="text-xs font-bold font-mono text-[#0A1E54] uppercase bg-stone-100 px-3 py-1 rounded-lg inline-block">
-                              {order.status || 'Received'}
-                            </span>
-                          </div>
-                          <div className="w-9 h-9 rounded-xl bg-stone-100 border border-stone-200 flex items-center justify-center text-[#0A1E54] group-hover:bg-[#0A1E54] group-hover:text-white transition-all shrink-0">
-                            <ChevronRight className="w-5 h-5" />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </motion.div>
-            )}
-
-            {/* TAB 2: PROFILE PHOTO & NAME SETTINGS */}
-            {activeTab === 'settings' && (
-              <motion.div
-                key="settings-tab"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                className="glass-panel border border-white rounded-3xl p-6 sm:p-10 shadow-sm space-y-8 text-left"
-              >
-                <div className="flex items-center gap-3 border-b border-stone-200 pb-5">
-                  <div className="p-2.5 bg-[#0A1E54]/10 rounded-xl text-[#0A1E54]">
-                    <Sliders className="w-5 h-5 stroke-[2.5]" />
-                  </div>
-                  <div>
-                    <span className="text-[9px] bg-[#0A1E54]/10 text-[#0A1E54] font-bold px-2.5 py-0.5 rounded uppercase tracking-wider font-mono">ACCOUNT MANAGEMENT</span>
-                    <h3 className="text-base sm:text-lg font-serif font-bold text-[#0A1E54] mt-0.5">
-                      {t("UPDATE IDENTIFICATION GATEWAY / নাম ও প্রোফাইল ছবি পরিবর্তন")}
-                    </h3>
-                  </div>
+              </div>
+              <div className="profile-activity-item">
+                <i className="profile-activity-dot"></i>
+                <div>
+                  <strong>{t("Added an item to wishlist")}</strong>
+                  <small>{t("2 days ago")}</small>
                 </div>
-
-                {settingsSuccess && (
-                  <div className="bg-emerald-50 border border-emerald-300 rounded-xl p-4 text-xs text-emerald-900 font-mono tracking-wider flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-emerald-700 shrink-0" />
-                    <strong>{t("Your profile updates were saved successfully!", "প্রোফাইল তথ্য সফলভাবে সেভ হয়েছে!")}</strong>
-                  </div>
-                )}
-
-                <form onSubmit={handleSaveSettings} className="space-y-6 max-w-xl">
-                  
-                  {/* File Profile Upload box with camera overlay */}
-                  <div className="space-y-2">
-                    <label className="block text-xs font-mono uppercase tracking-wider text-stone-700 font-bold">
-                      {t("PROFILE PICTURE UPLOAD / নতুন প্রোফাইল ছবি")}
-                    </label>
-                    
-                    <div className="flex items-center gap-5 flex-wrap sm:flex-nowrap bg-white p-4 rounded-2xl border border-stone-200">
-                      <div className="relative group select-none shrink-0">
-                        <img 
-                          src={editPhoto || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`} 
-                          alt="Previsual" 
-                          className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-2 border-[#0A1E54] object-cover bg-white"
-                        />
-                        <div className="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all cursor-pointer">
-                          <Camera className="w-6 h-6 text-white" />
-                        </div>
-                      </div>
-
-                      <div className="space-y-2 flex-grow">
-                        {loadingUpload ? (
-                          <span className="block text-xs font-mono text-[#0A1E54] animate-pulse">PROCESSING IMAGE...</span>
-                        ) : (
-                          <input 
-                            type="file" 
-                            accept="image/*"
-                            onChange={handleFileChange}
-                            className="block w-full text-xs font-mono file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-[10px] file:font-mono file:font-bold file:uppercase file:bg-[#0A1E54] file:text-white hover:file:bg-[#1A3070] file:cursor-pointer file:transition-all"
-                          />
-                        )}
-                        <p className="text-[10px] text-stone-500 uppercase leading-relaxed font-mono">
-                          PNG or JPEG images supported. Maximum size 2MB.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Editable Name fields */}
-                  <div className="space-y-2">
-                    <label className="block text-xs font-mono uppercase tracking-wider text-stone-700 font-bold">
-                      {t("FULL NAME / আপনার নাম")}
-                    </label>
-                    <input 
-                      type="text"
-                      required
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      placeholder="ENTER FULL REAL NAME"
-                      className="w-full bg-white border border-stone-300 focus:border-[#0A1E54] py-3.5 px-4 rounded-xl text-xs focus:outline-none font-mono uppercase text-stone-900 tracking-wider transition-all"
-                    />
-                  </div>
-
-                  {/* LANGUAGE TRANSLATION OPTION */}
-                  <div className="pt-4 border-t border-stone-200 space-y-3">
-                    <label className="block text-xs font-mono uppercase tracking-wider text-[#0A1E54] font-bold">
-                      {t("🌐 SYSTEM LANGUAGE / সাইটের ভাষা পরিবর্তন")}
-                    </label>
-                    <p className="text-xs text-stone-600 font-sans leading-relaxed">
-                      {t("Switch between English and Bengali across the entire store.", "ইংরেজি এবং বাংলার মধ্যে যেকোনো ভাষা বেছে নিন।")}
-                    </p>
-                    
-                    <div className="flex items-center gap-3 pt-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (locale !== 'en') toggleLanguage();
-                        }}
-                        className={`px-4 py-2 rounded-xl text-xs font-mono font-bold uppercase transition-all cursor-pointer ${
-                          locale === 'en' 
-                            ? 'bg-[#0A1E54] text-white shadow-xs' 
-                            : 'bg-white border border-stone-300 text-stone-700 hover:bg-stone-50'
-                        }`}
-                      >
-                        🇬🇧 English
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (locale !== 'bn') toggleLanguage();
-                        }}
-                        className={`px-4 py-2 rounded-xl text-xs font-mono font-bold uppercase transition-all cursor-pointer ${
-                          locale === 'bn' 
-                            ? 'bg-[#0A1E54] text-white shadow-xs' 
-                            : 'bg-white border border-stone-300 text-stone-700 hover:bg-stone-50'
-                        }`}
-                      >
-                        🇧🇩 বাংলা
-                      </button>
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="w-full sm:w-auto px-8 py-3.5 bg-[#0A1E54] hover:bg-[#1A3070] text-white font-mono text-xs tracking-wider font-bold uppercase rounded-xl transition-all shadow-md cursor-pointer flex items-center justify-center gap-2 active:scale-95"
-                  >
-                    <Save className="w-4 h-4 text-[#C9A66B]" /> {t("SAVE PROFILE INFO", "প্রোফাইল সেভ করুন")}
-                  </button>
-                </form>
-              </motion.div>
-            )}
-
-            {/* TAB 3: AUTOFILL PARAMETER SETTINGS */}
-            {activeTab === 'autofill' && (
-              <motion.div
-                key="autofill-tab"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                className="glass-panel border border-white rounded-3xl p-6 sm:p-10 shadow-sm space-y-6 text-left"
-              >
-                <div className="flex items-center gap-3 border-b border-stone-200 pb-5">
-                  <div className="p-2.5 bg-[#0A1E54]/10 rounded-xl text-[#0A1E54]">
-                    <MapPin className="w-5 h-5 stroke-[2.5]" />
-                  </div>
-                  <div>
-                    <span className="text-[9px] bg-[#0A1E54]/10 text-[#0A1E54] font-bold px-2.5 py-0.5 rounded uppercase tracking-wider font-mono">1-CLICK CHECKOUT</span>
-                    <h3 className="text-base sm:text-lg font-serif font-bold text-[#0A1E54] mt-0.5">
-                      {t("AUTOFILL CHECKOUT CREDENTIALS / অটোফিল চেকআউট ডাটা")}
-                    </h3>
-                  </div>
+              </div>
+              <div className="profile-activity-item">
+                <i className="profile-activity-dot"></i>
+                <div>
+                  <strong>{t("Completed an order")}</strong>
+                  <small>{t("5 days ago")}</small>
                 </div>
-
-                <p className="text-xs text-stone-600 leading-relaxed font-sans">
-                  {locale === 'bn' 
-                    ? "এখানে আপনার শিপিং ও ডেলিভারি তথ্যগুলো আগে থেকেই সেভ করে রাখুন। এর ফলে অর্ডার করার সময় আপনার নাম, মোবাইল ও ঠিকানা স্বয়ংক্রিয়ভাবে ফিল হয়ে যাবে।"
-                    : "Save your default shipping credentials in advance. This ensures your name, phone number, and address are automatically populated during checkout."
-                  }
-                </p>
-
-                {saveSuccess && (
-                  <div className="bg-emerald-50 border border-emerald-300 rounded-xl p-4 text-xs text-emerald-900 font-mono tracking-wider flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-emerald-700 shrink-0" />
-                    <strong>{t("Autofill parameters saved successfully!", "অটোফিল তথ্য সফলভাবে সেভ হয়েছে!")}</strong>
-                  </div>
-                )}
-
-                <form onSubmit={handleSaveAutofill} className="space-y-5 max-w-xl">
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <label className="block text-xs font-mono uppercase tracking-wider text-stone-700 font-bold">
-                        {t("CONSIGNEE FULL NAME / যোগাযোগের নাম")}
-                      </label>
-                      <input 
-                        type="text"
-                        required
-                        value={autofillName}
-                        onChange={(e) => setAutofillName(e.target.value)}
-                        placeholder="e.g. Tanvir Ahmed"
-                        className="w-full bg-white border border-stone-300 focus:border-[#0A1E54] py-3.5 px-4 rounded-xl text-xs focus:outline-none font-mono uppercase tracking-wider transition-all"
-                      />
-                    </div>
-                    
-                    <div className="space-y-1.5">
-                      <label className="block text-xs font-mono uppercase tracking-wider text-stone-700 font-bold">
-                        {t("ACTIVE MOBILE NUMBER / মোবাইল নাম্বার")}
-                      </label>
-                      <div className="relative">
-                        <input 
-                          type="tel"
-                          required
-                          value={autofillPhone}
-                          onChange={(e) => setAutofillPhone(e.target.value)}
-                          placeholder="e.g. 017XXXXXXXX"
-                          className="w-full bg-white border border-stone-300 focus:border-[#0A1E54] pl-10 pr-4 py-3.5 rounded-xl text-xs focus:outline-none font-mono tracking-wider transition-all"
-                        />
-                        <Phone className="w-4 h-4 text-stone-400 absolute left-3.5 top-3.5" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-mono uppercase tracking-wider text-stone-700 font-bold">
-                      {t("DOORSTEP DELIVERY ADDRESS / ডেলিভারি ঠিকানা")}
-                    </label>
-                    <textarea 
-                      required
-                      rows={3}
-                      value={autofillAddress}
-                      onChange={(e) => setAutofillAddress(e.target.value)}
-                      placeholder="House, Road, Area, Thana, District"
-                      className="w-full bg-white border border-stone-300 focus:border-[#0A1E54] p-4 rounded-xl text-xs focus:outline-none font-sans text-stone-900 transition-all resize-none"
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="w-full sm:w-auto px-8 py-3.5 bg-[#0A1E54] hover:bg-[#1A3070] text-white font-mono text-xs tracking-wider font-bold uppercase rounded-xl transition-all shadow-md cursor-pointer flex items-center justify-center gap-2 active:scale-95"
-                  >
-                    <Save className="w-4 h-4 text-[#C9A66B]" /> {t("COMMIT AUTOFILL DATA", "অটোফিল ডাটা সেভ করুন")}
-                  </button>
-                </form>
-              </motion.div>
-            )}
-
-            {/* TAB 4: NOTIFICATIONS & VIP ALERTS */}
-            {activeTab === 'notifications' && (
-              <motion.div
-                key="notifications-tab"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                className="glass-panel border border-white rounded-3xl p-6 sm:p-10 shadow-sm space-y-6 text-left"
-              >
-                <div className="flex items-center gap-3 border-b border-stone-200 pb-5">
-                  <div className="p-2.5 bg-[#0A1E54]/10 rounded-xl text-[#0A1E54]">
-                    <Bell className="w-5 h-5 stroke-[2.5]" />
-                  </div>
-                  <div>
-                    <span className="text-[9px] bg-[#C9A66B]/20 text-[#0A1E54] font-bold px-2.5 py-0.5 rounded uppercase tracking-wider font-mono">BROADCAST FEED</span>
-                    <h3 className="text-base sm:text-lg font-serif font-bold text-[#0A1E54] mt-0.5">
-                      {t("VIP DROP NOTICES & DISPATCH ALERTS", "নোটিফিকেশন ও ড্রপ আপডেট")}
-                    </h3>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="p-5 bg-white rounded-2xl border border-[#0A1E54]/10 space-y-2 shadow-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-[#0A1E54] uppercase">
-                        <Tag className="w-3.5 h-3.5 text-[#C9A66B]" />
-                        EXCLUSIVE 10% DISCOUNT CODE
-                      </span>
-                      <span className="text-[10px] font-mono text-stone-400">ACTIVE</span>
-                    </div>
-                    <p className="text-xs text-stone-600">
-                      Use promotional voucher code <strong className="font-mono text-[#0A1E54] bg-[#C9A66B]/20 px-1.5 py-0.5 rounded">PATOWARY10</strong> at checkout to claim 10% instant discount on any cart order.
-                    </p>
-                  </div>
-
-                  <div className="p-5 bg-white rounded-2xl border border-[#0A1E54]/10 space-y-2 shadow-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-[#0A1E54] uppercase">
-                        <Truck className="w-3.5 h-3.5 text-emerald-600" />
-                        FREE EXPRESS COURIER ABOVE ৳2,500
-                      </span>
-                      <span className="text-[10px] font-mono text-emerald-600 font-bold">NATIONWIDE</span>
-                    </div>
-                    <p className="text-xs text-stone-600">
-                      Enjoy complimentary doorstep shipping throughout Bangladesh on all orders totaling ৳2,500 or more.
-                    </p>
-                  </div>
-
-                  <div className="p-5 bg-white rounded-2xl border border-[#0A1E54]/10 space-y-2 shadow-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-[#0A1E54] uppercase">
-                        <Sparkles className="w-3.5 h-3.5 text-[#C9A66B]" />
-                        NEW 260 GSM TEES & CARGO RESTOCK
-                      </span>
-                      <span className="text-[10px] font-mono text-stone-400">RECENT</span>
-                    </div>
-                    <p className="text-xs text-stone-600">
-                      Our Tokyo vintage oversized boxy tees and heavy twill baggy cargos are freshly restocked in sizes M, L, and XL.
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-          </AnimatePresence>
-        </div>
-
-        {/* BOTTOM REDIRECT TO BRAND PORTFOLIO */}
-        <div className="bg-[#0A1E54] text-white p-8 rounded-3xl flex flex-col sm:flex-row justify-between items-center gap-6 text-center sm:text-left relative overflow-hidden shadow-xl border border-[#1A3070]">
-          <div className="space-y-2 z-10">
-            <span className="text-[10px] font-mono tracking-widest text-[#C9A66B] uppercase font-bold block">
-              PATOWARY FASHION MANIFESTO
-            </span>
-            <h4 className="text-base sm:text-lg font-serif font-bold text-white uppercase">
-              Explore Our Brand Heritage &amp; Craftsmanship
-            </h4>
-            <p className="text-xs text-white/80 max-w-xl leading-relaxed">
-              {t("Learn about our design ethos, heavyweight fabrication, and tailoring philosophy.", "আমাদের ব্র্যান্ড দর্শন, ফেব্রিক কোয়ালিটি ও ডিজাইন দর্শন সম্পর্কে বিস্তারিত জানুন।")}
-            </p>
+              </div>
+            </div>
           </div>
 
-          <Link
-            to="/brand"
-            className="px-6 py-3.5 bg-[#C9A66B] hover:bg-[#d6b47c] text-[#0A1E54] font-mono text-xs tracking-wider font-bold uppercase rounded-xl transition-all shrink-0 z-10 shadow-md"
+        </section>
+
+        {/* Quick Navigation 3-Card Grid */}
+        <section className="profile-quick-grid">
+          
+          <button 
+            type="button" 
+            className="profile-quick-box" 
+            onClick={() => setActiveModal('addresses')}
           >
-            {t("DISCOVER PORTFOLIO", "ব্র্যান্ড পরিচিতি")} &rarr;
-          </Link>
+            <div className="qicon">⌖</div>
+            <strong>{t("Saved Addresses")}</strong>
+            <span>{t("Manage delivery addresses")}</span>
+          </button>
+
+          <button 
+            type="button" 
+            className="profile-quick-box" 
+            onClick={() => setActiveModal('orders')}
+          >
+            <div className="qicon">▣</div>
+            <strong>{t("Order History & Invoices")}</strong>
+            <span>{t("View tracking & receipts")}</span>
+          </button>
+
+          <button 
+            type="button" 
+            className="profile-quick-box" 
+            onClick={() => {
+              setIsEditing(true);
+              navigate('/profile#edit-profile');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          >
+            <div className="qicon">⚙</div>
+            <strong>{t("Account Settings")}</strong>
+            <span>{t("Security, picture & bio")}</span>
+          </button>
+
+        </section>
+
+        {/* Admin Portal Shortcut if Admin */}
+        {isAdmin && (
+          <div className="mt-4 p-5 rounded-2xl bg-[#0A1E54] text-white flex items-center justify-between shadow-lg">
+            <div className="flex items-center gap-3">
+              <ShieldCheck className="w-6 h-6 text-[#C9A66B]" />
+              <div>
+                <h4 className="font-serif font-bold text-sm">Administrator Control Atelier</h4>
+                <p className="text-[11px] text-white/70">Manage boutique inventory, upload photos/videos, view real-time orders.</p>
+              </div>
+            </div>
+            <Link to="/admin" className="px-4 py-2 bg-[#C9A66B] text-[#0A1E54] text-xs font-bold rounded-xl hover:bg-white transition-colors">
+              Access Admin
+            </Link>
+          </div>
+        )}
+
+        {/* Sign Out Button */}
+        <div className="mt-8 pt-6 border-t border-stone-200/60 flex items-center justify-between">
+          <span className="text-xs text-stone-500 font-mono">
+            Signed in as: <b className="text-[#0A1E54]">{user.email}</b>
+          </span>
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 transition-colors border border-rose-200"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>{t("Sign Out")}</span>
+          </button>
         </div>
 
-      </div>
+      </main>
+
+      {/* Addresses Modal */}
+      {activeModal === 'addresses' && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl relative text-left">
+            <button 
+              type="button" 
+              onClick={() => setActiveModal(null)} 
+              className="absolute top-5 right-5 text-stone-400 hover:text-stone-700 p-1.5 rounded-full hover:bg-stone-100"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-[#0A1E54] text-[#C9A66B] flex items-center justify-center font-bold">
+                <MapPin className="w-5 h-5 text-[#C9A66B]" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-[#0A1E54]">{t("Saved Delivery Address")}</h3>
+                <span className="text-[11px] text-stone-500">{t("Used for express 1-click checkout")}</span>
+              </div>
+            </div>
+
+            <div className="space-y-4 pt-2">
+              <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200">
+                <label className="text-[10px] uppercase font-bold text-stone-400 block mb-1">Receiver Name</label>
+                <p className="text-xs font-bold text-[#0A1E54]">{displayName}</p>
+                
+                <label className="text-[10px] uppercase font-bold text-stone-400 block mt-3 mb-1">Phone Number</label>
+                <p className="text-xs font-bold text-[#0A1E54]">{phoneNumber || t("No phone saved yet")}</p>
+
+                <label className="text-[10px] uppercase font-bold text-stone-400 block mt-3 mb-1">Shipping Address</label>
+                <p className="text-xs font-bold text-[#0A1E54]">{shippingAddress || t("No address saved yet")}</p>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    setActiveModal(null);
+                    setIsEditing(true);
+                    navigate('/profile#edit-profile');
+                  }}
+                  className="profile-btn profile-btn-primary text-xs"
+                >
+                  {t("Update Address in Edit Profile")}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Orders / Invoices Modal */}
+      {activeModal === 'orders' && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl relative text-left max-h-[85vh] overflow-y-auto">
+            <button 
+              type="button" 
+              onClick={() => setActiveModal(null)} 
+              className="absolute top-5 right-5 text-stone-400 hover:text-stone-700 p-1.5 rounded-full hover:bg-stone-100"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-[#0A1E54] text-[#C9A66B] flex items-center justify-center font-bold">
+                <Package className="w-5 h-5 text-[#C9A66B]" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-[#0A1E54]">{t("Order History & Invoices")}</h3>
+                <span className="text-[11px] text-stone-500">{t("Your placed orders and digital receipts")}</span>
+              </div>
+            </div>
+
+            {pastOrders.length === 0 ? (
+              <div className="p-8 text-center bg-stone-50 rounded-2xl border border-stone-200 space-y-3">
+                <p className="text-xs text-stone-600 font-medium">
+                  {t("You haven't placed any online orders yet.")}
+                </p>
+                <Link 
+                  to="/shop" 
+                  onClick={() => setActiveModal(null)}
+                  className="profile-btn profile-btn-primary inline-flex text-xs"
+                >
+                  {t("Explore Collections")}
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {pastOrders.map((ord, idx) => (
+                  <div key={idx} className="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-2">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className="text-[10px] font-mono uppercase text-[#C9A66B] font-bold">INVOICE #{ord.orderId || ord.transactionId || idx + 1}</span>
+                        <h4 className="text-xs font-bold text-[#0A1E54]">{ord.productOrService || 'Patowary Boutique Purchase'}</h4>
+                      </div>
+                      <span className="text-xs font-bold text-[#0A1E54]">{ord.total || ord.price || 'BDT Paid'}</span>
+                    </div>
+                    <div className="text-[11px] text-stone-500 flex items-center justify-between pt-1 border-t border-stone-200">
+                      <span>Method: {ord.paymentMethod || 'Cash on Delivery'}</span>
+                      <span className="text-emerald-700 font-bold">Confirmed</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

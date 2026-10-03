@@ -21,8 +21,7 @@ import { OFFICIAL_LOGO_URL } from '../components/BrandLogo';
 import { sendFormViaEmailJS } from '../lib/emailjs';
 import { updatePageSEO } from '../utils/seoUtils';
 import { useLocation } from 'react-router-dom';
-import { ReCaptcha } from '../components/ReCaptcha';
-import { verifyRecaptchaToken } from '../utils/recaptcha';
+import { HumanVerificationModal, isUserHumanVerified, setHumanVerified } from '../components/HumanVerificationModal';
 
 export const Auth: React.FC = () => {
   const { user, login, signup, loginWithGoogle, loginWithFacebook } = useAuth();
@@ -38,18 +37,14 @@ export const Auth: React.FC = () => {
   const [slideDirection, setSlideDirection] = useState<number>(isInitialRegister ? 1 : -1);
   const [isForgotPasswordMode, setIsForgotPasswordMode] = useState(isInitialForgot);
   
+  // One-time human verification modal for unauthenticated users
+  const [showVerifyModal, setShowVerifyModal] = useState(() => !isUserHumanVerified());
+
   // Input fields
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
-
-  // reCAPTCHA verification token
-  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
-
-  // Social Sign-in Human Verification state
-  const [socialVerificationModal, setSocialVerificationModal] = useState<'google' | 'facebook' | null>(null);
-  const [socialVerificationLoading, setSocialVerificationLoading] = useState(false);
 
   // Forgot password
   const [forgotEmail, setForgotEmail] = useState('');
@@ -103,7 +98,6 @@ export const Auth: React.FC = () => {
     setAuthMode(newMode);
     setIsForgotPasswordMode(false);
     setErrorMsg(null);
-    setRecaptchaToken(null);
     navigate(newMode === 'register' ? `/register${location.search}` : `/login${location.search}`);
   };
 
@@ -114,28 +108,14 @@ export const Auth: React.FC = () => {
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setErrorMsg(t("Please enter a valid email address", "সঠিক ইমেইল ঠিকানা লিখুন"));
-      setLoading(false);
-      return;
-    }
-
-    // Enforce Google reCAPTCHA security verification
-    if (!recaptchaToken) {
-      setErrorMsg(t("Please complete the reCAPTCHA security verification below", "দয়া করে নিচের রিক্যাপচা সিকিউরিটি ভেরিফিকেশনটি সম্পন্ন করুন"));
-      setLoading(false);
-      return;
-    }
-
-    const verification = await verifyRecaptchaToken(recaptchaToken);
-    if (!verification.success) {
-      setErrorMsg(verification.error || t("Security verification failed. Please try again.", "নিরাপত্তা যাচাই ব্যর্থ হয়েছে। পুনরায় চেষ্টা করুন।"));
+      setErrorMsg(t("Please enter a valid email address"));
       setLoading(false);
       return;
     }
 
     if (authMode === 'login') {
       if (password.length < 6) {
-        setErrorMsg(t("Password must be at least 6 characters", "পাসওয়ার্ড অন্তত ৬ অক্ষরের হতে হবে"));
+        setErrorMsg(t("Password must be at least 6 characters"));
         setLoading(false);
         return;
       }
@@ -150,19 +130,19 @@ export const Auth: React.FC = () => {
       }
     } else {
       if (!displayName.trim()) {
-        setErrorMsg(t("Please provide your full name", "আপনার পুরো নাম লিখুন"));
+        setErrorMsg(t("Please provide your full name"));
         setLoading(false);
         return;
       }
 
       if (!rulesAllPassed) {
-        setErrorMsg(t("Please meet all password requirements", "পাসওয়ার্ডের সকল শর্ত পূরণ করুন"));
+        setErrorMsg(t("Please meet all password requirements"));
         setLoading(false);
         return;
       }
 
       if (password !== confirmPassword) {
-        setErrorMsg(t("Passwords do not match", "পাসওয়ার্ড দুটি মেলেনি"));
+        setErrorMsg(t("Passwords do not match"));
         setLoading(false);
         return;
       }
@@ -198,58 +178,31 @@ export const Auth: React.FC = () => {
     }
   };
 
-  const executeSocialSignIn = async (provider: 'google' | 'facebook', token: string) => {
-    setSocialVerificationLoading(true);
-    setErrorMsg(null);
-    try {
-      // 1. Validate reCAPTCHA token with secure backend endpoint first
-      const verification = await verifyRecaptchaToken(token);
-      if (!verification.success) {
-        setErrorMsg(verification.error || t("Human security verification failed. Please try again.", "হিউম্যান ভেরিফিকেশন ব্যর্থ হয়েছে। পুনরায় চেষ্টা করুন।"));
-        setSocialVerificationLoading(false);
-        return;
-      }
-
-      // 2. Only after reCAPTCHA verification succeeds, launch the actual provider authentication
-      setSocialVerificationModal(null);
-      setLoading(true);
-      if (provider === 'google') {
-        await loginWithGoogle();
-        playCinematicIntroSound("Google authentication verified. Welcome to Patowary Fashion.");
-      } else {
-        await loginWithFacebook();
-        playCinematicIntroSound("Facebook authentication verified. Welcome to Patowary Fashion.");
-      }
-      navigate('/profile');
-    } catch (err: any) {
-      setErrorMsg(err.message || `${provider === 'google' ? 'Google' : 'Facebook'} Sign-In failed or was cancelled.`);
-    } finally {
-      setSocialVerificationLoading(false);
-      setLoading(false);
-    }
-  };
-
   const handleGoogleSignInClick = async () => {
     setErrorMsg(null);
-    if (recaptchaToken) {
-      // Human verification already completed, proceed with Google sign-in
-      await executeSocialSignIn('google', recaptchaToken);
-    } else {
-      // Enforce Google reCAPTCHA human verification before opening Google login
-      setSocialVerificationModal('google');
-      playCinematicIntroSound("Please complete human verification to continue with Google");
+    setLoading(true);
+    try {
+      await loginWithGoogle();
+      playCinematicIntroSound("Google authentication verified. Welcome to Patowary Fashion.");
+      navigate('/profile');
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Google Sign-In failed or was cancelled.');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleFacebookSignInClick = async () => {
     setErrorMsg(null);
-    if (recaptchaToken) {
-      // Human verification already completed, proceed with Facebook sign-in
-      await executeSocialSignIn('facebook', recaptchaToken);
-    } else {
-      // Enforce Google reCAPTCHA human verification before opening Facebook login
-      setSocialVerificationModal('facebook');
-      playCinematicIntroSound("Please complete human verification to continue with Facebook");
+    setLoading(true);
+    try {
+      await loginWithFacebook();
+      playCinematicIntroSound("Facebook authentication verified. Welcome to Patowary Fashion.");
+      navigate('/profile');
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Facebook Sign-In failed or was cancelled.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -258,20 +211,6 @@ export const Auth: React.FC = () => {
     if (!forgotEmail) return;
     setLoading(true);
     setErrorMsg(null);
-
-    // Enforce Google reCAPTCHA security verification
-    if (!recaptchaToken) {
-      setErrorMsg(t("Please complete the reCAPTCHA security verification below", "দয়া করে নিচের রিক্যাপচা সিকিউরিটি ভেরিফিকেশনটি সম্পন্ন করুন"));
-      setLoading(false);
-      return;
-    }
-
-    const verification = await verifyRecaptchaToken(recaptchaToken);
-    if (!verification.success) {
-      setErrorMsg(verification.error || t("Security verification failed. Please try again.", "নিরাপত্তা যাচাই ব্যর্থ হয়েছে। পুনরায় চেষ্টা করুন।"));
-      setLoading(false);
-      return;
-    }
 
     // Transmit password reset request via EmailJS
     await sendFormViaEmailJS({
@@ -338,10 +277,10 @@ export const Auth: React.FC = () => {
               />
             </div>
             <h2 className="text-2xl font-serif font-bold text-[#0A1E54]">
-              {t("Recover Password", "পাসওয়ার্ড পুনরুদ্ধার")}
+              {t("Recover Password")}
             </h2>
             <p className="text-xs text-stone-500 font-sans">
-              {t("Enter your account email to receive reset instructions", "পাসওয়ার্ড রিসেটের জন্য আপনার অ্যাকাউন্টের ইমেইল দিন")}
+              {t("Enter your account email to receive reset instructions")}
             </p>
           </div>
 
@@ -356,10 +295,10 @@ export const Auth: React.FC = () => {
             <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 text-center space-y-3 relative z-10">
               <CheckCircle className="w-12 h-12 text-emerald-600 mx-auto" />
               <h4 className="text-sm font-bold text-[#0A1E54]">
-                {t("Reset Link Sent!", "রিসেট লিংক পাঠানো হয়েছে!")}
+                {t("Reset Link Sent!")}
               </h4>
               <p className="text-xs text-stone-600 leading-relaxed font-sans">
-                {t("We have sent password reset details to your inbox and notification system.", "পাসওয়ার্ড রিসেট করার প্রয়োজনীয় লিংক আপনার ইমেইলে পাঠিয়ে দেওয়া হয়েছে।")}
+                {t("We have sent password reset details to your inbox and notification system.")}
               </p>
               <button
                 type="button"
@@ -370,14 +309,14 @@ export const Auth: React.FC = () => {
                 }}
                 className="w-full py-3 bg-[#0A1E54] hover:bg-[#1A3070] text-white font-mono text-xs tracking-wider font-bold rounded-xl uppercase transition-all cursor-pointer shadow-md"
               >
-                {t("Return to Sign In", "সাইন ইন পেজে ফিরুন")}
+                {t("Return to Sign In")}
               </button>
             </div>
           ) : (
             <form onSubmit={handleForgotPasswordSubmit} className="space-y-4 relative z-10">
               <div className="space-y-1">
                 <label className="block text-[11px] font-mono uppercase text-stone-600 font-bold tracking-wider">
-                  {t("Registered Email Address", "নিবন্ধিত ইমেইল")}
+                  {t("Registered Email Address")}
                 </label>
                 <div className="relative">
                   <input
@@ -392,19 +331,12 @@ export const Auth: React.FC = () => {
                 </div>
               </div>
 
-              {/* Google reCAPTCHA Verification */}
-              <ReCaptcha
-                onVerify={(tok) => setRecaptchaToken(tok)}
-                onExpire={() => setRecaptchaToken(null)}
-                onError={() => setRecaptchaToken(null)}
-              />
-
               <button
                 type="submit"
                 disabled={loading}
                 className="w-full bg-[#0A1E54] hover:bg-[#1A3070] text-white text-xs font-bold uppercase tracking-wider py-3.5 rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all active:scale-[0.99]"
               >
-                <span>{loading ? t("Sending...", "পাঠানো হচ্ছে...") : t("Send Reset Link", "রিসেট লিংক পাঠান")}</span>
+                <span>{loading ? t("Sending...") : t("Send Reset Link")}</span>
                 <ArrowRight className="w-4 h-4 text-[#C9A66B]" />
               </button>
 
@@ -416,7 +348,7 @@ export const Auth: React.FC = () => {
                 }}
                 className="w-full text-center text-xs text-[#0A1E54] hover:underline font-semibold block pt-2 cursor-pointer"
               >
-                &larr; {t("Back to Sign In", "ফিরে যান")}
+                &larr; {t("Back to Sign In")}
               </button>
             </form>
           )}
@@ -453,7 +385,7 @@ export const Auth: React.FC = () => {
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0A1E54]/5 border border-[#0A1E54]/10">
             <Sparkles className="w-3 h-3 text-[#C9A66B]" />
             <span className="text-[10px] font-mono tracking-widest text-[#0A1E54] uppercase font-bold">
-              {t("OFFICIAL CLIENT PORTAL", "অফিসিয়াল ক্লায়েন্ট পোর্টাল")}
+              {t("OFFICIAL CLIENT PORTAL")}
             </span>
           </div>
         </div>
@@ -464,10 +396,10 @@ export const Auth: React.FC = () => {
             <Lock className="w-4 h-4 text-amber-700 mt-0.5 shrink-0" />
             <div className="text-[11px] leading-tight text-amber-900 font-sans">
               <span className="font-bold block uppercase tracking-wider text-[10px] text-amber-800 mb-0.5">
-                {t("Administrator Sign-In Required", "অ্যাডমিনিস্ট্রেটর লগইন প্রয়োজন")}
+                {t("Administrator Sign-In Required")}
               </span>
               <span>
-                {t("To access the Central Store Admin Terminal (/admin), please log in with your authorized store administrator credentials.", "সেন্ট্রাল স্টোর অ্যাডমিন টার্মিনাল (/admin) অ্যাক্সেস করতে আপনার অনুমোদিত স্টোর অ্যাডমিন অ্যাকাউন্টে সাইন ইন করুন।")}
+                {t("To access the Central Store Admin Terminal (/admin), please log in with your authorized store administrator credentials.")}
               </span>
             </div>
           </div>
@@ -492,7 +424,7 @@ export const Auth: React.FC = () => {
               authMode === 'login' ? 'text-white' : 'text-stone-600 hover:text-[#0A1E54]'
             }`}
           >
-            {t("SIGN IN", "সাইন ইন")}
+            {t("SIGN IN")}
           </button>
 
           <button
@@ -502,7 +434,7 @@ export const Auth: React.FC = () => {
               authMode === 'register' ? 'text-white' : 'text-stone-600 hover:text-[#0A1E54]'
             }`}
           >
-            {t("REGISTER", "রেজিস্টার")}
+            {t("REGISTER")}
           </button>
         </div>
 
@@ -531,7 +463,7 @@ export const Auth: React.FC = () => {
                   {/* Email */}
                   <div className="space-y-1">
                     <label className="block text-[11px] font-mono uppercase text-stone-600 font-bold tracking-wider">
-                      {t("Email Address", "ইমেইল ঠিকানা")}
+                      {t("Email Address")}
                     </label>
                     <div className="relative">
                       <input
@@ -550,14 +482,14 @@ export const Auth: React.FC = () => {
                   <div className="space-y-1">
                     <div className="flex justify-between items-center">
                       <label className="block text-[11px] font-mono uppercase text-stone-600 font-bold tracking-wider">
-                        {t("Password", "পাসওয়ার্ড")}
+                        {t("Password")}
                       </label>
                       <button
                         type="button"
                         onClick={() => setIsForgotPasswordMode(true)}
                         className="text-[11px] text-[#0A1E54] hover:underline font-semibold cursor-pointer"
                       >
-                        {t("Forgot Password?", "পাসওয়ার্ড ভুলে গেছেন?")}
+                        {t("Forgot Password?")}
                       </button>
                     </div>
                     <div className="relative">
@@ -573,20 +505,13 @@ export const Auth: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Google reCAPTCHA Verification */}
-                  <ReCaptcha
-                    onVerify={(tok) => setRecaptchaToken(tok)}
-                    onExpire={() => setRecaptchaToken(null)}
-                    onError={() => setRecaptchaToken(null)}
-                  />
-
                   {/* Submit button */}
                   <button
                     type="submit"
                     disabled={loading}
                     className="w-full bg-[#0A1E54] hover:bg-[#1A3070] text-white text-xs font-bold uppercase tracking-wider py-3.5 rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all active:scale-[0.99] mt-2"
                   >
-                    <span>{loading ? t("Authenticating...", "যাচাই করা হচ্ছে...") : t("SIGN IN", "সাইন ইন")}</span>
+                    <span>{loading ? t("Authenticating...") : t("SIGN IN")}</span>
                     <ArrowRight className="w-4 h-4 text-[#C9A66B]" />
                   </button>
                 </form>
@@ -605,7 +530,7 @@ export const Auth: React.FC = () => {
                   {/* Full Name */}
                   <div className="space-y-1">
                     <label className="block text-[11px] font-mono uppercase text-stone-600 font-bold tracking-wider">
-                      {t("Full Name", "আপনার পুরো নাম")}
+                      {t("Full Name")}
                     </label>
                     <div className="relative">
                       <input
@@ -623,7 +548,7 @@ export const Auth: React.FC = () => {
                   {/* Email */}
                   <div className="space-y-1">
                     <label className="block text-[11px] font-mono uppercase text-stone-600 font-bold tracking-wider">
-                      {t("Email Address", "ইমেইল ঠিকানা")}
+                      {t("Email Address")}
                     </label>
                     <div className="relative">
                       <input
@@ -641,7 +566,7 @@ export const Auth: React.FC = () => {
                   {/* Password */}
                   <div className="space-y-1">
                     <label className="block text-[11px] font-mono uppercase text-stone-600 font-bold tracking-wider">
-                      {t("Password", "পাসওয়ার্ড")}
+                      {t("Password")}
                     </label>
                     <div className="relative">
                       <input
@@ -659,7 +584,7 @@ export const Auth: React.FC = () => {
                   {/* Confirm Password */}
                   <div className="space-y-1">
                     <label className="block text-[11px] font-mono uppercase text-stone-600 font-bold tracking-wider">
-                      {t("Confirm Password", "পাসওয়ার্ড নিশ্চিত করুন")}
+                      {t("Confirm Password")}
                     </label>
                     <div className="relative">
                       <input
@@ -690,20 +615,13 @@ export const Auth: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Google reCAPTCHA Verification */}
-                  <ReCaptcha
-                    onVerify={(tok) => setRecaptchaToken(tok)}
-                    onExpire={() => setRecaptchaToken(null)}
-                    onError={() => setRecaptchaToken(null)}
-                  />
-
                   {/* Register Submit button */}
                   <button
                     type="submit"
                     disabled={loading}
                     className="w-full bg-[#0A1E54] hover:bg-[#1A3070] text-white text-xs font-bold uppercase tracking-wider py-3.5 rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all active:scale-[0.99] mt-2"
                   >
-                    <span>{loading ? t("Registering...", "রেজিস্টার করা হচ্ছে...") : t("CREATE ACCOUNT", "রেজিস্টার করুন")}</span>
+                    <span>{loading ? t("Registering...") : t("CREATE ACCOUNT")}</span>
                     <ArrowRight className="w-4 h-4 text-[#C9A66B]" />
                   </button>
                 </form>
@@ -716,7 +634,7 @@ export const Auth: React.FC = () => {
         <div className="space-y-3 pt-4 border-t border-stone-200/80 mt-4">
           <div className="relative flex items-center justify-center">
             <span className="bg-white/90 px-3 text-[10px] text-stone-400 uppercase font-mono tracking-wider">
-              {t("OR CONNECT WITH", "অথবা সোশ্যাল দিয়ে লগইন করুন")}
+              {t("OR CONNECT WITH")}
             </span>
           </div>
 
@@ -752,104 +670,47 @@ export const Auth: React.FC = () => {
 
         {/* Bottom Switch Note */}
         <div className="pt-4 text-center text-xs text-stone-600">
-          <span>{authMode === 'login' ? t("Don't have an account?", "অ্যাকাউন্ট নেই?") : t("Already have an account?", "আগে থেকেই অ্যাকাউন্ট আছে?")} </span>
+          <span>{authMode === 'login' ? t("Don't have an account?") : t("Already have an account?")} </span>
           <button
             type="button"
             onClick={() => switchMode(authMode === 'login' ? 'register' : 'login')}
             className="text-[#0A1E54] font-bold hover:underline cursor-pointer ml-1 inline-flex items-center gap-1"
           >
-            {authMode === 'login' ? t("Create one now", "নতুন অ্যাকাউন্ট খুলুন") : t("Sign In here", "সাইন ইন করুন")}
+            {authMode === 'login' ? t("Create one now") : t("Sign In here")}
           </button>
         </div>
 
         {/* Terms and Privacy policy note */}
         <div className="mt-3 text-center text-[10px] text-stone-500 font-sans leading-normal">
-          <span>{t("By continuing, you agree to our", "চলিয়ে যাওয়ার মাধ্যমে আপনি আমাদের")} </span>
+          <span>{t("By continuing, you agree to our")} </span>
           <Link to="/terms" className="text-[#0A1E54] font-semibold underline hover:text-[#C9A66B]">
-            {t("Terms of Service", "শর্তাবলী")}
+            {t("Terms of Service")}
           </Link>
-          <span> {t("and", "ও")} </span>
+          <span> {t("and")} </span>
           <Link to="/privacy" className="text-[#0A1E54] font-semibold underline hover:text-[#C9A66B]">
-            {t("Privacy Policy", "প্রাইভেসি পলিসি")}
+            {t("Privacy Policy")}
           </Link>
         </div>
 
         {/* Security badge */}
         <div className="mt-3 pt-2.5 border-t border-stone-200/50 flex items-center justify-center gap-2 text-[10px] text-stone-400 font-mono">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-          <span>{t("256-BIT ENCRYPTED FIREBASE AUTHENTICATION", "২৫৬-বিট এনক্রিপ্টেড ফায়ারবেস অথেনটিকেশন")}</span>
+          <span>{t("256-BIT ENCRYPTED FIREBASE AUTHENTICATION")}</span>
         </div>
 
       </div>
 
-      {/* Human Verification Modal for Social Sign-In */}
-      {socialVerificationModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="relative w-full max-w-md bg-white border border-[#C9A66B]/50 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5 text-left">
-            <div className="flex items-center justify-between border-b border-stone-150 pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-full bg-[#0A1E54] text-[#C9A66B] flex items-center justify-center font-bold">
-                  <ShieldCheck className="w-5 h-5 text-[#C9A66B]" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-serif font-bold text-[#0A1E54]">
-                    {t("Human Verification Required", "হিউম্যান ভেরিফিকেশন প্রয়োজন")}
-                  </h3>
-                  <span className="text-[10px] font-mono text-stone-500 uppercase tracking-wider font-bold">
-                    {socialVerificationModal === 'google' ? 'CONTINUE WITH GOOGLE' : 'CONTINUE WITH FACEBOOK'}
-                  </span>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSocialVerificationModal(null)}
-                className="text-stone-400 hover:text-stone-700 p-1.5 rounded-full hover:bg-stone-100 text-sm font-bold cursor-pointer"
-                title="Close"
-              >
-                ✕
-              </button>
-            </div>
-
-            <p className="text-xs text-stone-600 leading-relaxed font-sans">
-              {t(
-                `Security Rule: Please verify you are human using the Google reCAPTCHA below. Once verified, the official ${socialVerificationModal === 'google' ? 'Google' : 'Facebook'} authentication window will automatically open.`,
-                `নিরাপত্তা নিশ্চিত করতে নিচের 'I am not a robot' যাচাইটি সম্পন্ন করুন। যাচাই সফল হলে স্বয়ংক্রিয়ভাবে ${socialVerificationModal === 'google' ? 'গুগল' : 'ফেসবুক'} লগইন পেজ ওপেন হবে।`
-              )}
-            </p>
-
-            {/* Google reCAPTCHA Widget */}
-            <div className="py-2 flex justify-center bg-stone-50/80 p-4 rounded-2xl border border-stone-200">
-              <ReCaptcha
-                onVerify={(tok) => {
-                  setRecaptchaToken(tok);
-                  executeSocialSignIn(socialVerificationModal, tok);
-                }}
-                onExpire={() => setRecaptchaToken(null)}
-                onError={() => setRecaptchaToken(null)}
-              />
-            </div>
-
-            {socialVerificationLoading && (
-              <div className="flex items-center justify-center gap-2 text-xs font-mono text-[#0A1E54] py-2 bg-[#C9A66B]/15 rounded-xl border border-[#C9A66B]/30 font-bold">
-                <div className="w-4 h-4 border-2 border-[#0A1E54] border-t-transparent rounded-full animate-spin" />
-                <span>{t("Verifying security token with Google server...", "সার্ভারে নিরাপত্তা যাচাই হচ্ছে...")}</span>
-              </div>
-            )}
-
-            <div className="pt-2 border-t border-stone-150 flex items-center justify-between text-[11px] font-mono text-stone-400">
-              <span>Google reCAPTCHA v2 Protected</span>
-              <button
-                type="button"
-                onClick={() => setSocialVerificationModal(null)}
-                className="text-stone-600 hover:text-[#0A1E54] font-bold underline cursor-pointer"
-              >
-                {t("Cancel", "বাতিল")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
+      {/* One-Time Human Verification Modal for Logged-Out Visitors */}
+      <HumanVerificationModal
+        isOpen={showVerifyModal && !user}
+        onClose={() => setShowVerifyModal(false)}
+        onVerified={() => {
+          setShowVerifyModal(false);
+          setAuthMode('register');
+          navigate('/register');
+          playCinematicIntroSound("Verification passed. Opening registration.");
+        }}
+      />
     </div>
   );
 };

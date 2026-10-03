@@ -3,8 +3,6 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { updatePageSEO } from '../utils/seoUtils';
 import { sendFormViaEmailJS } from '../lib/emailjs';
 import { playCinematicIntroSound } from '../utils/voiceUtils';
-import { ReCaptcha } from '../components/ReCaptcha';
-import { verifyRecaptchaToken } from '../utils/recaptcha';
 import { 
   Phone, 
   Mail, 
@@ -27,9 +25,6 @@ export const Contact: React.FC = () => {
   const [subject, setSubject] = useState('Order Enquiry');
   const [message, setMessage] = useState('');
 
-  // reCAPTCHA verification token
-  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
-
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -42,21 +37,8 @@ export const Contact: React.FC = () => {
     e.preventDefault();
     if (!name.trim() || !message.trim()) return;
 
-    // Enforce Google reCAPTCHA security verification
-    if (!recaptchaToken) {
-      setErrorMessage(t("Please complete the reCAPTCHA security verification below.", "দয়া করে নিচের রিক্যাপচা যাচাইকরণটি সম্পন্ন করুন।"));
-      return;
-    }
-
     setSubmitting(true);
     setErrorMessage(null);
-
-    const verification = await verifyRecaptchaToken(recaptchaToken);
-    if (!verification.success) {
-      setErrorMessage(verification.error || t("Security verification failed. Please try again.", "নিরাপত্তা যাচাই ব্যর্থ হয়েছে। পুনরায় চেষ্টা করুন।"));
-      setSubmitting(false);
-      return;
-    }
 
     const result = await sendFormViaEmailJS({
       formType: 'Customer Care Contact Inquiry Form',
@@ -96,10 +78,10 @@ export const Contact: React.FC = () => {
             PATOWARY CUSTOMER DESK
           </span>
           <h1 className="text-3xl sm:text-5xl font-serif font-bold text-[#0A1E54]">
-            {t("How Can We Help You?", "আমরা কীভাবে আপনাকে সাহায্য করতে পারি?")}
+            How Can We Help You?
           </h1>
           <p className="text-xs sm:text-sm text-stone-600 leading-relaxed font-sans">
-            {t("Have questions about our drop sizes, fabric weights, or delivery tracking? Our dedicated team is available 6 days a week.", "সাইজ, ফেব্রিক বা ডেলিভারি সংক্রান্ত যেকোনো তথ্যের জন্য আমাদের সাথে যোগাযোগ করুন।")}
+            Have questions about our drop sizes, fabric weights, or delivery tracking? Our dedicated team is available 6 days a week.
           </p>
         </div>
 
@@ -126,12 +108,12 @@ export const Contact: React.FC = () => {
               </p>
 
               <a
-                href="https://wa.me/8801633701001"
+                href="https://wa.me/8801730943993"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 w-full py-3 rounded-full bg-[#25D366] hover:bg-[#1ebd54] text-white font-mono text-xs font-bold uppercase tracking-wider transition-all shadow-md active:scale-95"
               >
-                <span>Chat on WhatsApp (+880 1633 701001)</span>
+                <span>Chat on WhatsApp (+8801730943993)</span>
                 <ExternalLink className="w-3.5 h-3.5" />
               </a>
             </div>
@@ -156,7 +138,9 @@ export const Contact: React.FC = () => {
                 </div>
                 <div>
                   <h4 className="text-xs font-mono uppercase tracking-wider text-stone-400 font-bold">Email Inquiries</h4>
-                  <p className="text-sm font-bold text-[#0A1E54] mt-0.5">lord79915@gmail.com</p>
+                  <a href="mailto:fashionpatowary@gmail.com" className="text-sm font-bold text-[#0A1E54] hover:text-[#C9A66B] transition-colors block mt-0.5">
+                    fashionpatowary@gmail.com
+                  </a>
                   <p className="text-xs text-stone-500">Invoices, drops, and bulk styling requests</p>
                 </div>
               </div>
@@ -179,7 +163,7 @@ export const Contact: React.FC = () => {
                 <div>
                   <h4 className="text-xs font-mono uppercase tracking-wider text-stone-400 font-bold">Facebook Community</h4>
                   <a
-                    href="https://www.facebook.com/share/19JHtW2Eft/"
+                    href="https://www.facebook.com/share/1bjdW3mmQ4/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm font-bold text-[#0A1E54] hover:text-[#C9A66B] transition-colors flex items-center gap-1 mt-0.5"
@@ -200,7 +184,7 @@ export const Contact: React.FC = () => {
               
               <div>
                 <h3 className="text-xl sm:text-2xl font-serif font-bold text-[#0A1E54]">
-                  {t("Send Us a Message", "আমাদের একটি বার্তা পাঠান")}
+                  Send Us a Message
                 </h3>
                 <p className="text-xs text-stone-500 mt-1">
                   Fill in your details below and our customer desk will respond within 24 hours.
@@ -213,7 +197,7 @@ export const Contact: React.FC = () => {
                     <CheckCircle2 className="w-6 h-6" />
                   </div>
                   <h4 className="text-base font-serif font-bold text-emerald-900">
-                    {t("Inquiry Dispatched Successfully!", "আপনার বার্তা সফলভাবে পাঠানো হয়েছে!")}
+                    Inquiry Dispatched Successfully!
                   </h4>
                   <p className="text-xs text-emerald-800 max-w-sm mx-auto">
                     Thank you for contacting Patowary Fashion. A representative will get in touch with you shortly.
@@ -238,7 +222,7 @@ export const Contact: React.FC = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-mono uppercase tracking-wider text-stone-500 mb-1 font-bold">
-                        {t("Your Name", "আপনার নাম")} *
+                        Your Name *
                       </label>
                       <input
                         type="text"
@@ -252,7 +236,7 @@ export const Contact: React.FC = () => {
 
                     <div>
                       <label className="block text-xs font-mono uppercase tracking-wider text-stone-500 mb-1 font-bold">
-                        {t("Phone Number", "মোবাইল নম্বর")} *
+                        Phone Number *
                       </label>
                       <input
                         type="tel"
@@ -268,7 +252,7 @@ export const Contact: React.FC = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-mono uppercase tracking-wider text-stone-500 mb-1 font-bold">
-                        {t("Email Address", "ইমেইল")}
+                        Email Address
                       </label>
                       <input
                         type="email"
@@ -281,7 +265,7 @@ export const Contact: React.FC = () => {
 
                     <div>
                       <label className="block text-xs font-mono uppercase tracking-wider text-stone-500 mb-1 font-bold">
-                        {t("Subject / Reason", "বিষয়")}
+                        Subject / Reason
                       </label>
                       <select
                         value={subject}
@@ -299,24 +283,17 @@ export const Contact: React.FC = () => {
 
                   <div>
                     <label className="block text-xs font-mono uppercase tracking-wider text-stone-500 mb-1 font-bold">
-                      {t("Message", "আপনার বার্তা")} *
+                      Message *
                     </label>
                     <textarea
                       required
                       rows={5}
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
-                      placeholder={t("Write your inquiry details here...", "এখানে আপনার বার্তা লিখুন...")}
+                      placeholder="Write your inquiry details here..."
                       className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-xs text-[#0A1E54] focus:outline-none focus:border-[#0A1E54] resize-none"
                     />
                   </div>
-
-                  {/* Google reCAPTCHA Security Verification */}
-                  <ReCaptcha
-                    onVerify={(tok) => setRecaptchaToken(tok)}
-                    onExpire={() => setRecaptchaToken(null)}
-                    onError={() => setRecaptchaToken(null)}
-                  />
 
                   <button
                     type="submit"
@@ -328,7 +305,7 @@ export const Contact: React.FC = () => {
                     ) : (
                       <>
                         <Send className="w-3.5 h-3.5" />
-                        <span>{t("Dispatch Message", "বার্তা পাঠান")}</span>
+                        <span>Dispatch Message</span>
                       </>
                     )}
                   </button>

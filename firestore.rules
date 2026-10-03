@@ -96,12 +96,12 @@ service cloud.firestore {
     function isValidOrder(o) {
       return o.id is string && o.id.size() <= 100
         && o.fullName is string && o.fullName.size() <= 200
-        && o.phone is string && o.phone.size() <= 50
-        && o.address is string && o.address.size() <= 500
+        && o.phone is string && o.phone.size() <= 1000
+        && o.address is string && o.address.size() <= 1000
         && o.paymentMethod is string && o.paymentMethod.size() <= 100
         && o.items is list && o.items.size() <= 50
         && o.totalPrice is number && o.totalPrice >= 0
-        && o.status is string && o.status in ['Received', 'Processing', 'Shipped', 'Out for Delivery', 'Completed']
+        && o.status is string && o.status in ['Pending', 'Payment Verification', 'Confirmed', 'Processing', 'Shipped', 'Out for Delivery', 'Delivered', 'Completed', 'Cancelled', 'Received']
         && o.createdAt is string;
     }
 

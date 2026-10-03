@@ -191,14 +191,14 @@ export const Orders: React.FC = () => {
               className="inline-flex items-center gap-2 text-xs font-mono tracking-wider uppercase font-bold text-[#0A1E54] hover:text-[#C9A66B] transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
-              {t("Back to All Orders", "সব অর্ডার এ ফিরে যান")}
+              Back to All Orders
             </Link>
 
             <Link
               to={`/track-order?id=${encodeURIComponent(orderId)}`}
               className="text-xs font-mono text-[#0A1E54] hover:underline flex items-center gap-1"
             >
-              <span>{t("Live Tracking Map", "লাইভ ট্র্যাকিং")}</span>
+              <span>Live Tracking Map</span>
               <ExternalLink className="w-3 h-3" />
             </Link>
           </div>
@@ -219,13 +219,13 @@ export const Orders: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#0A1E54]/10 pb-6">
           <div>
             <span className="text-[10px] font-mono tracking-widest text-[#C9A66B] uppercase font-bold block mb-1">
-              {t("PATOWARY CUSTOMER ARCHIVE", "কাস্টমার অর্ডার আর্কাইভ")}
+              PATOWARY CUSTOMER ARCHIVE
             </span>
             <h1 className="text-3xl sm:text-4xl font-serif font-bold text-[#0A1E54]">
-              {t("My Orders", "আমার অর্ডারসমূহ")}
+              My Orders
             </h1>
             <p className="text-xs text-stone-500 mt-1">
-              {t("Track your parcel dispatch status, invoices, and delivery timeline.", "আপনার পার্সেলের সার্বক্ষণিক আপডেট ও ইনভয়েস দেখুন।")}
+              Track your parcel dispatch status, invoices, and delivery timeline.
             </p>
           </div>
 
@@ -235,7 +235,7 @@ export const Orders: React.FC = () => {
               <Search className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder={t("Track by Order ID (e.g. ORD-...)", "অর্ডার আইডি দিয়ে ট্র্যাক করুন...")}
+                placeholder="Track by Order ID (e.g. ORD-...)"
                 value={searchIdInput}
                 onChange={(e) => setSearchIdInput(e.target.value)}
                 className="pl-9 pr-3 py-2 text-xs bg-white border border-[#0A1E54]/10 rounded-full focus:outline-none focus:border-[#0A1E54] w-64 text-[#0A1E54] font-mono"
@@ -245,7 +245,7 @@ export const Orders: React.FC = () => {
               type="submit"
               className="px-4 py-2 rounded-full bg-[#0A1E54] hover:bg-[#1A3070] text-white text-xs font-mono uppercase tracking-wider transition-colors cursor-pointer"
             >
-              {t("Track", "ট্র্যাক")}
+              Track
             </button>
           </form>
         </div>
@@ -254,7 +254,7 @@ export const Orders: React.FC = () => {
         {loading ? (
           <div className="bg-white rounded-3xl p-12 text-center border border-[#0A1E54]/10 shadow-sm">
             <div className="w-10 h-10 border-3 border-[#0A1E54] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-sm font-mono text-[#0A1E54]">{t("Loading your orders...", "অর্ডার লোড হচ্ছে...")}</p>
+            <p className="text-sm font-mono text-[#0A1E54]">Loading your orders...</p>
           </div>
         ) : ordersList.length === 0 ? (
           <div className="bg-white rounded-3xl p-12 text-center border border-[#0A1E54]/10 shadow-sm space-y-4">
@@ -262,10 +262,10 @@ export const Orders: React.FC = () => {
               <Package className="w-8 h-8" />
             </div>
             <h3 className="text-xl font-serif font-bold text-[#0A1E54]">
-              {t("No orders placed yet", "এখনও কোনো অর্ডার করা হয়নি")}
+              No orders placed yet
             </h3>
             <p className="text-xs text-stone-500 max-w-sm mx-auto">
-              {t("Explore our latest streetwear drop and experience contemporary luxury fashion.", "আমাদের সর্বশেষ কালেকশন ব্রাউজ করে অর্ডার করুন।")}
+              Explore our latest streetwear drop and experience contemporary luxury fashion.
             </p>
             <div className="pt-2">
               <Link
@@ -273,7 +273,7 @@ export const Orders: React.FC = () => {
                 className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#0A1E54] text-white text-xs font-mono uppercase tracking-wider hover:bg-[#1A3070] transition-colors"
               >
                 <ShoppingBag className="w-3.5 h-3.5" />
-                {t("Start Shopping", "শপিং শুরু করুন")}
+                Start Shopping
               </Link>
             </div>
           </div>
@@ -292,7 +292,7 @@ export const Orders: React.FC = () => {
                     {getStatusBadge(order.status)}
                   </div>
                   <p className="text-xs text-stone-500">
-                    {order.items?.length || 1} {t("items", "টি আইটেম")} • {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'Recent'}
+                    {order.items?.length || 1} items • {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'Recent'}
                   </p>
                   <p className="text-xs text-stone-600 line-clamp-1 max-w-md">
                     {order.items?.map((it: any) => `${it.title} (${it.quantity})`).join(', ') || 'Custom Garment Package'}
@@ -301,9 +301,9 @@ export const Orders: React.FC = () => {
 
                 <div className="flex items-center justify-between sm:justify-end gap-6 pt-2 sm:pt-0 border-t sm:border-t-0 border-stone-100">
                   <div className="text-left sm:text-right">
-                    <span className="text-[10px] font-mono uppercase text-stone-400 block">{t("Total", "মোট")}</span>
+                    <span className="text-[10px] font-mono uppercase text-stone-400 block">Total</span>
                     <span className="text-base font-mono font-bold text-[#0A1E54]">
-                      ৳{Number(order.totalPrice || order.subtotal || 0).toLocaleString()}
+                      BDT {Number(order.totalPrice || order.subtotal || 0).toLocaleString()}
                     </span>
                   </div>
 
@@ -311,7 +311,7 @@ export const Orders: React.FC = () => {
                     to={`/orders/${order.id}`}
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0A1E54] text-white hover:bg-[#1A3070] text-xs font-mono uppercase tracking-wider transition-colors shrink-0 group-hover:scale-105 active:scale-95"
                   >
-                    <span>{t("Details", "বিস্তারিত")}</span>
+                    <span>Details</span>
                     <ChevronRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>

@@ -104,7 +104,7 @@ export const BrandPortfolio: React.FC = () => {
                 to="/products"
                 className="px-6 py-3 bg-[#C9A66B] hover:bg-[#d6b47c] text-[#0A1E54] text-xs font-mono font-bold tracking-wider uppercase rounded-xl transition-all shadow-sm flex items-center gap-2"
               >
-                <span>{t("Explore Catalog", "ক্যাটালগ দেখুন")}</span>
+                <span>Explore Catalog</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <button

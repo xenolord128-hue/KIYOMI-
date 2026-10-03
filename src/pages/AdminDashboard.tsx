@@ -43,7 +43,12 @@ import {
   ShoppingBag,
   Phone,
   Calendar,
-  X
+  X,
+  Video,
+  Film,
+  Image as ImageIcon,
+  UploadCloud,
+  Check
 } from 'lucide-react';
 import { RAW_PRODUCTS } from '../data/products';
 import { Product, Category, PromoCode, Order } from '../types';
@@ -54,7 +59,7 @@ const INITIAL_CATEGORIES: Category[] = [
   { 
     id: 'cat-baggy-cargo', 
     name: 'Baggy & Cargo Pants', 
-    nameBn: 'ব্যাগি ও কার্গো প্যান্ট', 
+    nameBn: 'Baggy & Cargo Fits', 
     slug: 'baggy-cargo-pants', 
     description: 'Heavyweight twill utility cargos, 6-pocket trousers, wide-leg denim', 
     status: 'active', 
@@ -63,7 +68,7 @@ const INITIAL_CATEGORIES: Category[] = [
   { 
     id: 'cat-oversized-tees', 
     name: 'Oversized Tees & Polos', 
-    nameBn: 'ওভারসাইজড টি ও পোলো', 
+    nameBn: 'Oversized Tees & Polos', 
     slug: 'oversized-tees-polos', 
     description: '260 GSM combed cotton drop-shoulder boxy tees, luxury drape', 
     status: 'active', 
@@ -72,7 +77,7 @@ const INITIAL_CATEGORIES: Category[] = [
   { 
     id: 'cat-hoodies', 
     name: 'Hoodies & Sweatshirts', 
-    nameBn: 'হুডি ও সোয়েটশার্ট', 
+    nameBn: 'Hoodies & Fleece', 
     slug: 'hoodies-sweatshirts', 
     description: '420 GSM French Terry double-layered streetwear pullovers', 
     status: 'active', 
@@ -81,7 +86,7 @@ const INITIAL_CATEGORIES: Category[] = [
   { 
     id: 'cat-womens', 
     name: "Women's Collection", 
-    nameBn: 'উইমেন্স কালেকশন', 
+    nameBn: "Women's Fits", 
     slug: 'womens-collection', 
     description: 'Relaxed streetwear trousers, boxy cropped silhouettes, fluid drape', 
     status: 'active', 
@@ -90,7 +95,7 @@ const INITIAL_CATEGORIES: Category[] = [
   { 
     id: 'cat-accessories', 
     name: 'Accessories & Lifestyle', 
-    nameBn: 'এক্সেসরিজ ও লাইফস্টাইল', 
+    nameBn: 'Accessories & Drops', 
     slug: 'accessories-lifestyle', 
     description: 'Tactical crossbody slings, vintage caps, belts, and eyewear', 
     status: 'active', 
@@ -171,7 +176,12 @@ export const AdminDashboard: React.FC = () => {
   const [prodDesc, setProdDesc] = useState('');
   const [prodVariants, setProdVariants] = useState('M, L, XL');
   const [prodOutOfStock, setProdOutOfStock] = useState('');
-  const [prodAssets, setProdAssets] = useState('https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=800');
+  const [prodImage1, setProdImage1] = useState('https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=800');
+  const [prodImage2, setProdImage2] = useState('');
+  const [prodImage3, setProdImage3] = useState('');
+  const [prodImage4, setProdImage4] = useState('');
+  const [prodImage5, setProdImage5] = useState('');
+  const [prodVideoUrl, setProdVideoUrl] = useState('');
 
   // Category Form State (Add / Edit)
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -415,7 +425,12 @@ export const AdminDashboard: React.FC = () => {
     setProdDesc('');
     setProdVariants('M, L, XL');
     setProdOutOfStock('');
-    setProdAssets('https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=800');
+    setProdImage1('https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=800');
+    setProdImage2('');
+    setProdImage3('');
+    setProdImage4('');
+    setProdImage5('');
+    setProdVideoUrl('');
     setIsProductModalOpen(true);
   };
 
@@ -431,8 +446,25 @@ export const AdminDashboard: React.FC = () => {
     setProdDesc(product.description);
     setProdVariants(product.variants.join(', '));
     setProdOutOfStock((product.outOfStock || []).join(', '));
-    setProdAssets((product.assets || []).join(', '));
+    setProdImage1(product.assets?.[0] || '');
+    setProdImage2(product.assets?.[1] || '');
+    setProdImage3(product.assets?.[2] || '');
+    setProdImage4(product.assets?.[3] || '');
+    setProdImage5(product.assets?.[4] || '');
+    setProdVideoUrl(product.videoUrl || '');
     setIsProductModalOpen(true);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, setter: (val: string) => void) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (loadEvt) => {
+      if (typeof loadEvt.target?.result === 'string') {
+        setter(loadEvt.target.result);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSaveProductSubmit = async (e: React.FormEvent) => {
@@ -441,7 +473,9 @@ export const AdminDashboard: React.FC = () => {
 
     const sizeVariantsArray = prodVariants.split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
     const outOfStockArray = prodOutOfStock.split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
-    const assetUrlsArray = prodAssets.split(',').map(s => s.trim()).filter(Boolean);
+    const assetUrlsArray = [prodImage1, prodImage2, prodImage3, prodImage4, prodImage5]
+      .map(s => s.trim())
+      .filter(Boolean);
 
     const targetId = editingProduct ? editingProduct.id : Date.now();
 
@@ -459,6 +493,7 @@ export const AdminDashboard: React.FC = () => {
       variants: sizeVariantsArray.length > 0 ? sizeVariantsArray : ['Standard'],
       outOfStock: outOfStockArray,
       assets: assetUrlsArray.length > 0 ? assetUrlsArray : ['https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=800'],
+      videoUrl: prodVideoUrl.trim() || undefined,
       reviews: editingProduct ? editingProduct.reviews : [],
       rating: editingProduct ? editingProduct.rating : 5,
       createdAt: editingProduct?.createdAt || new Date().toISOString()
@@ -2114,15 +2149,190 @@ export const AdminDashboard: React.FC = () => {
                 />
               </div>
 
-              <div>
-                <label className="block text-[10px] font-mono text-zinc-400 uppercase font-bold mb-1">Image Asset URLs (Comma Separated)</label>
+              {/* 4 to 5 Product Photos Upload Section */}
+              <div className="bg-[#1A3070]/40 p-4 rounded-2xl border border-white/10 space-y-3">
+                <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                  <div className="flex items-center gap-2">
+                    <ImageIcon className="w-4 h-4 text-[#C9A66B]" />
+                    <span className="text-[11px] font-mono text-white uppercase font-bold">
+                      Product Photos (Upload 4 to 5 High-Res Images)
+                    </span>
+                  </div>
+                  <span className="text-[9px] font-mono text-[#C9A66B] font-bold">4:4 Ratio Recommended</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Photo 1: Cover Image (Required) */}
+                  <div className="space-y-1.5 bg-[#0A1E54]/50 p-2.5 rounded-xl border border-white/10">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono text-[#C9A66B] font-bold">1. Cover Photo (Primary) *</span>
+                      {prodImage1 && (
+                        <button type="button" onClick={() => setProdImage1('')} className="text-[9px] text-rose-400 hover:underline">Clear</button>
+                      )}
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      {prodImage1 && (
+                        <img src={prodImage1} alt="" className="w-10 h-10 object-cover rounded-lg border border-white/20 shrink-0 bg-black/40" />
+                      )}
+                      <input
+                        type="text"
+                        required
+                        value={prodImage1}
+                        onChange={(e) => setProdImage1(e.target.value)}
+                        placeholder="Image URL or upload file"
+                        className="w-full bg-[#1A3070]/60 border border-white/10 rounded-lg p-2 text-white text-[11px] font-mono focus:outline-none"
+                      />
+                    </div>
+                    <label className="inline-flex items-center gap-1.5 text-[9px] font-mono text-stone-300 bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-md cursor-pointer transition-colors">
+                      <UploadCloud className="w-3 h-3 text-[#C9A66B]" />
+                      <span>Upload from Device</span>
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, setProdImage1)} />
+                    </label>
+                  </div>
+
+                  {/* Photo 2 */}
+                  <div className="space-y-1.5 bg-[#0A1E54]/50 p-2.5 rounded-xl border border-white/10">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono text-stone-300 font-bold">2. Angle / Detail Photo</span>
+                      {prodImage2 && (
+                        <button type="button" onClick={() => setProdImage2('')} className="text-[9px] text-rose-400 hover:underline">Clear</button>
+                      )}
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      {prodImage2 && (
+                        <img src={prodImage2} alt="" className="w-10 h-10 object-cover rounded-lg border border-white/20 shrink-0 bg-black/40" />
+                      )}
+                      <input
+                        type="text"
+                        value={prodImage2}
+                        onChange={(e) => setProdImage2(e.target.value)}
+                        placeholder="Image URL or upload file"
+                        className="w-full bg-[#1A3070]/60 border border-white/10 rounded-lg p-2 text-white text-[11px] font-mono focus:outline-none"
+                      />
+                    </div>
+                    <label className="inline-flex items-center gap-1.5 text-[9px] font-mono text-stone-300 bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-md cursor-pointer transition-colors">
+                      <UploadCloud className="w-3 h-3 text-[#C9A66B]" />
+                      <span>Upload from Device</span>
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, setProdImage2)} />
+                    </label>
+                  </div>
+
+                  {/* Photo 3 */}
+                  <div className="space-y-1.5 bg-[#0A1E54]/50 p-2.5 rounded-xl border border-white/10">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono text-stone-300 font-bold">3. Back / Fit Photo</span>
+                      {prodImage3 && (
+                        <button type="button" onClick={() => setProdImage3('')} className="text-[9px] text-rose-400 hover:underline">Clear</button>
+                      )}
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      {prodImage3 && (
+                        <img src={prodImage3} alt="" className="w-10 h-10 object-cover rounded-lg border border-white/20 shrink-0 bg-black/40" />
+                      )}
+                      <input
+                        type="text"
+                        value={prodImage3}
+                        onChange={(e) => setProdImage3(e.target.value)}
+                        placeholder="Image URL or upload file"
+                        className="w-full bg-[#1A3070]/60 border border-white/10 rounded-lg p-2 text-white text-[11px] font-mono focus:outline-none"
+                      />
+                    </div>
+                    <label className="inline-flex items-center gap-1.5 text-[9px] font-mono text-stone-300 bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-md cursor-pointer transition-colors">
+                      <UploadCloud className="w-3 h-3 text-[#C9A66B]" />
+                      <span>Upload from Device</span>
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, setProdImage3)} />
+                    </label>
+                  </div>
+
+                  {/* Photo 4 */}
+                  <div className="space-y-1.5 bg-[#0A1E54]/50 p-2.5 rounded-xl border border-white/10">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono text-stone-300 font-bold">4. Fabric / Texture Close-up</span>
+                      {prodImage4 && (
+                        <button type="button" onClick={() => setProdImage4('')} className="text-[9px] text-rose-400 hover:underline">Clear</button>
+                      )}
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      {prodImage4 && (
+                        <img src={prodImage4} alt="" className="w-10 h-10 object-cover rounded-lg border border-white/20 shrink-0 bg-black/40" />
+                      )}
+                      <input
+                        type="text"
+                        value={prodImage4}
+                        onChange={(e) => setProdImage4(e.target.value)}
+                        placeholder="Image URL or upload file"
+                        className="w-full bg-[#1A3070]/60 border border-white/10 rounded-lg p-2 text-white text-[11px] font-mono focus:outline-none"
+                      />
+                    </div>
+                    <label className="inline-flex items-center gap-1.5 text-[9px] font-mono text-stone-300 bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-md cursor-pointer transition-colors">
+                      <UploadCloud className="w-3 h-3 text-[#C9A66B]" />
+                      <span>Upload from Device</span>
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, setProdImage4)} />
+                    </label>
+                  </div>
+                </div>
+
+                {/* Photo 5 (Full Width) */}
+                <div className="space-y-1.5 bg-[#0A1E54]/50 p-2.5 rounded-xl border border-white/10">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono text-stone-300 font-bold">5. Model Lifestyle / Extra Angle (Optional)</span>
+                    {prodImage5 && (
+                      <button type="button" onClick={() => setProdImage5('')} className="text-[9px] text-rose-400 hover:underline">Clear</button>
+                    )}
+                  </div>
+                  <div className="flex gap-2 items-center">
+                    {prodImage5 && (
+                      <img src={prodImage5} alt="" className="w-10 h-10 object-cover rounded-lg border border-white/20 shrink-0 bg-black/40" />
+                    )}
+                    <input
+                      type="text"
+                      value={prodImage5}
+                      onChange={(e) => setProdImage5(e.target.value)}
+                      placeholder="Image URL or upload file"
+                      className="w-full bg-[#1A3070]/60 border border-white/10 rounded-lg p-2 text-white text-[11px] font-mono focus:outline-none"
+                    />
+                  </div>
+                  <label className="inline-flex items-center gap-1.5 text-[9px] font-mono text-stone-300 bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-md cursor-pointer transition-colors">
+                    <UploadCloud className="w-3 h-3 text-[#C9A66B]" />
+                    <span>Upload from Device</span>
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, setProdImage5)} />
+                  </label>
+                </div>
+              </div>
+
+              {/* 1 Product Showcase Video Section */}
+              <div className="bg-[#1A3070]/40 p-4 rounded-2xl border border-[#C9A66B]/30 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Film className="w-4 h-4 text-[#C9A66B]" />
+                    <span className="text-[11px] font-mono text-[#C9A66B] uppercase font-bold">
+                      Product Showcase Video (1 Video Clip)
+                    </span>
+                  </div>
+                  {prodVideoUrl && (
+                    <button type="button" onClick={() => setProdVideoUrl('')} className="text-[9px] text-rose-400 hover:underline">Remove Video</button>
+                  )}
+                </div>
                 <input
                   type="text"
-                  required
-                  value={prodAssets}
-                  onChange={(e) => setProdAssets(e.target.value)}
-                  className="w-full bg-[#1A3070]/60 border border-white/10 rounded-xl p-3 text-white focus:outline-none font-mono"
+                  value={prodVideoUrl}
+                  onChange={(e) => setProdVideoUrl(e.target.value)}
+                  placeholder="Paste direct MP4 URL, WebM URL, or YouTube link"
+                  className="w-full bg-[#0A1E54]/60 border border-white/10 rounded-xl p-3 text-white text-xs font-mono focus:outline-none focus:border-[#C9A66B]"
                 />
+                <div className="flex items-center justify-between text-[9px] font-mono text-stone-400">
+                  <span>Supported: Direct MP4, WebM, or YouTube embed link</span>
+                  <label className="inline-flex items-center gap-1.5 text-stone-300 bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-md cursor-pointer transition-colors">
+                    <Video className="w-3 h-3 text-[#C9A66B]" />
+                    <span>Select Video File</span>
+                    <input type="file" accept="video/*" className="hidden" onChange={(e) => handleFileUpload(e, setProdVideoUrl)} />
+                  </label>
+                </div>
+                {prodVideoUrl && (
+                  <div className="pt-1">
+                    <video src={prodVideoUrl} controls className="w-full max-h-36 rounded-xl bg-black border border-white/10" />
+                  </div>
+                )}
               </div>
 
               <div>
@@ -2188,12 +2398,12 @@ export const AdminDashboard: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-[10px] font-mono text-zinc-400 uppercase font-bold mb-1">Category Name (Bengali)</label>
+                <label className="block text-[10px] font-mono text-zinc-400 uppercase font-bold mb-1">Category Subtitle / Fit</label>
                 <input
                   type="text"
                   value={catNameBn}
                   onChange={(e) => setCatNameBn(e.target.value)}
-                  placeholder="e.g. ব্যাগি ও কার্গো প্যান্ট"
+                  placeholder="e.g. Baggy & Cargo Fits"
                   className="w-full bg-[#1A3070]/60 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-[#C9A66B]"
                 />
               </div>

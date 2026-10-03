@@ -1,26 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useCart } from '../contexts/CartContext';
 import { 
   Search,
   ShoppingBag, 
-  Menu, 
-  X, 
   ShieldCheck,
   Globe
 } from 'lucide-react';
 import { OFFICIAL_LOGO_URL } from './BrandLogo';
 import { playCinematicIntroSound } from '../utils/voiceUtils';
+import { HumanVerificationModal, isUserHumanVerified } from './HumanVerificationModal';
 
 export const Header: React.FC = () => {
   const { user, isAdmin } = useAuth();
   const { cartItems } = useCart();
   const { locale, toggleLanguage, t } = useLanguage();
   const location = useLocation();
+  const navigate = useNavigate();
+  const headerRef = useRef<HTMLElement>(null);
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
 
   const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -29,13 +31,39 @@ export const Header: React.FC = () => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
 
+  // Close menu on click outside
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (headerRef.current && !headerRef.current.contains(e.target as Node)) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [isMobileMenuOpen]);
+
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/';
     return location.pathname.startsWith(path);
   };
 
+  const handleProfileClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (user) {
+      navigate('/profile');
+      return;
+    }
+    // If not logged in:
+    if (!isUserHumanVerified()) {
+      setIsVerifyModalOpen(true);
+    } else {
+      navigate('/login');
+    }
+  };
+
   return (
-    <header className="pf-header" role="banner">
+    <header className="pf-header" role="banner" ref={headerRef}>
       <div className="pf-header-inner">
 
         {/* Logo / Brand Area */}
@@ -54,16 +82,16 @@ export const Header: React.FC = () => {
         {/* Desktop Navigation Links */}
         <nav className="pf-nav" aria-label="Main Navigation">
           <Link to="/" className={isActive('/') && location.pathname === '/' ? 'active' : ''}>
-            {t('Home', 'হোম')}
+            Home
           </Link>
           <Link to="/shop" className={isActive('/shop') || isActive('/products') ? 'active' : ''}>
-            {t('Shop', 'শপ')}
+            Shop
           </Link>
           <Link to="/categories" className={isActive('/categories') || isActive('/menu') ? 'active' : ''}>
-            {t('Categories', 'ক্যাটাগরি')}
+            Categories
           </Link>
           <Link to="/about" className={isActive('/about') ? 'active' : ''}>
-            {t('About', 'পরিচিতি')}
+            About
           </Link>
         </nav>
 
@@ -75,7 +103,7 @@ export const Header: React.FC = () => {
             to="/search"
             className={`pf-icon-btn group ${isActive('/search') ? 'bg-[#C9A66B]/20 border-[#C9A66B]/50' : ''}`}
             aria-label="Search"
-            title={t("Search Catalog", "অনুসন্ধান")}
+            title="Search Catalog"
           >
             <Search className="w-5 h-5 text-[#0A1E54] group-hover:scale-110 transition-transform" strokeWidth={2.2} />
           </Link>
@@ -85,7 +113,7 @@ export const Header: React.FC = () => {
             to="/cart"
             className={`pf-icon-btn group ${isActive('/cart') ? 'bg-[#C9A66B]/20 border-[#C9A66B]/50' : ''}`}
             aria-label="Shopping Cart"
-            title={t("Shopping Cart", "শপিং কার্ট")}
+            title="Shopping Cart"
           >
             <ShoppingBag className="w-5 h-5 text-[#0A1E54] group-hover:scale-110 transition-transform" strokeWidth={2.2} />
             {cartCount > 0 && (
@@ -94,11 +122,12 @@ export const Header: React.FC = () => {
           </Link>
 
           {/* 3. Profile Button (Communication App Default Human Avatar Silhouette Logo -> Not personal photo/initial) */}
-          <Link
-            to={user ? "/profile" : "/login"}
-            className={`pf-icon-btn group ${isActive('/profile') || isActive('/login') || isActive('/account') ? 'bg-[#C9A66B]/20 border-[#C9A66B]/50' : ''}`}
+          <button
+            type="button"
+            onClick={handleProfileClick}
+            className={`pf-icon-btn group cursor-pointer ${isActive('/profile') || isActive('/login') || isActive('/account') ? 'bg-[#C9A66B]/20 border-[#C9A66B]/50' : ''}`}
             aria-label="User Profile"
-            title={user ? (user.displayName || t("My Profile", "আমার প্রোফাইল")) : t("Sign In", "সাইন ইন")}
+            title={user ? (user.displayName || "My Profile") : "Sign In"}
           >
             {/* Communication App Default Contact / Human Avatar Silhouette */}
             <svg 
@@ -113,24 +142,20 @@ export const Header: React.FC = () => {
                 clipRule="evenodd" 
               />
             </svg>
-          </Link>
-
-          {/* 4. Menu Button (Toggles Smooth Dropdown Menu) */}
-          <button
-            type="button"
-            id="pfMenuBtn"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="pf-icon-btn group cursor-pointer"
-            aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
-            aria-expanded={isMobileMenuOpen}
-            title={t("Menu", "মেনু")}
-          >
-            {isMobileMenuOpen ? (
-              <X className="w-5 h-5 text-[#0A1E54] group-hover:scale-110 transition-transform" strokeWidth={2.5} />
-            ) : (
-              <Menu className="w-5 h-5 text-[#0A1E54] group-hover:scale-110 transition-transform" strokeWidth={2.5} />
-            )}
           </button>
+
+          {/* 2-bar animated hamburger */}
+          <input 
+            type="checkbox" 
+            id="checkbox"
+            checked={isMobileMenuOpen}
+            onChange={(e) => setIsMobileMenuOpen(e.target.checked)}
+          />
+
+          <label htmlFor="checkbox" className="toggle" aria-label="Toggle navigation menu">
+            <div className="bars" id="bar1"></div>
+            <div className="bars" id="bar2"></div>
+          </label>
 
         </div>
       </div>
@@ -145,43 +170,46 @@ export const Header: React.FC = () => {
           onClick={() => setIsMobileMenuOpen(false)}
           className={isActive('/') && location.pathname === '/' ? 'active' : ''}
         >
-          {t("Home", "হোম")}
+          Home
         </Link>
         <Link
           to="/shop"
           onClick={() => setIsMobileMenuOpen(false)}
           className={isActive('/shop') || isActive('/products') ? 'active' : ''}
         >
-          {t("Shop All Collections", "সকল কালেকশন শপ")}
+          Shop All Collections
         </Link>
         <Link
           to="/categories"
           onClick={() => setIsMobileMenuOpen(false)}
           className={isActive('/categories') || isActive('/menu') ? 'active' : ''}
         >
-          {t("Categories Catalog", "ক্যাটাগরি ক্যাটালগ")}
+          Categories Catalog
         </Link>
         <Link
           to="/about"
           onClick={() => setIsMobileMenuOpen(false)}
           className={isActive('/about') ? 'active' : ''}
         >
-          {t("About Patowary Fashion", "ব্র্যান্ড পরিচিতি")}
+          About Patowary Fashion
         </Link>
         <Link
           to="/track-order"
           onClick={() => setIsMobileMenuOpen(false)}
           className={isActive('/track-order') ? 'active' : ''}
         >
-          {t("Track My Order", "অর্ডার ট্র্যাক")}
+          Track My Order
         </Link>
-        <Link
-          to={user ? "/profile" : "/login"}
-          onClick={() => setIsMobileMenuOpen(false)}
-          className={isActive('/profile') || isActive('/login') ? 'active' : ''}
+        <button
+          type="button"
+          onClick={(e) => {
+            setIsMobileMenuOpen(false);
+            handleProfileClick(e);
+          }}
+          className={`w-full text-left px-3.5 py-3 rounded-xl font-bold text-sm cursor-pointer transition-colors ${isActive('/profile') || isActive('/login') ? 'active bg-[#C9A66B]/20 text-[#0A1E54]' : 'text-[#111827] hover:bg-black/5'}`}
         >
-          {user ? t("My Profile / Invoices", "প্রোফাইল / ইনভয়েস") : t("Sign In / Register", "সাইন ইন / রেজিস্টার")}
-        </Link>
+          {user ? "My Profile & Invoices" : "Sign In / Register"}
+        </button>
         {isAdmin && (
           <Link
             to="/admin"
@@ -189,28 +217,27 @@ export const Header: React.FC = () => {
             className="text-[#C9A66B] font-bold flex items-center gap-1.5"
           >
             <ShieldCheck className="w-4 h-4 text-[#C9A66B]" />
-            <span>{t("Admin Portal", "অ্যাডমিন পোর্টাল")}</span>
+            <span>Admin Portal</span>
           </Link>
         )}
 
-        {/* Language Switcher in Dropdown */}
+        {/* Global Store Info */}
         <div className="pt-3 mt-2 border-t border-stone-200/60 flex items-center justify-between text-xs px-2 text-stone-600">
           <span className="flex items-center gap-1.5 font-medium">
             <Globe className="w-3.5 h-3.5 text-[#C9A66B]" />
-            {t("Language:", "ভাষা:")}
+            Language:
           </span>
-          <button
-            type="button"
-            onClick={() => {
-              toggleLanguage();
-              playCinematicIntroSound(locale === 'en' ? 'বাংলা ভাষা সক্রিয় করা হয়েছে' : 'English enabled');
-            }}
-            className="px-3.5 py-1.5 bg-white/90 border border-stone-200 rounded-xl text-[#0A1E54] font-bold cursor-pointer hover:bg-stone-50 transition-colors shadow-xs"
-          >
-            {locale === 'en' ? 'বাংলা' : 'EN'}
-          </button>
+          <span className="px-3 py-1 bg-white/90 border border-stone-200 rounded-xl text-[#0A1E54] font-bold shadow-xs">
+            English (US)
+          </span>
         </div>
       </div>
+
+      {/* One-Time Human Verification Modal */}
+      <HumanVerificationModal 
+        isOpen={isVerifyModalOpen}
+        onClose={() => setIsVerifyModalOpen(false)}
+      />
     </header>
   );
 };

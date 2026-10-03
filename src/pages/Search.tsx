@@ -88,7 +88,7 @@ export const Search: React.FC = () => {
             to="/"
             className="inline-flex items-center gap-2 text-xs font-mono tracking-wider text-[#0A1E54] uppercase font-bold hover:text-[#1A3070] transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" /> {t("Back to Home", "হোম পেজে ফিরুন")}
+            <ArrowLeft className="w-4 h-4" /> {t("Back to Home")}
           </Link>
         </div>
 
@@ -98,7 +98,7 @@ export const Search: React.FC = () => {
             PATOWARY FASHION SEARCH
           </span>
           <h1 className="text-2xl sm:text-4xl font-serif font-bold text-[#0A1E54] uppercase mt-1">
-            {t("Search & Discover Fits", "পছন্দের ফ্যাশন খুঁজুন")}
+            {t("Search & Discover Fits")}
           </h1>
         </div>
 
@@ -111,7 +111,7 @@ export const Search: React.FC = () => {
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder={t("SEARCH BAGGY CARGO, 260 GSM TEES, HOODIES, ACCESSORIES...", "ব্যাগি কার্গো, টি-শার্ট, হুডি খুঁজুন...")}
+            placeholder={t("SEARCH BAGGY CARGO, 260 GSM TEES, HOODIES, ACCESSORIES...")}
             className="w-full bg-transparent px-4 py-4 text-xs sm:text-sm font-sans focus:outline-none placeholder-stone-400 font-medium text-stone-900"
           />
           {searchInput && (
@@ -128,7 +128,7 @@ export const Search: React.FC = () => {
         {/* Trending Keywords */}
         <div className="flex flex-wrap items-center gap-2 mb-8 font-mono text-xs">
           <span className="text-stone-500 uppercase tracking-wider flex items-center gap-1.5 font-bold mr-1">
-            <TrendingUp className="w-4 h-4 text-[#C9A66B]" /> {t("POPULAR SEARCHES:", "জনপ্রিয় অনুসন্ধান:")}
+            <TrendingUp className="w-4 h-4 text-[#C9A66B]" /> {t("POPULAR SEARCHES:")}
           </span>
           {trendingTags.map((tag) => (
             <button
@@ -147,24 +147,24 @@ export const Search: React.FC = () => {
 
         {/* Results Counter */}
         <div className="flex justify-between items-center text-xs font-mono border-b border-stone-200 pb-3 mb-6">
-          <span className="text-stone-500 uppercase tracking-wider">{t("SEARCH RESULTS", "ফলাফল")}</span>
-          <span className="text-[#0A1E54] font-bold tracking-wider">{filteredProducts.length} {t("PRODUCTS FOUND", "পণ্য পাওয়া গেছে")}</span>
+          <span className="text-stone-500 uppercase tracking-wider">{t("SEARCH RESULTS")}</span>
+          <span className="text-[#0A1E54] font-bold tracking-wider">{filteredProducts.length} {t("PRODUCTS FOUND")}</span>
         </div>
 
         {/* Product Results Grid */}
         {filteredProducts.length === 0 ? (
           <div className="bg-white/80 backdrop-blur-md border border-white rounded-3xl p-16 text-center space-y-4 max-w-md mx-auto shadow-sm">
             <h3 className="text-base font-bold text-[#0A1E54]">
-              {t("No matches found", "কোনো ফলাফল পাওয়া যায়নি")}
+              {t("No matches found")}
             </h3>
             <p className="text-xs text-stone-500">
-              {t("Try checking for typos or searching with broader keywords like 'Pants' or 'Tee'.", "অন্য কোনো শব্দ দিয়ে পুনরায় অনুসন্ধান করুন।")}
+              {t("Try checking for typos or searching with broader keywords like 'Pants' or 'Tee'.")}
             </p>
             <button
               onClick={() => setSearchInput('')}
               className="px-6 py-2.5 bg-[#0A1E54] text-white text-xs font-bold uppercase rounded-xl"
             >
-              {t("Clear Search", "ক্লিয়ার করুন")}
+              {t("Clear Search")}
             </button>
           </div>
         ) : (
@@ -178,7 +178,7 @@ export const Search: React.FC = () => {
                   onClick={() => navigate(`/product/${product.id}`)}
                   className="glass-card rounded-2xl overflow-hidden flex flex-col justify-between group cursor-pointer border border-white hover:border-[#C9A66B]/50 shadow-xs hover:shadow-md transition-all"
                 >
-                  <div className="relative aspect-[4/5] bg-stone-100 overflow-hidden">
+                  <div className="relative aspect-square bg-stone-100 overflow-hidden">
                     <img
                       src={product.assets[0]}
                       alt={product.title}
@@ -213,7 +213,7 @@ export const Search: React.FC = () => {
 
                     <div className="mt-3 pt-3 border-t border-stone-100 flex items-center justify-between">
                       <div>
-                        <span className="text-[10px] text-stone-500 block uppercase font-mono">{t("Price", "মূল্য")}</span>
+                        <span className="text-[10px] text-stone-500 block uppercase font-mono">{t("Price")}</span>
                         <span className="text-sm sm:text-base font-bold text-[#0A1E54] font-mono">
                           ৳ {product.price.toLocaleString()}
                         </span>
@@ -224,7 +224,7 @@ export const Search: React.FC = () => {
                         className="p-2 sm:px-3 sm:py-2 bg-[#0A1E54] hover:bg-[#1A3070] text-white rounded-xl flex items-center gap-1.5 text-xs font-semibold shadow-xs cursor-pointer"
                       >
                         <ShoppingBag className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">{t("Add", "ব্যাগ")}</span>
+                        <span className="hidden sm:inline">{t("Add to Bag")}</span>
                       </button>
                     </div>
                   </div>

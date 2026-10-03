@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Order } from '../types';
+import { OrderProgressBar } from './OrderProgressBar';
 
 interface TrackMyOrderProps {
   initialOrderId?: string;
@@ -44,13 +45,46 @@ export const TrackMyOrder: React.FC<TrackMyOrderProps> = ({
 }) => {
   const { t, locale } = useLanguage();
   const [orderIdInput, setOrderIdInput] = useState(initialOrderId);
+  const [phoneInput, setPhoneInput] = useState('');
   const [activeQueryId, setActiveQueryId] = useState(initialOrderId);
+  const [activeQueryPhone, setActiveQueryPhone] = useState('');
   const [orderData, setOrderData] = useState<Order | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  // Privacy masking helpers
+  const maskCustomerName = (name?: string): string => {
+    if (!name) return 'Valued Customer';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) {
+      return parts[0].slice(0, 2) + '****';
+    }
+    return `${parts[0]} ${parts[parts.length - 1].slice(0, 1)}***`;
+  };
+
+  const maskCustomerPhone = (phone?: string): string => {
+    if (!phone) return '017*****';
+    const digits = phone.replace(/\D/g, '');
+    if (digits.length >= 8) {
+      return `${digits.slice(0, 3)}*****${digits.slice(-3)}`;
+    }
+    return '017*****';
+  };
+
+  const maskCustomerAddress = (addr?: string): string => {
+    if (!addr) return 'Dhaka, Bangladesh';
+    const parts = addr.split(',');
+    if (parts.length > 2) {
+      return `****, ${parts.slice(-2).join(',').trim()}`;
+    }
+    if (parts.length === 2) {
+      return `****, ${parts[1].trim()}`;
+    }
+    return addr.length > 15 ? `**** ${addr.slice(-12)}` : addr;
+  };
 
   // Load user's recent local invoices
   useEffect(() => {
@@ -90,6 +124,17 @@ export const TrackMyOrder: React.FC<TrackMyOrderProps> = ({
       (snapshot) => {
         if (snapshot.exists()) {
           const liveOrder = { id: snapshot.id, ...snapshot.data() } as Order;
+          // Verify phone if customer entered one
+          if (activeQueryPhone.trim()) {
+            const queryDigits = activeQueryPhone.replace(/\D/g, '');
+            const orderDigits = (liveOrder.phone || '').replace(/\D/g, '');
+            if (!orderDigits.endsWith(queryDigits) && !queryDigits.endsWith(orderDigits)) {
+              setOrderData(null);
+              setErrorMsg(`Order ID #${cleanId} found, but the phone number does not match our consignee records. Please verify.`);
+              setLoading(false);
+              return;
+            }
+          }
           setOrderData(liveOrder);
           setLastUpdated(new Date());
           setErrorMsg(null);
@@ -101,6 +146,16 @@ export const TrackMyOrder: React.FC<TrackMyOrderProps> = ({
             (o) => o.id?.toUpperCase() === cleanId.toUpperCase()
           );
           if (match) {
+            if (activeQueryPhone.trim()) {
+              const queryDigits = activeQueryPhone.replace(/\D/g, '');
+              const orderDigits = (match.phone || '').replace(/\D/g, '');
+              if (!orderDigits.endsWith(queryDigits) && !queryDigits.endsWith(orderDigits)) {
+                setOrderData(null);
+                setErrorMsg(`Order ID #${cleanId} found, but the phone number does not match our consignee records.`);
+                setLoading(false);
+                return;
+              }
+            }
             setOrderData(match);
             setLastUpdated(new Date());
             setErrorMsg(null);
@@ -108,9 +163,7 @@ export const TrackMyOrder: React.FC<TrackMyOrderProps> = ({
           } else {
             setOrderData(null);
             setErrorMsg(
-              locale === 'bn'
-                ? `আইডি "${cleanId}" দিয়ে কোনো অর্ডার পাওয়া যায়নি। সঠিক আইডি দিয়ে আবার চেষ্টা করুন।`
-                : `No order record found for Tracking ID "${cleanId}". Please verify your order number.`
+              `No order record found for Tracking ID "${cleanId}". Please verify your order number.`
             );
           }
           setLoading(false);
@@ -129,9 +182,7 @@ export const TrackMyOrder: React.FC<TrackMyOrderProps> = ({
           if (onOrderFound) onOrderFound(match);
         } else {
           setErrorMsg(
-            locale === 'bn'
-              ? 'সার্ভারের সাথে সংযোগ স্থাপন করা সম্ভব হয়নি। আপনার ইন্টারনেট কানেকশন চেক করুন।'
-              : 'Unable to connect to live tracking server. Please verify your connection.'
+            'Unable to connect to live tracking server. Please verify your connection.'
           );
         }
         setLoading(false);
@@ -139,13 +190,14 @@ export const TrackMyOrder: React.FC<TrackMyOrderProps> = ({
     );
 
     return () => unsubscribe();
-  }, [activeQueryId, recentOrders, locale, onOrderFound]);
+  }, [activeQueryId, activeQueryPhone, recentOrders, locale, onOrderFound]);
 
   const handleTrackSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const clean = orderIdInput.trim();
     if (!clean) return;
     setActiveQueryId(clean);
+    setActiveQueryPhone(phoneInput.trim());
     playCinematicIntroSound(`Checking tracking status for order ${clean}`);
   };
 
@@ -173,41 +225,41 @@ export const TrackMyOrder: React.FC<TrackMyOrderProps> = ({
     {
       key: 'Received',
       labelEn: 'Order Received',
-      labelBn: 'অর্ডার গৃহীত',
+      labelBn: 'Order Received',
       descEn: 'Order logged and confirmed in Patowary dispatch system',
-      descBn: 'অর্ডারটি সিস্টেমে সফলভাবে গৃহীত হয়েছে',
+      descBn: 'Order logged and confirmed in Patowary dispatch system',
       icon: Box
     },
     {
       key: 'Processing',
       labelEn: 'Packed & Ready',
-      labelBn: 'প্রসেসিং ও প্যাকিং',
+      labelBn: 'Packed & Ready',
       descEn: 'Items quality-checked, wrapped, and sealed in Dhaka atelier',
-      descBn: 'প্রোডাক্ট কোয়ালিটি চেক ও প্যাকিং সম্পন্ন হয়েছে',
+      descBn: 'Items quality-checked, wrapped, and sealed in Dhaka atelier',
       icon: PackageCheck
     },
     {
       key: 'Shipped',
       labelEn: 'In Transit',
-      labelBn: 'কুরিয়ারে হস্তান্তর',
+      labelBn: 'In Transit',
       descEn: 'Dispatched with logistics courier for city transit',
-      descBn: 'পার্সেলটি এক্সপ্রেস কুরিয়ারে হস্তান্তর করা হয়েছে',
+      descBn: 'Dispatched with logistics courier for city transit',
       icon: Truck
     },
     {
       key: 'Out for Delivery',
       labelEn: 'Out for Delivery',
-      labelBn: 'ডেলিভারির পথে',
+      labelBn: 'Out for Delivery',
       descEn: 'Rider is on the way to your doorstep for handover',
-      descBn: 'ডেলিভারি রাইডার আপনার ঠিকানায় পার্সেল নিয়ে রওনা হয়েছে',
+      descBn: 'Rider is on the way to your doorstep for handover',
       icon: Radio
     },
     {
       key: 'Completed',
       labelEn: 'Delivered',
-      labelBn: 'সফল ডেলিভারি',
+      labelBn: 'Delivered',
       descEn: 'Package inspected, payment collected, and handed over',
-      descBn: 'পার্সেলটি সফলভাবে আপনার হাতে তুলে দেওয়া হয়েছে',
+      descBn: 'Package inspected, payment collected, and handed over',
       icon: CheckCircle2
     }
   ];
@@ -232,26 +284,26 @@ export const TrackMyOrder: React.FC<TrackMyOrderProps> = ({
           <div className="border-b border-stone-100 pb-4">
             <span className="text-[10px] font-mono tracking-widest text-[#C9A66B] uppercase font-bold flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-[#C9A66B]" />
-              {t("REAL-TIME PARCEL RADAR", "লাইভ পার্সেল ট্র্যাকিং")}
+              REAL-TIME PARCEL RADAR
             </span>
             <h3 className="text-xl sm:text-2xl font-serif font-bold text-[#0A1E54] mt-1">
-              {t("Track Your Consignment", "আপনার অর্ডার ট্র্যাক করুন")}
+              Track Your Consignment
             </h3>
             <p className="text-xs text-stone-500 font-sans mt-0.5">
-              {t("Enter your invoice tracking ID (e.g. PTW-... or ORD-...) to view live courier status.", "আপনার ইউনিক অর্ডার আইডি দিন এবং রিয়েল-টাইম কুরিয়ার আপডেট দেখুন।")}
+              Enter your invoice tracking ID (e.g. PTW-... or ORD-...) to view live courier status.
             </p>
           </div>
         )}
 
         {/* Input Form */}
-        <form onSubmit={handleTrackSubmit} className="flex flex-col sm:flex-row gap-2.5">
-          <div className="relative flex-1">
+        <form onSubmit={handleTrackSubmit} className="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
+          <div className="relative sm:col-span-6">
             <input
               type="text"
               required
               value={orderIdInput}
               onChange={(e) => setOrderIdInput(e.target.value)}
-              placeholder="e.g. PTW-2026-57112 or ORD-17294"
+              placeholder="Order ID (e.g. PF-20261002-1234)"
               className="w-full bg-stone-50/80 border border-stone-200 focus:border-[#0A1E54] pl-10 pr-10 py-3.5 rounded-2xl text-xs sm:text-sm font-mono tracking-wider uppercase text-[#0A1E54] focus:outline-none transition-all shadow-inner font-bold placeholder-stone-400"
             />
             <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -264,7 +316,7 @@ export const TrackMyOrder: React.FC<TrackMyOrderProps> = ({
                   setOrderData(null);
                   setErrorMsg(null);
                 }}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 p-1 text-xs"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 p-1 text-xs cursor-pointer"
                 title="Clear"
               >
                 ✕
@@ -272,16 +324,27 @@ export const TrackMyOrder: React.FC<TrackMyOrderProps> = ({
             )}
           </div>
 
+          <div className="relative sm:col-span-4">
+            <input
+              type="tel"
+              value={phoneInput}
+              onChange={(e) => setPhoneInput(e.target.value)}
+              placeholder="Phone (Optional for verification)"
+              className="w-full bg-stone-50/80 border border-stone-200 focus:border-[#0A1E54] pl-10 pr-4 py-3.5 rounded-2xl text-xs sm:text-sm font-mono tracking-wider text-[#0A1E54] focus:outline-none transition-all shadow-inner placeholder-stone-400"
+            />
+            <Phone className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          </div>
+
           <button
             type="submit"
             disabled={loading}
-            className="px-8 py-3.5 bg-[#0A1E54] hover:bg-[#1A3070] text-[#F8F3EA] text-xs font-mono uppercase tracking-wider font-bold rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50 shrink-0"
+            className="sm:col-span-2 px-6 py-3.5 bg-[#0A1E54] hover:bg-[#1A3070] text-[#F8F3EA] text-xs font-mono uppercase tracking-wider font-bold rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
           >
             {loading ? (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
               <>
-                <span>{t("Track Live", "ট্র্যাক করুন")}</span>
+                <span>Track Live</span>
                 <Truck className="w-4 h-4 text-[#C9A66B]" />
               </>
             )}
@@ -292,7 +355,7 @@ export const TrackMyOrder: React.FC<TrackMyOrderProps> = ({
         {recentOrders.length > 0 && (
           <div className="pt-2 flex flex-wrap items-center gap-2 text-xs font-mono">
             <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">
-              {t("Recent:", "সাম্প্রতিক:")}
+              Recent:
             </span>
             {recentOrders.slice(0, 3).map((ord) => (
               <button
@@ -323,7 +386,7 @@ export const TrackMyOrder: React.FC<TrackMyOrderProps> = ({
           <div className="space-y-1">
             <p className="font-bold">{errorMsg}</p>
             <p className="text-[11px] text-rose-700 font-sans">
-              {t("Tip: Order IDs were provided upon placing the order and sent via SMS/WhatsApp.", "পরামর্শ: অর্ডার কনফার্মেশনের সময় প্রাপ্ত ট্র্যাকিং নম্বরটি ব্যবহার করুন।")}
+              Tip: Order IDs were provided upon placing the order and sent via SMS/WhatsApp.
             </p>
           </div>
         </motion.div>
@@ -369,58 +432,15 @@ export const TrackMyOrder: React.FC<TrackMyOrderProps> = ({
                 </div>
               </div>
 
-              {/* Status Stepper Progress Bar */}
-              <div className="pt-2 space-y-6">
-                <div className="grid grid-cols-5 gap-2 relative">
-                  {/* Connecting Line */}
-                  <div className="absolute top-4 left-6 right-6 h-1 bg-white/10 rounded-full -z-0" />
-                  <div 
-                    className="absolute top-4 left-6 h-1 bg-[#C9A66B] rounded-full transition-all duration-700 shadow-[0_0_8px_#C9A66B] -z-0"
-                    style={{ width: `${(currentStageIndex / (STAGES.length - 1)) * 100}%` }}
-                  />
-
-                  {STAGES.map((stg, idx) => {
-                    const isPassed = idx < currentStageIndex;
-                    const isCurrent = idx === currentStageIndex;
-                    const IconComponent = stg.icon;
-
-                    return (
-                      <div key={stg.key} className="flex flex-col items-center text-center relative z-10">
-                        <div
-                          className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all duration-300 ${
-                            isCurrent
-                              ? 'bg-[#C9A66B] text-[#0A1E54] ring-4 ring-[#C9A66B]/30 scale-110 shadow-lg'
-                              : isPassed
-                              ? 'bg-emerald-500 text-white'
-                              : 'bg-white/10 text-white/40 border border-white/10'
-                          }`}
-                        >
-                          <IconComponent className="w-4 h-4" />
-                        </div>
-                        <span className={`text-[9px] sm:text-[10px] font-mono uppercase mt-2.5 font-bold leading-tight ${
-                          isCurrent ? 'text-[#C9A66B]' : isPassed ? 'text-white' : 'text-white/40'
-                        }`}>
-                          {locale === 'bn' ? stg.labelBn : stg.labelEn}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Current Stage Description banner */}
-                <div className="bg-white/5 border border-white/10 p-3.5 rounded-2xl flex items-center justify-between text-xs text-white/80">
-                  <div className="flex items-center gap-2.5">
-                    <Clock className="w-4 h-4 text-[#C9A66B] shrink-0" />
-                    <span className="font-sans">
-                      {locale === 'bn' ? STAGES[currentStageIndex]?.descBn : STAGES[currentStageIndex]?.descEn}
-                    </span>
-                  </div>
-                  {lastUpdated && (
-                    <span className="text-[10px] font-mono text-white/50 shrink-0 hidden sm:inline">
-                      Updated {lastUpdated.toLocaleTimeString()}
-                    </span>
-                  )}
-                </div>
+              {/* Visual Step-by-Step Order Progress Bar Component */}
+              <div className="pt-2">
+                <OrderProgressBar 
+                  status={orderData.status} 
+                  orderId={orderData.id} 
+                  createdAt={orderData.createdAt} 
+                  theme="dark" 
+                  showDetailsCard={true} 
+                />
               </div>
 
             </div>
@@ -439,28 +459,37 @@ export const TrackMyOrder: React.FC<TrackMyOrderProps> = ({
               <div className="bg-white rounded-3xl p-6 border border-[#0A1E54]/10 shadow-sm space-y-4">
                 <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-[#0A1E54] border-b border-stone-100 pb-2 flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-[#C9A66B]" />
-                  <span>{t("Shipping Destination", "ডেলিভারি ঠিকানা")}</span>
+                  <span>Shipping Destination</span>
                 </h4>
 
                 <div className="space-y-2 text-xs text-stone-700">
                   <div className="flex items-center gap-2">
                     <User className="w-4 h-4 text-stone-400 shrink-0" />
-                    <span className="font-bold text-[#0A1E54] text-sm">{orderData.fullName}</span>
+                    <span className="font-bold text-[#0A1E54] text-sm">
+                      {activeQueryPhone.trim() ? orderData.fullName : maskCustomerName(orderData.fullName)}
+                    </span>
+                    {!activeQueryPhone.trim() && (
+                      <span className="text-[10px] text-stone-400 font-mono">(Privacy Protected)</span>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     <Phone className="w-4 h-4 text-stone-400 shrink-0" />
-                    <span className="font-mono">{orderData.phone}</span>
+                    <span className="font-mono">
+                      {activeQueryPhone.trim() ? orderData.phone : maskCustomerPhone(orderData.phone)}
+                    </span>
                   </div>
                   <div className="flex items-start gap-2">
                     <MapPin className="w-4 h-4 text-stone-400 shrink-0 mt-0.5" />
-                    <span className="leading-relaxed">{orderData.address}</span>
+                    <span className="leading-relaxed">
+                      {activeQueryPhone.trim() ? orderData.address : maskCustomerAddress(orderData.address)}
+                    </span>
                   </div>
                   <div className="pt-2 border-t border-stone-100 flex items-center justify-between text-[11px] font-mono text-stone-500">
-                    <span>{t("Date Placed:", "অর্ডারের তারিখ:")}</span>
+                    <span>Date Placed:</span>
                     <span>{orderData.createdAt ? new Date(orderData.createdAt).toLocaleDateString() : 'Recent'}</span>
                   </div>
                   <div className="flex items-center justify-between text-[11px] font-mono text-stone-500">
-                    <span>{t("Payment Mode:", "পেমেন্ট মাধ্যম:")}</span>
+                    <span>Payment Mode:</span>
                     <span className="font-bold text-[#0A1E54]">{orderData.paymentMethod || 'Cash On Delivery'}</span>
                   </div>
                 </div>
@@ -497,7 +526,7 @@ export const TrackMyOrder: React.FC<TrackMyOrderProps> = ({
               <div className="bg-white rounded-3xl p-6 border border-[#0A1E54]/10 shadow-sm space-y-4">
                 <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-[#0A1E54] border-b border-stone-100 pb-2 flex items-center gap-2">
                   <ShoppingBag className="w-4 h-4 text-[#C9A66B]" />
-                  <span>{t("Ordered Items", "অর্ডারকৃত আইটেম")} ({orderData.items?.length || 0})</span>
+                  <span>Ordered Items ({orderData.items?.length || 0})</span>
                 </h4>
 
                 <div className="divide-y divide-stone-100 max-h-64 overflow-y-auto pr-1">
@@ -517,7 +546,7 @@ export const TrackMyOrder: React.FC<TrackMyOrderProps> = ({
                         </div>
                       </div>
                       <span className="text-xs font-mono font-bold text-[#0A1E54] shrink-0">
-                        ৳{((item.price || 0) * (item.quantity || 1)).toLocaleString()}
+                        BDT {((item.price || 0) * (item.quantity || 1)).toLocaleString()}
                       </span>
                     </div>
                   ))}
@@ -526,16 +555,16 @@ export const TrackMyOrder: React.FC<TrackMyOrderProps> = ({
                 {/* Total Billing */}
                 <div className="pt-3 border-t border-stone-200 space-y-1.5 text-xs font-mono">
                   <div className="flex justify-between text-stone-600">
-                    <span>{t("Subtotal", "সাবটোটাল")}</span>
-                    <span>৳{orderData.totalPrice?.toLocaleString()}</span>
+                    <span>Subtotal</span>
+                    <span>BDT {orderData.totalPrice?.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-stone-600">
-                    <span>{t("Doorstep Delivery Fee", "ডেলিভারি চার্জ")}</span>
+                    <span>Doorstep Delivery Fee</span>
                     <span className="text-emerald-600 font-bold">FREE</span>
                   </div>
                   <div className="flex justify-between text-sm font-bold text-[#0A1E54] pt-2 border-t border-stone-200">
-                    <span>{t("Total Amount", "সর্বমোট প্রদেয়")}</span>
-                    <span>৳{orderData.totalPrice?.toLocaleString()}</span>
+                    <span>Total Amount</span>
+                    <span>BDT {orderData.totalPrice?.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
@@ -563,7 +592,7 @@ export const TrackMyOrder: React.FC<TrackMyOrderProps> = ({
                 </button>
 
                 <a
-                  href={`https://wa.me/8801633701001?text=${encodeURIComponent(
+                  href={`https://wa.me/8801730943993?text=${encodeURIComponent(
                     `Hello Patowary Fashion, regarding my order tracking #${orderData.id}:`
                   )}`}
                   target="_blank"
